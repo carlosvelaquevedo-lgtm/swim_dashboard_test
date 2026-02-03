@@ -967,31 +967,58 @@ class VideoContextDetector:
     
     def _analyze_color(self, frame: np.ndarray) -> Dict:
         """Analyze color distribution for water detection"""
+        h, w = frame.shape[:2]
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         
-        # Blue/cyan detection (underwater indicator)
+        # Blue/cyan detection
         lower_blue = np.array([85, 50, 50])
         upper_blue = np.array([130, 255, 255])
         blue_mask = cv2.inRange(hsv, lower_blue, upper_blue)
-        blue_ratio = np.sum(blue_mask > 0) / (frame.shape[0] * frame.shape[1])
+        blue_ratio = np.sum(blue_mask > 0) / (h * w)
         
-        # White detection (splash/surface indicator)
+        # White/bright detection (splash/surface indicator)
         lower_white = np.array([0, 0, 200])
         upper_white = np.array([180, 30, 255])
         white_mask = cv2.inRange(hsv, lower_white, upper_white)
-        white_ratio = np.sum(white_mask > 0) / (frame.shape[0] * frame.shape[1])
+        white_ratio = np.sum(white_mask > 0) / (h * w)
         
-        # Check for sky (above water outdoor indicator)
-        top_region = frame[:frame.shape[0]//4, :]
-        hsv_top = cv2.cvtColor(top_region, cv2.COLOR_BGR2HSV)
-        sky_mask = cv2.inRange(hsv_top, np.array([90, 20, 150]), np.array([130, 100, 255]))
-        sky_ratio = np.sum(sky_mask > 0) / (top_region.shape[0] * top_region.shape[1])
+        # === NEW: Above-water detection via region analysis ===
+        # Split frame into thirds
+        top_third = hsv[:h//3, :]
+        bottom_third = hsv[2*h//3:, :]
+        
+        # Saturation gradient: above-water has lower saturation at top (sky/air)
+        # and higher saturation at bottom (water)
+        top_saturation = np.mean(top_third[:,:,1])
+        bottom_saturation = np.mean(bottom_third[:,:,1])
+        saturation_gradient = bottom_saturation - top_saturation  # Positive = above water pattern
+        
+        # Brightness gradient: above-water often brighter at top
+        top_brightness = np.mean(top_third[:,:,2])
+        bottom_brightness = np.mean(bottom_third[:,:,2])
+        brightness_gradient = top_brightness - bottom_brightness  # Positive = above water pattern
+        
+        # Check for reflection/glare in top region (above water indicator)
+        bright_spots_top = cv2.inRange(top_third, np.array([0, 0, 180]), np.array([180, 60, 255]))
+        bright_ratio_top = np.sum(bright_spots_top > 0) / (top_third.shape[0] * top_third.shape[1])
+        
+        # Sky detection in top region
+        sky_mask = cv2.inRange(top_third, np.array([90, 20, 150]), np.array([130, 100, 255]))
+        sky_ratio = np.sum(sky_mask > 0) / (top_third.shape[0] * top_third.shape[1])
+        
+        # Underwater typically has uniform saturation throughout
+        # Above water has gradient (low sat top, high sat bottom where water is)
         
         return {
             'blue_ratio': blue_ratio,
             'white_ratio': white_ratio,
             'sky_ratio': sky_ratio,
-            'avg_brightness': np.mean(frame)
+            'avg_brightness': np.mean(frame),
+            'saturation_gradient': saturation_gradient,
+            'brightness_gradient': brightness_gradient,
+            'bright_ratio_top': bright_ratio_top,
+            'top_saturation': top_saturation,
+            'bottom_saturation': bottom_saturation,
         }
     
     def _analyze_landmarks(self, lm_pixel: Dict) -> Dict:
@@ -1074,19 +1101,66 @@ class VideoContextDetector:
         has_lanes = sum([1 for a in self.frame_analyses if a['edges']]) > len(self.frame_analyses) * 0.3
         avg_splash = np.mean([a['splash'] for a in self.frame_analyses])
         
-        # Determine water position
-        if avg_blue > 0.3 and has_lanes:
-            self.context.water_position = WaterPosition.UNDERWATER
-            water_confidence = 0.9
-        elif avg_blue > 0.2:
-            self.context.water_position = WaterPosition.UNDERWATER
-            water_confidence = 0.7
-        elif avg_white > 0.15 or avg_splash > 500:
+        # NEW: Saturation and brightness gradients
+        avg_sat_gradient = np.mean([a['color']['saturation_gradient'] for a in self.frame_analyses])
+        avg_bright_gradient = np.mean([a['color']['brightness_gradient'] for a in self.frame_analyses])
+        avg_bright_top = np.mean([a['color']['bright_ratio_top'] for a in self.frame_analyses])
+        avg_top_sat = np.mean([a['color']['top_saturation'] for a in self.frame_analyses])
+        avg_bottom_sat = np.mean([a['color']['bottom_saturation'] for a in self.frame_analyses])
+        
+        # === IMPROVED WATER POSITION DETECTION ===
+        # Above water indicators:
+        # 1. Saturation gradient: bottom > top by significant margin (water at bottom, air at top)
+        # 2. Lower saturation in top region (sky/background vs water)
+        # 3. Bright spots in top region (reflections, sky)
+        
+        above_water_score = 0
+        underwater_score = 0
+        
+        # Check saturation gradient (most reliable for above-water)
+        if avg_sat_gradient > 20:  # Bottom much more saturated than top
+            above_water_score += 3
+        elif avg_sat_gradient > 10:
+            above_water_score += 2
+        elif avg_sat_gradient < -10:  # Top more saturated (unusual, likely underwater)
+            underwater_score += 1
+            
+        # Check top region saturation (low = air/sky, high = water)
+        if avg_top_sat < 80:  # Low saturation top = above water
+            above_water_score += 2
+        elif avg_top_sat > 100:  # High saturation throughout = underwater
+            underwater_score += 2
+            
+        # Check for bright spots in top (reflections/sky)
+        if avg_bright_top > 0.05:
+            above_water_score += 1
+            
+        # Blue ratio - high blue can be either above or below!
+        # But UNIFORM high blue suggests underwater
+        if avg_blue > 0.3:
+            if avg_sat_gradient < 15:  # Uniform blue = underwater
+                underwater_score += 2
+            # If high blue but also high gradient, it's above water looking at pool
+        
+        # Lane lines typically visible underwater
+        if has_lanes:
+            underwater_score += 1
+            
+        # Splash indicates surface
+        if avg_splash > 500:
+            above_water_score += 1
+            
+        # Sky detection
+        if avg_sky > 0.1:
+            above_water_score += 1
+        
+        # Determine final water position
+        if above_water_score > underwater_score + 1:
             self.context.water_position = WaterPosition.ABOVE_WATER
-            water_confidence = 0.7
-        elif avg_sky > 0.2:
-            self.context.water_position = WaterPosition.ABOVE_WATER
-            water_confidence = 0.8
+            water_confidence = min(0.9, 0.5 + (above_water_score - underwater_score) * 0.1)
+        elif underwater_score > above_water_score + 1:
+            self.context.water_position = WaterPosition.UNDERWATER
+            water_confidence = min(0.9, 0.5 + (underwater_score - above_water_score) * 0.1)
         else:
             self.context.water_position = WaterPosition.MIXED
             water_confidence = 0.5
