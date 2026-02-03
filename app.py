@@ -546,6 +546,65 @@ class SwimPhase(Enum):
     PUSH = "Push"
     RECOVERY = "Recovery"
 
+class CameraView(Enum):
+    SIDE = "Side View"
+    FRONT = "Front View"
+    TOP = "Top View"
+    UNKNOWN = "Unknown"
+
+class WaterPosition(Enum):
+    UNDERWATER = "Underwater"
+    ABOVE_WATER = "Above Water"
+    MIXED = "Mixed/Waterline"
+    UNKNOWN = "Unknown"
+
+@dataclass
+class VideoContext:
+    """Detected video context for adaptive analysis"""
+    camera_view: CameraView = CameraView.UNKNOWN
+    water_position: WaterPosition = WaterPosition.UNKNOWN
+    swimming_direction: str = "left_to_right"  # or "right_to_left"
+    confidence: float = 0.0
+    detection_frames: int = 0
+    
+    # Color analysis results
+    avg_blue_ratio: float = 0.0
+    has_lane_lines: bool = False
+    has_splash: bool = False
+    
+    # Landmark visibility stats
+    upper_body_visible_pct: float = 0.0
+    lower_body_visible_pct: float = 0.0
+    
+    def get_available_metrics(self) -> List[str]:
+        """Return list of metrics available for this view"""
+        metrics = []
+        
+        if self.camera_view == CameraView.SIDE:
+            if self.water_position == WaterPosition.UNDERWATER:
+                metrics = ["evf", "body_alignment", "kick_depth", "stroke_phase", "torso_lean"]
+            else:  # Above water
+                metrics = ["recovery_arm", "breathing", "head_position", "stroke_rate"]
+        
+        elif self.camera_view == CameraView.FRONT:
+            if self.water_position == WaterPosition.UNDERWATER:
+                metrics = ["body_roll", "hand_entry_width", "kick_symmetry", "streamline"]
+            else:
+                metrics = ["entry_angle", "breathing_side", "catch_width"]
+        
+        elif self.camera_view == CameraView.TOP:
+            metrics = ["body_roll", "stroke_symmetry", "kick_width", "streamline"]
+        
+        else:
+            # Unknown - provide basic metrics
+            metrics = ["body_roll", "stroke_rate", "breathing"]
+        
+        return metrics
+    
+    def get_description(self) -> str:
+        """Get human-readable description of detected context"""
+        return f"{self.camera_view.value} • {self.water_position.value}"
+
 @dataclass
 class AthleteProfile:
     height_cm: float
@@ -607,6 +666,9 @@ class SessionSummary:
     breaths_during_pull: int = 0
     total_breaths: int = 0
     diagnostics: List[str] = field(default_factory=list)
+    # Video context
+    video_context: Optional[VideoContext] = None
+    available_metrics: Dict = field(default_factory=dict)
 
 # ─────────────────────────────────────────────
 # HELPERS - Enhanced calculations
@@ -875,6 +937,281 @@ def detect_local_minimum(arr, threshold=10):
     return arr[mid] < min(arr[:mid] + arr[mid+1:]) and (arr[mid] + threshold) <= min(arr[:mid] + arr[mid+1:])
 
 # ─────────────────────────────────────────────
+# VIDEO CONTEXT DETECTION
+# ─────────────────────────────────────────────
+
+class VideoContextDetector:
+    """Analyzes video frames to detect camera angle and water position"""
+    
+    def __init__(self):
+        self.frame_analyses = []
+        self.detection_complete = False
+        self.context = VideoContext()
+        
+    def analyze_frame(self, frame: np.ndarray, landmarks_pixel: Optional[Dict] = None) -> None:
+        """Analyze a single frame for context detection"""
+        if self.detection_complete:
+            return
+            
+        analysis = {
+            'color': self._analyze_color(frame),
+            'landmarks': self._analyze_landmarks(landmarks_pixel) if landmarks_pixel else None,
+            'edges': self._detect_lane_lines(frame),
+            'splash': self._detect_splash(frame)
+        }
+        self.frame_analyses.append(analysis)
+        
+        # After analyzing enough frames, make determination
+        if len(self.frame_analyses) >= 30:
+            self._finalize_detection()
+    
+    def _analyze_color(self, frame: np.ndarray) -> Dict:
+        """Analyze color distribution for water detection"""
+        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+        
+        # Blue/cyan detection (underwater indicator)
+        lower_blue = np.array([85, 50, 50])
+        upper_blue = np.array([130, 255, 255])
+        blue_mask = cv2.inRange(hsv, lower_blue, upper_blue)
+        blue_ratio = np.sum(blue_mask > 0) / (frame.shape[0] * frame.shape[1])
+        
+        # White detection (splash/surface indicator)
+        lower_white = np.array([0, 0, 200])
+        upper_white = np.array([180, 30, 255])
+        white_mask = cv2.inRange(hsv, lower_white, upper_white)
+        white_ratio = np.sum(white_mask > 0) / (frame.shape[0] * frame.shape[1])
+        
+        # Check for sky (above water outdoor indicator)
+        top_region = frame[:frame.shape[0]//4, :]
+        hsv_top = cv2.cvtColor(top_region, cv2.COLOR_BGR2HSV)
+        sky_mask = cv2.inRange(hsv_top, np.array([90, 20, 150]), np.array([130, 100, 255]))
+        sky_ratio = np.sum(sky_mask > 0) / (top_region.shape[0] * top_region.shape[1])
+        
+        return {
+            'blue_ratio': blue_ratio,
+            'white_ratio': white_ratio,
+            'sky_ratio': sky_ratio,
+            'avg_brightness': np.mean(frame)
+        }
+    
+    def _analyze_landmarks(self, lm_pixel: Dict) -> Dict:
+        """Analyze landmark positions for camera angle detection"""
+        if not lm_pixel:
+            return None
+        
+        # Calculate distances for view detection
+        try:
+            # Shoulder width (X distance)
+            shoulder_width = abs(lm_pixel["left_shoulder"][0] - lm_pixel["right_shoulder"][0])
+            
+            # Shoulder-hip depth (Y distance in side view, minimal in front view)
+            shoulder_y = (lm_pixel["left_shoulder"][1] + lm_pixel["right_shoulder"][1]) / 2
+            hip_y = (lm_pixel["left_hip"][1] + lm_pixel["right_hip"][1]) / 2
+            torso_height = abs(hip_y - shoulder_y)
+            
+            # Hip width
+            hip_width = abs(lm_pixel["left_hip"][0] - lm_pixel["right_hip"][0])
+            
+            # Check visibility of different body parts
+            # Upper body: shoulders, elbows, wrists
+            # Lower body: hips, knees, ankles
+            
+            return {
+                'shoulder_width': shoulder_width,
+                'torso_height': torso_height,
+                'hip_width': hip_width,
+                'width_to_height_ratio': shoulder_width / (torso_height + 1),
+                'hip_to_shoulder_ratio': hip_width / (shoulder_width + 1)
+            }
+        except:
+            return None
+    
+    def _detect_lane_lines(self, frame: np.ndarray) -> bool:
+        """Detect pool lane lines (indicates underwater pool view)"""
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray, 50, 150)
+        
+        # Look for horizontal lines (lane lines on pool bottom)
+        lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=100, 
+                                 minLineLength=100, maxLineGap=10)
+        
+        if lines is None:
+            return False
+        
+        horizontal_lines = 0
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            angle = abs(math.atan2(y2-y1, x2-x1) * 180 / np.pi)
+            if angle < 15 or angle > 165:  # Near horizontal
+                horizontal_lines += 1
+        
+        return horizontal_lines >= 2
+    
+    def _detect_splash(self, frame: np.ndarray) -> float:
+        """Detect splash/turbulence (indicates surface/above water)"""
+        # Splash appears as high-frequency white regions
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        
+        # High contrast areas
+        laplacian = cv2.Laplacian(gray, cv2.CV_64F)
+        variance = laplacian.var()
+        
+        # White bubble detection
+        _, white_thresh = cv2.threshold(gray, 220, 255, cv2.THRESH_BINARY)
+        white_ratio = np.sum(white_thresh > 0) / (frame.shape[0] * frame.shape[1])
+        
+        return variance * white_ratio
+    
+    def _finalize_detection(self) -> None:
+        """Make final determination based on collected analyses"""
+        if not self.frame_analyses:
+            return
+        
+        # Aggregate color analysis
+        avg_blue = np.mean([a['color']['blue_ratio'] for a in self.frame_analyses])
+        avg_white = np.mean([a['color']['white_ratio'] for a in self.frame_analyses])
+        avg_sky = np.mean([a['color']['sky_ratio'] for a in self.frame_analyses])
+        has_lanes = sum([1 for a in self.frame_analyses if a['edges']]) > len(self.frame_analyses) * 0.3
+        avg_splash = np.mean([a['splash'] for a in self.frame_analyses])
+        
+        # Determine water position
+        if avg_blue > 0.3 and has_lanes:
+            self.context.water_position = WaterPosition.UNDERWATER
+            water_confidence = 0.9
+        elif avg_blue > 0.2:
+            self.context.water_position = WaterPosition.UNDERWATER
+            water_confidence = 0.7
+        elif avg_white > 0.15 or avg_splash > 500:
+            self.context.water_position = WaterPosition.ABOVE_WATER
+            water_confidence = 0.7
+        elif avg_sky > 0.2:
+            self.context.water_position = WaterPosition.ABOVE_WATER
+            water_confidence = 0.8
+        else:
+            self.context.water_position = WaterPosition.MIXED
+            water_confidence = 0.5
+        
+        # Analyze landmarks for camera view
+        landmark_analyses = [a['landmarks'] for a in self.frame_analyses if a['landmarks']]
+        
+        if landmark_analyses:
+            avg_width_height = np.mean([l['width_to_height_ratio'] for l in landmark_analyses])
+            avg_hip_shoulder = np.mean([l['hip_to_shoulder_ratio'] for l in landmark_analyses])
+            
+            # Side view: torso height >> shoulder width (body is elongated horizontally)
+            # Front view: shoulder width >> torso height (body faces camera)
+            # Top view: both widths similar, minimal height
+            
+            if avg_width_height < 0.5:
+                # Shoulder width much smaller than torso height = Side view
+                self.context.camera_view = CameraView.SIDE
+                view_confidence = 0.8
+            elif avg_width_height > 2.0:
+                # Shoulder width much larger than torso height = Front or Top view
+                if avg_hip_shoulder > 0.7:
+                    self.context.camera_view = CameraView.FRONT
+                    view_confidence = 0.7
+                else:
+                    self.context.camera_view = CameraView.TOP
+                    view_confidence = 0.6
+            else:
+                # Diagonal or unclear
+                self.context.camera_view = CameraView.SIDE  # Default assumption
+                view_confidence = 0.5
+        else:
+            self.context.camera_view = CameraView.SIDE
+            view_confidence = 0.4
+        
+        # Set overall confidence
+        self.context.confidence = (water_confidence + view_confidence) / 2
+        self.context.avg_blue_ratio = avg_blue
+        self.context.has_lane_lines = has_lanes
+        self.context.has_splash = avg_splash > 300
+        self.context.detection_frames = len(self.frame_analyses)
+        
+        self.detection_complete = True
+    
+    def get_context(self) -> VideoContext:
+        """Get the detected video context"""
+        if not self.detection_complete and self.frame_analyses:
+            self._finalize_detection()
+        return self.context
+    
+    def force_context(self, camera_view: CameraView, water_position: WaterPosition) -> None:
+        """Manually override detected context"""
+        self.context.camera_view = camera_view
+        self.context.water_position = water_position
+        self.context.confidence = 1.0  # Manual = 100% confidence
+        self.detection_complete = True
+
+
+def get_metrics_for_context(context: VideoContext) -> Dict:
+    """Return metric configurations based on video context"""
+    
+    base_metrics = {
+        'stroke_rate': True,
+        'breathing': True,
+    }
+    
+    if context.camera_view == CameraView.SIDE:
+        if context.water_position == WaterPosition.UNDERWATER:
+            return {
+                **base_metrics,
+                'evf': True,
+                'body_alignment': True,
+                'vertical_drop': True,
+                'kick_depth': True,
+                'stroke_phase': True,
+                'torso_lean': True,
+                'dropped_elbow': True,
+                # Not available in this view
+                'body_roll': False,  # Need front view for accurate roll
+                'hand_entry_width': False,
+            }
+        else:  # Above water
+            return {
+                **base_metrics,
+                'recovery_arm': True,
+                'head_position': True,
+                'breathing_timing': True,
+                # Limited underwater metrics
+                'evf': False,
+                'body_alignment': False,
+                'kick_depth': False,
+            }
+    
+    elif context.camera_view == CameraView.FRONT:
+        if context.water_position == WaterPosition.UNDERWATER:
+            return {
+                **base_metrics,
+                'body_roll': True,
+                'hand_entry_width': True,
+                'kick_symmetry': True,
+                'streamline': True,
+                # Not available in front view
+                'evf': False,
+                'body_alignment': False,
+            }
+        else:
+            return {
+                **base_metrics,
+                'entry_angle': True,
+                'breathing_side': True,
+                'catch_width': True,
+            }
+    
+    elif context.camera_view == CameraView.TOP:
+        return {
+            **base_metrics,
+            'body_roll': True,
+            'stroke_symmetry': True,
+            'kick_width': True,
+        }
+    
+    # Unknown - provide basic metrics only
+    return base_metrics
+
+# ─────────────────────────────────────────────
 # VISUAL PANELS - Enhanced
 # ─────────────────────────────────────────────
 
@@ -1058,12 +1395,25 @@ class SwimAnalyzer:
     MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task"
     MODEL_FILENAME = "pose_landmarker_heavy.task"
 
-    def __init__(self, athlete: AthleteProfile, conf_thresh, yaw_thresh):
+    def __init__(self, athlete: AthleteProfile, conf_thresh, yaw_thresh, 
+                 manual_camera_view: Optional[CameraView] = None,
+                 manual_water_position: Optional[WaterPosition] = None):
         self.athlete = athlete
         self.conf_thresh = conf_thresh
         self.yaw_thresh = yaw_thresh
 
         self.landmarker = self._init_landmarker()
+        
+        # Video context detection
+        self.context_detector = VideoContextDetector()
+        self.video_context = VideoContext()
+        self.available_metrics = {}
+        
+        # Manual override if provided
+        if manual_camera_view and manual_water_position:
+            self.context_detector.force_context(manual_camera_view, manual_water_position)
+            self.video_context = self.context_detector.get_context()
+            self.available_metrics = get_metrics_for_context(self.video_context)
 
         self.metrics: List[FrameMetrics] = []
         self.stroke_times = []
@@ -1138,6 +1488,10 @@ class SwimAnalyzer:
         if timestamp_ms <= self.last_timestamp_ms:
             timestamp_ms = self.last_timestamp_ms + 1
         self.last_timestamp_ms = timestamp_ms
+        
+        # Analyze frame for video context detection (first 30 frames)
+        if not self.context_detector.detection_complete:
+            self.context_detector.analyze_frame(frame, None)
 
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
@@ -1145,6 +1499,9 @@ class SwimAnalyzer:
         result = self.landmarker.detect_for_video(mp_image, timestamp_ms)
 
         if not result.pose_landmarks:
+            # Still analyze frame for context even without landmarks
+            if not self.context_detector.detection_complete:
+                self.context_detector.analyze_frame(frame, None)
             return frame, None
 
         landmarks = result.pose_landmarks[0]
@@ -1168,6 +1525,14 @@ class SwimAnalyzer:
             vis_count += 1
 
         conf = vis_sum / vis_count if vis_count > 0 else 0.0
+        
+        # Continue context detection with landmarks
+        if not self.context_detector.detection_complete:
+            self.context_detector.analyze_frame(frame, lm_pixel)
+            # Update context and available metrics
+            self.video_context = self.context_detector.get_context()
+            self.available_metrics = get_metrics_for_context(self.video_context)
+        
         if conf < self.conf_thresh:
             return frame, None
 
@@ -1553,7 +1918,9 @@ class SwimAnalyzer:
             avg_evf_score=statistics.mean(evf_scores) if evf_scores else 100,
             breaths_during_pull=self.breaths_during_pull,
             total_breaths=self.breath_l + self.breath_r,
-            diagnostics=diagnostics
+            diagnostics=diagnostics,
+            video_context=self.video_context,
+            available_metrics=self.available_metrics
         )
 
 # ─────────────────────────────────────────────
@@ -1848,10 +2215,10 @@ def create_results_bundle(video_path, csv_buf, pdf_buf, timestamp):
 # ─────────────────────────────────────────────
 
 def main():
-    st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro DEV")
+    st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2")
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-    st.title("🏊 Freestyle Swim Technique Analyzer Pro DEV")
+    st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
     st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
 
     if not MEDIAPIPE_TASKS_AVAILABLE:
@@ -1891,6 +2258,58 @@ def main():
         
         st.divider()
         
+        # Video Context Settings
+        st.subheader("📹 Video Settings")
+        
+        auto_detect = st.checkbox("Auto-detect camera angle & water position", value=True)
+        
+        if not auto_detect:
+            st.caption("Manual override:")
+            manual_camera = st.selectbox("Camera Angle", 
+                ["Side View", "Front View", "Top View"],
+                help="Side: See swimmer from the side. Front: Facing the swimmer. Top: Looking down from above.")
+            
+            manual_water = st.selectbox("Water Position",
+                ["Underwater", "Above Water", "Mixed/Waterline"],
+                help="Underwater: Camera below surface. Above: Camera above surface. Mixed: Waterline visible.")
+            
+            # Map to enums
+            camera_map = {"Side View": CameraView.SIDE, "Front View": CameraView.FRONT, "Top View": CameraView.TOP}
+            water_map = {"Underwater": WaterPosition.UNDERWATER, "Above Water": WaterPosition.ABOVE_WATER, "Mixed/Waterline": WaterPosition.MIXED}
+            manual_camera_view = camera_map[manual_camera]
+            manual_water_position = water_map[manual_water]
+        else:
+            manual_camera_view = None
+            manual_water_position = None
+            st.caption("The analyzer will automatically detect your video type in the first few seconds.")
+        
+        # Show what metrics are available based on view
+        with st.expander("📊 Metrics by View Type"):
+            st.markdown("""
+            **Side View + Underwater** *(Most metrics)*
+            - EVF (Early Vertical Forearm)
+            - Body alignment & vertical drop
+            - Kick depth
+            - Stroke phases
+            - Dropped elbow detection
+            
+            **Side View + Above Water**
+            - Recovery arm position
+            - Head position
+            - Breathing timing
+            
+            **Front View + Underwater**
+            - Body roll
+            - Hand entry width
+            - Kick symmetry
+            
+            **Front View + Above Water**
+            - Entry angle
+            - Breathing side
+            """)
+        
+        st.divider()
+        
         # Detection Settings with explanations
         st.subheader("Detection Settings")
         
@@ -1916,7 +2335,11 @@ def main():
 
     if uploaded:
         try:
-            analyzer = SwimAnalyzer(athlete, conf_thresh, yaw_thresh)
+            analyzer = SwimAnalyzer(
+                athlete, conf_thresh, yaw_thresh,
+                manual_camera_view=manual_camera_view if not auto_detect else None,
+                manual_water_position=manual_water_position if not auto_detect else None
+            )
         except Exception as e:
             st.error(f"Failed to initialize analyzer: {e}")
             return
@@ -2022,6 +2445,45 @@ def main():
                 pass
 
             st.success("✅ Analysis complete!")
+            
+            # Display detected video context
+            if summary.video_context:
+                ctx = summary.video_context
+                ctx_icon = "🎥" if ctx.camera_view == CameraView.SIDE else "👤" if ctx.camera_view == CameraView.FRONT else "🔝"
+                water_icon = "🌊" if ctx.water_position == WaterPosition.UNDERWATER else "☀️" if ctx.water_position == WaterPosition.ABOVE_WATER else "〰️"
+                confidence_color = "#22c55e" if ctx.confidence >= 0.7 else "#eab308" if ctx.confidence >= 0.5 else "#ef4444"
+                
+                st.markdown(f"""
+                <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 16px; margin-bottom: 20px; border-left: 4px solid #06b6d4;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <div>
+                            <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase;">Detected Video Type</span>
+                            <div style="font-size: 18px; font-weight: 600; color: white; margin-top: 4px;">
+                                {ctx_icon} {ctx.camera_view.value} &nbsp;•&nbsp; {water_icon} {ctx.water_position.value}
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="color: #94a3b8; font-size: 12px;">Detection Confidence</span>
+                            <div style="font-size: 18px; font-weight: 600; color: {confidence_color};">{ctx.confidence*100:.0f}%</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(100, 116, 139, 0.3);">
+                        <span style="color: #64748b; font-size: 12px;">
+                            {'📊 Full metrics available (side underwater view)' if ctx.camera_view == CameraView.SIDE and ctx.water_position == WaterPosition.UNDERWATER else 
+                             '📊 Limited metrics (best results with side underwater view)' if ctx.camera_view != CameraView.SIDE or ctx.water_position != WaterPosition.UNDERWATER else ''}
+                        </span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Show warning if not optimal view
+                if ctx.camera_view != CameraView.SIDE or ctx.water_position != WaterPosition.UNDERWATER:
+                    st.warning(f"""
+                    **Note:** Your video appears to be **{ctx.camera_view.value}** / **{ctx.water_position.value}**.
+                    
+                    For the most accurate analysis (EVF, body alignment, kick depth), use **Side View Underwater** footage.
+                    Current view provides: {', '.join(summary.available_metrics.keys()) if summary.available_metrics else 'basic metrics'}
+                    """)
 
             # NEW: Render visual metrics component with body silhouettes
             st.subheader("📊 Technique Breakdown")
