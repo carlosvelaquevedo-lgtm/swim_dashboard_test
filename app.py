@@ -894,8 +894,8 @@ def draw_technique_panel_enhanced(frame, origin_x, title, metrics_dict, phase, i
     """
     h, w = frame.shape[:2]
     px, py = origin_x - 160, 30
-    pw, ph = 380
-    
+    pw, ph = 380, 480   # ← fixed line
+
     # Semi-transparent background
     ov = frame.copy()
     cv2.rectangle(ov, (px, py), (px+pw, py+ph), (0,0,0), -1)
