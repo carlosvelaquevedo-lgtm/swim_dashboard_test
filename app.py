@@ -894,8 +894,8 @@ def draw_technique_panel_enhanced(frame, origin_x, title, metrics_dict, phase, i
     """
     h, w = frame.shape[:2]
     px, py = origin_x - 160, 30
-    pw, ph = 380, 380   # ← fixed line
-
+    pw, ph = 320, 380  # Reduced height since silhouette removed
+    
     # Semi-transparent background
     ov = frame.copy()
     cv2.rectangle(ov, (px, py), (px+pw, py+ph), (0,0,0), -1)
@@ -1851,7 +1851,7 @@ def main():
     st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2")
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-    st.title("🏊 Freestyle Swim Technique Analyzer Pro DEV")
+    st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
     st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
 
     if not MEDIAPIPE_TASKS_AVAILABLE:
@@ -1931,9 +1931,10 @@ def main():
         h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
         total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-        out_path = tempfile.mktemp(suffix=".mp4")
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
+        # Write to temporary file with OpenCV
+        temp_out_path = tempfile.mktemp(suffix=".avi")
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Use XVID for intermediate
+        writer = cv2.VideoWriter(temp_out_path, fourcc, fps, (w, h))
 
         progress = st.progress(0)
         status = st.empty()
@@ -1958,6 +1959,42 @@ def main():
 
             cap.release()
             writer.release()
+            
+            # Re-encode to H.264 MP4 for browser compatibility
+            status.text("Encoding video for browser playback...")
+            out_path = tempfile.mktemp(suffix=".mp4")
+            
+            import subprocess
+            try:
+                # Use ffmpeg to re-encode to H.264 (browser-compatible)
+                subprocess.run([
+                    'ffmpeg', '-y', '-i', temp_out_path,
+                    '-c:v', 'libx264',
+                    '-preset', 'fast',
+                    '-crf', '23',
+                    '-pix_fmt', 'yuv420p',  # Required for browser compatibility
+                    '-movflags', '+faststart',  # Enables streaming
+                    out_path
+                ], check=True, capture_output=True)
+            except (subprocess.CalledProcessError, FileNotFoundError):
+                # Fallback: if ffmpeg fails, try copying the AVI or use original approach
+                try:
+                    subprocess.run([
+                        'ffmpeg', '-y', '-i', temp_out_path,
+                        '-c:v', 'copy',
+                        out_path
+                    ], check=True, capture_output=True)
+                except:
+                    # Last resort: just rename AVI to MP4 (may not play in browser)
+                    import shutil
+                    out_path = temp_out_path.replace('.avi', '.mp4')
+                    shutil.copy(temp_out_path, out_path)
+            
+            # Clean up temp AVI
+            try:
+                os.unlink(temp_out_path)
+            except:
+                pass
 
             try:
                 os.unlink(input_path)
