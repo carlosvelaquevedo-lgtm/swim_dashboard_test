@@ -1651,51 +1651,86 @@ def generate_plots(analyzer: SwimAnalyzer):
 
 def generate_pdf_report(summary: SessionSummary, filename: str, plot_buffer: io.BytesIO) -> io.BytesIO:
     buffer = io.BytesIO()
-    pdf = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    pdf = SimpleDocTemplate(
+        buffer, 
+        pagesize=letter, 
+        topMargin=0.75*inch, 
+        bottomMargin=0.5*inch,
+        leftMargin=0.75*inch,
+        rightMargin=0.75*inch
+    )
     styles = getSampleStyleSheet()
-    styles.add(ParagraphStyle(name='CustomTitle', fontSize=24, textColor=colors.HexColor('#06b6d4'), spaceAfter=20))
-    styles.add(ParagraphStyle(name='DiagnosticGood', fontSize=11, textColor=colors.HexColor('#22c55e'), leftIndent=20))
-    styles.add(ParagraphStyle(name='DiagnosticWarn', fontSize=11, textColor=colors.HexColor('#f59e0b'), leftIndent=20))
-    styles.add(ParagraphStyle(name='DiagnosticError', fontSize=11, textColor=colors.HexColor('#ef4444'), leftIndent=20))
+    
+    # Custom styles with proper spacing
+    styles.add(ParagraphStyle(
+        name='CustomTitle', 
+        fontSize=20,  # Reduced from 24 to prevent overlap
+        textColor=colors.HexColor('#06b6d4'), 
+        spaceAfter=12,
+        spaceBefore=0,
+        alignment=1  # Center alignment
+    ))
+    styles.add(ParagraphStyle(
+        name='ReportSubtitle', 
+        fontSize=12, 
+        textColor=colors.HexColor('#64748b'), 
+        spaceAfter=20,
+        alignment=1  # Center alignment
+    ))
+    styles.add(ParagraphStyle(name='DiagnosticGood', fontSize=10, textColor=colors.HexColor('#22c55e'), leftIndent=15, spaceAfter=6))
+    styles.add(ParagraphStyle(name='DiagnosticWarn', fontSize=10, textColor=colors.HexColor('#f59e0b'), leftIndent=15, spaceAfter=6))
+    styles.add(ParagraphStyle(name='DiagnosticError', fontSize=10, textColor=colors.HexColor('#ef4444'), leftIndent=15, spaceAfter=6))
 
     story = []
-    story.append(Paragraph("Freestyle Swimming Technique Analysis Report", styles['CustomTitle']))
-    story.append(Spacer(1, 0.2*inch))
+    
+    # Title - centered and properly sized
+    story.append(Paragraph("Freestyle Swimming Technique Analysis", styles['CustomTitle']))
+    story.append(Paragraph(f"Analysis Report • {datetime.datetime.now().strftime('%B %d, %Y')}", styles['ReportSubtitle']))
+    story.append(Spacer(1, 0.15*inch))
 
     # Session Information
     story.append(Paragraph("Session Information", styles['Heading2']))
     session_data = [
-        ['File', filename],
-        ['Duration', f"{summary.duration_s:.1f}s"],
-        ['Date', datetime.datetime.now().strftime("%Y-%m-%d %H:%M")],
-        ['Avg Confidence', f"{summary.avg_confidence*100:.1f}%"]
+        ['File', filename[:40] + '...' if len(filename) > 40 else filename],  # Truncate long filenames
+        ['Duration', f"{summary.duration_s:.1f} seconds"],
+        ['Analyzed', datetime.datetime.now().strftime("%Y-%m-%d %H:%M")],
+        ['Detection Confidence', f"{summary.avg_confidence*100:.1f}%"]
     ]
-    story.append(Table(session_data, colWidths=[2*inch, 4*inch]))
-    story.append(Spacer(1, 0.3*inch))
+    t = Table(session_data, colWidths=[1.8*inch, 4.2*inch])
+    t.setStyle(TableStyle([
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('TEXTCOLOR', (0,0), (0,-1), colors.HexColor('#64748b')),
+        ('ALIGN', (0,0), (0,-1), 'RIGHT'),
+        ('RIGHTPADDING', (0,0), (0,-1), 12),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 0.25*inch))
 
     # Overall Score Card
     story.append(Paragraph("Overall Performance", styles['Heading2']))
     score_color = colors.HexColor('#22c55e') if summary.avg_score >= 70 else colors.HexColor('#f59e0b') if summary.avg_score >= 50 else colors.HexColor('#ef4444')
-    story.append(Paragraph(f"<font size='36' color='{score_color}'><b>{summary.avg_score:.1f}/100</b></font>", styles['Normal']))
-    story.append(Spacer(1, 0.2*inch))
+    story.append(Paragraph(f"<font size='32' color='{score_color}'><b>{summary.avg_score:.1f}/100</b></font>", styles['Normal']))
+    story.append(Spacer(1, 0.15*inch))
 
     # Sub-Scores
     story.append(Paragraph("Component Scores", styles['Heading3']))
     subscore_data = [
         ['Component', 'Score', 'Status'],
         ['Body Alignment', f"{summary.avg_alignment_score:.1f}", get_zone_status(summary.avg_horizontal_deviation, DEFAULT_HORIZONTAL_DEV_GOOD, DEFAULT_HORIZONTAL_DEV_OK)],
-        ['EVF (Pull Phase)', f"{summary.avg_evf_score:.1f}", get_zone_status(summary.avg_evf_angle, DEFAULT_EVF_ANGLE_GOOD, DEFAULT_EVF_ANGLE_OK)],
+        ['EVF (Pull Phase)', f"{summary.avg_evf_score:.1f}", f"Dropped: {summary.dropped_elbow_pct:.0f}%" if summary.dropped_elbow_pct > 10 else get_zone_status(summary.avg_evf_angle, DEFAULT_EVF_ANGLE_GOOD, DEFAULT_EVF_ANGLE_OK)],
         ['Body Roll', f"{summary.avg_body_roll:.1f}°", get_zone_status(summary.avg_body_roll, DEFAULT_ROLL_GOOD, DEFAULT_ROLL_OK)],
         ['Kick', summary.kick_status, summary.kick_status],
     ]
-    t = Table(subscore_data, colWidths=[2*inch, 1.5*inch, 1.5*inch])
+    t = Table(subscore_data, colWidths=[2*inch, 1.3*inch, 1.7*inch])
     t.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1e3a5f')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTSIZE', (0,0), (-1,-1), 10),
+        ('ALIGN', (1,0), (-1,-1), 'CENTER'),
     ]))
     story.append(t)
-    story.append(Spacer(1, 0.3*inch))
+    story.append(Spacer(1, 0.25*inch))
 
     # Performance Metrics
     story.append(Paragraph("Performance Metrics", styles['Heading2']))
@@ -1703,22 +1738,25 @@ def generate_pdf_report(summary: SessionSummary, filename: str, plot_buffer: io.
         ['Metric', 'Value', 'Notes'],
         ['Stroke Rate', f"{summary.stroke_rate:.1f} spm", 'strokes per minute'],
         ['Total Strokes', f"{summary.total_strokes}", ''],
-        ['Breaths/min', f"{summary.breaths_per_min:.1f}", f"L:{summary.breath_left} R:{summary.breath_right}"],
-        ['Breaths During Pull', f"{summary.breaths_during_pull}", 'Should be 0 ideally'],
+        ['Breaths/min', f"{summary.breaths_per_min:.1f}", f"Left: {summary.breath_left}  Right: {summary.breath_right}"],
+        ['Breaths During Pull', f"{summary.breaths_during_pull}", 'Ideally 0'],
+        ['Dropped Elbow', f"{summary.dropped_elbow_pct:.0f}%", 'of catch frames'],
+        ['Vertical Drop', f"{summary.avg_vertical_drop:.1f}°", 'hip sink angle'],
         ['Max Body Roll', f"{summary.max_body_roll:.1f}°", 'peak rotation'],
-        ['Avg Horizontal Dev', f"{summary.avg_horizontal_deviation:.1f}°", 'body alignment'],
         ['Avg EVF Angle', f"{summary.avg_evf_angle:.1f}°", 'lower is better'],
-        ['Avg Kick Depth', f"{summary.avg_kick_depth:.2f}", 'relative to hip-ankle'],
+        ['Kick Depth', f"{summary.avg_kick_depth:.2f}", 'relative to hip-ankle'],
         ['Kick Symmetry', f"{summary.avg_kick_symmetry:.1f}°", 'L-R difference'],
     ]
-    t = Table(metrics_data, colWidths=[2*inch, 1.5*inch, 2.5*inch])
+    t = Table(metrics_data, colWidths=[1.8*inch, 1.2*inch, 2*inch])
     t.setStyle(TableStyle([
         ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
         ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1e3a5f')),
         ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTSIZE', (0,0), (-1,-1), 9),
+        ('ALIGN', (1,0), (1,-1), 'CENTER'),
     ]))
     story.append(t)
-    story.append(Spacer(1, 0.3*inch))
+    story.append(Spacer(1, 0.25*inch))
 
     # Diagnostics
     story.append(Paragraph("Coaching Insights", styles['Heading2']))
@@ -1828,23 +1866,54 @@ def main():
 
     with st.sidebar:
         st.header("⚙️ Athlete & Settings")
-        height = st.slider("Height (cm)", 150, 200, 170)
-        discipline = st.selectbox("Discipline", ["pool", "triathlon", "open water"])
         
+        # Height input with feet/inches conversion
+        st.subheader("Height")
+        height_unit = st.radio("Unit", ["cm", "ft/in"], horizontal=True, label_visibility="collapsed")
+        
+        if height_unit == "cm":
+            height = st.slider("Height (cm)", 150, 210, 170)
+        else:
+            col_ft, col_in = st.columns(2)
+            with col_ft:
+                feet = st.number_input("Feet", min_value=4, max_value=7, value=5)
+            with col_in:
+                inches = st.number_input("Inches", min_value=0, max_value=11, value=7)
+            # Convert to cm
+            height = int((feet * 12 + inches) * 2.54)
+            st.caption(f"= {height} cm")
+        
+        # Discipline selection with explanation
+        st.subheader("Discipline")
+        discipline = st.selectbox("Select discipline", ["pool", "triathlon", "open water"], label_visibility="collapsed")
+        
+        # Discipline explanations
+        discipline_info = {
+            "pool": "🏊 **Pool Swimming**: Optimized for controlled environment with walls for push-offs. Focuses on precise technique metrics, flip turn timing, and maintaining consistent stroke rate.",
+            "triathlon": "🏃 **Triathlon**: Balances efficiency with energy conservation. Slightly relaxed thresholds for body position since wetsuit buoyancy helps. Emphasizes sustainable stroke rate.",
+            "open water": "🌊 **Open Water**: Accounts for waves, currents, and sighting. More tolerant of head position variations and body roll changes needed for navigation."
+        }
+        st.info(discipline_info[discipline])
+        
+        st.divider()
+        
+        # Detection Settings with explanations
         st.subheader("Detection Settings")
-        conf_thresh = st.slider("Confidence Threshold", 0.3, 0.7, DEFAULT_CONF_THRESHOLD, 0.05)
-        yaw_thresh = st.slider("Breath Detection Sensitivity", 0.05, 0.3, DEFAULT_YAW_THRESHOLD, 0.01)
         
-        st.subheader("ℹ️ What's New in v2")
-        st.markdown("""
-        - **Horizontal Deviation**: Measures shoulder-hip-ankle alignment
-        - **True EVF Angle**: Forearm angle via plane calculation  
-        - **Enhanced Phase Detection**: Uses wrist velocity
-        - **Relative Kick Depth**: Normalized to body size
-        - **Breathing Penalty**: Detects breaths during pull phase
-        - **Separate Score Cards**: Alignment, EVF, Overall
-        - **Color-Coded Overlays**: Green/Amber/Red zones
-        - **Plain-Language Diagnostics**: Actionable coaching tips
+        conf_thresh = st.slider("Confidence Threshold", 0.3, 0.7, DEFAULT_CONF_THRESHOLD, 0.05)
+        st.caption("""
+        **What it does**: Filters out frames where pose detection is uncertain.  
+        **Ideal setting**: **0.5** (default) - balances accuracy with data retention.  
+        ↑ Higher = stricter, fewer frames analyzed but more accurate.  
+        ↓ Lower = more frames but may include errors from splashing/bubbles.
+        """)
+        
+        yaw_thresh = st.slider("Breath Detection Sensitivity", 0.05, 0.3, DEFAULT_YAW_THRESHOLD, 0.01)
+        st.caption("""
+        **What it does**: Detects head rotation for breath timing analysis.  
+        **Ideal setting**: **0.15** (default) - catches most breaths without false positives.  
+        ↑ Higher = only detects very pronounced head turns.  
+        ↓ Lower = more sensitive, may count minor head movements as breaths.
         """)
 
     athlete = AthleteProfile(height, discipline)
