@@ -894,7 +894,7 @@ def draw_technique_panel_enhanced(frame, origin_x, title, metrics_dict, phase, i
     """
     h, w = frame.shape[:2]
     px, py = origin_x - 160, 30
-    pw, ph = 380, 480   # ← fixed line
+    pw, ph = 380, 380   # ← fixed line
 
     # Semi-transparent background
     ov = frame.copy()
