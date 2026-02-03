@@ -1,0 +1,8 @@
+streamlit>=1.38.0
+opencv-python-headless==4.10.0.84   # or 4.9.0.80 — avoid very newest if unstable
+mediapipe==0.10.14                 # known stable with headless workaround
+numpy
+pandas
+matplotlib
+reportlab
+pillow
