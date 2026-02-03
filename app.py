@@ -890,10 +890,11 @@ def draw_simplified_silhouette(frame, x, y, color=(180,180,180), th=3):
 def draw_technique_panel_enhanced(frame, origin_x, title, metrics_dict, phase, is_ideal=False, breath_side='N'):
     """
     Enhanced technique panel with separate alignment and EVF indicators
+    (Silhouette removed for cleaner video output)
     """
     h, w = frame.shape[:2]
     px, py = origin_x - 160, 30
-    pw, ph = 320, 480
+    pw, ph = 380
     
     # Semi-transparent background
     ov = frame.copy()
@@ -903,9 +904,6 @@ def draw_technique_panel_enhanced(frame, origin_x, title, metrics_dict, phase, i
     # Title
     cv2.putText(frame, title.upper(), (px+10, py+30), cv2.FONT_HERSHEY_SIMPLEX, 0.8,
                 (255,255,255) if not is_ideal else (200,200,255), 2)
-
-    # Silhouette
-    draw_simplified_silhouette(frame, px+160, py+200, (160,160,160) if is_ideal else (200,200,200), 2)
 
     y_offset = py + 55
     
@@ -1833,19 +1831,15 @@ def export_to_csv(analyzer: SwimAnalyzer):
     buf.seek(0)
     return buf
 
-def create_results_bundle(video_path, csv_buf, pdf_buf, plot_buf, timestamp, analyzer):
+def create_results_bundle(video_path, csv_buf, pdf_buf, timestamp):
+    """Create ZIP with just video, PDF report, and CSV data"""
     zip_buf = io.BytesIO()
     with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zipf:
         if os.path.exists(video_path):
             with open(video_path, 'rb') as f:
-                zipf.writestr(f"annotated_{timestamp}.mp4", f.read())
-        zipf.writestr(f"report_{timestamp}.pdf", pdf_buf.getvalue())
-        zipf.writestr(f"charts_{timestamp}.png", plot_buf.getvalue())
-        zipf.writestr(f"data_{timestamp}.csv", csv_buf.getvalue())
-        if analyzer.best_bytes:
-            zipf.writestr(f"best_frame_{timestamp}.jpg", analyzer.best_bytes)
-        if analyzer.worst_bytes:
-            zipf.writestr(f"worst_frame_{timestamp}.jpg", analyzer.worst_bytes)
+                zipf.writestr(f"annotated_video_{timestamp}.mp4", f.read())
+        zipf.writestr(f"technique_report_{timestamp}.pdf", pdf_buf.getvalue())
+        zipf.writestr(f"frame_data_{timestamp}.csv", csv_buf.getvalue())
     zip_buf.seek(0)
     return zip_buf
 
@@ -1857,7 +1851,7 @@ def main():
     st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2")
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-    st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
+    st.title("🏊 Freestyle Swim Technique Analyzer Pro DEV")
     st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
 
     if not MEDIAPIPE_TASKS_AVAILABLE:
@@ -1981,7 +1975,7 @@ def main():
                 with open(out_path, 'rb') as f:
                     video_bytes = f.read()
             
-            zip_buf = create_results_bundle(out_path, csv_buf, pdf_buf, plot_buf, timestamp, analyzer)
+            zip_buf = create_results_bundle(out_path, csv_buf, pdf_buf, timestamp)
 
             analyzer.close()
 
@@ -2010,31 +2004,37 @@ def main():
             
             with col1:
                 score_color = "#22c55e" if summary.avg_score >= 70 else "#eab308" if summary.avg_score >= 50 else "#ef4444"
+                score_status = "Excellent" if summary.avg_score >= 80 else "Good" if summary.avg_score >= 70 else "Fair" if summary.avg_score >= 50 else "Needs Work"
                 st.markdown(f"""
-                <div class="score-card">
-                    <h3>Overall Score</h3>
-                    <div style="font-size: 42px; font-weight: bold; color: {score_color};">{summary.avg_score:.1f}</div>
-                    <div style="font-size: 14px; opacity: 0.8;">out of 100</div>
+                <div style="background: linear-gradient(135deg, rgba(6,182,212,0.2) 0%, rgba(37,99,235,0.2) 100%); border: 2px solid {score_color}; border-radius: 16px; padding: 20px; text-align: center;">
+                    <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">OVERALL SCORE</h4>
+                    <div style="font-size: 48px; font-weight: bold; color: {score_color};">{summary.avg_score:.1f}</div>
+                    <div style="font-size: 12px; color: {score_color}; font-weight: 600;">{score_status}</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: 70+ (Good) | 80+ (Excellent)</div>
                 </div>
                 """, unsafe_allow_html=True)
 
             with col2:
-                align_color = "#22c55e" if summary.avg_alignment_score >= 80 else "#eab308" if summary.avg_alignment_score >= 60 else "#ef4444"
+                align_color = "#22c55e" if summary.avg_vertical_drop <= 8 else "#eab308" if summary.avg_vertical_drop <= 15 else "#ef4444"
+                align_status = "Streamlined" if summary.avg_vertical_drop <= 5 else "Good" if summary.avg_vertical_drop <= 8 else "Hip Drop" if summary.avg_vertical_drop <= 15 else "Sinking"
                 st.markdown(f"""
-                <div class="alignment-card">
-                    <h3>Alignment Score</h3>
-                    <div style="font-size: 42px; font-weight: bold;">{summary.avg_alignment_score:.1f}</div>
-                    <div style="font-size: 14px; opacity: 0.8;">Deviation: {summary.avg_horizontal_deviation:.1f}°</div>
+                <div style="background: linear-gradient(135deg, rgba(5,150,105,0.2) 0%, rgba(16,185,129,0.2) 100%); border: 2px solid {align_color}; border-radius: 16px; padding: 20px; text-align: center;">
+                    <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">BODY ALIGNMENT</h4>
+                    <div style="font-size: 48px; font-weight: bold; color: {align_color};">{summary.avg_vertical_drop:.1f}°</div>
+                    <div style="font-size: 12px; color: {align_color}; font-weight: 600;">{align_status}</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: &lt;8° (flat body position)</div>
                 </div>
                 """, unsafe_allow_html=True)
 
             with col3:
-                evf_color = "#22c55e" if summary.avg_evf_score >= 80 else "#eab308" if summary.avg_evf_score >= 60 else "#ef4444"
+                evf_color = "#22c55e" if summary.dropped_elbow_pct <= 10 else "#eab308" if summary.dropped_elbow_pct <= 30 else "#ef4444"
+                evf_status = "High Elbow" if summary.dropped_elbow_pct <= 10 else "Some Drop" if summary.dropped_elbow_pct <= 30 else "Dropped Elbow"
                 st.markdown(f"""
-                <div class="evf-card">
-                    <h3>EVF Score</h3>
-                    <div style="font-size: 42px; font-weight: bold;">{summary.avg_evf_score:.1f}</div>
-                    <div style="font-size: 14px; opacity: 0.8;">Angle: {summary.avg_evf_angle:.1f}°</div>
+                <div style="background: linear-gradient(135deg, rgba(124,58,237,0.2) 0%, rgba(168,85,247,0.2) 100%); border: 2px solid {evf_color}; border-radius: 16px; padding: 20px; text-align: center;">
+                    <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">EVF (CATCH)</h4>
+                    <div style="font-size: 48px; font-weight: bold; color: {evf_color};">{summary.dropped_elbow_pct:.0f}%</div>
+                    <div style="font-size: 12px; color: {evf_color}; font-weight: 600;">{evf_status}</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: &lt;10% dropped elbow frames</div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -2053,7 +2053,7 @@ def main():
             for diag in summary.diagnostics:
                 if diag.startswith("✅"):
                     st.success(diag)
-                elif diag.startswith("⚠️"):
+                elif diag.startswith("🚨") or diag.startswith("⚠️"):
                     st.error(diag)
                 else:
                     st.warning(diag)
@@ -2072,10 +2072,19 @@ def main():
                 else:
                     st.info("No worst frame captured")
 
-            # Video player
+            # Video player - use st.video for cross-platform compatibility
             st.subheader("🎬 Annotated Video")
             if video_bytes:
-                st.video(video_bytes)
+                # st.video works better across platforms
+                st.video(video_bytes, format="video/mp4")
+                
+                # Also provide download link for the video separately
+                st.download_button(
+                    "⬇️ Download Annotated Video",
+                    video_bytes,
+                    f"annotated_swim_{timestamp}.mp4",
+                    "video/mp4"
+                )
 
             # Download button
             st.download_button(
