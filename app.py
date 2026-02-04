@@ -1601,11 +1601,14 @@ class SwimAnalyzer:
         conf = vis_sum / vis_count if vis_count > 0 else 0.0
         
         # Continue context detection with landmarks
-        if not self.context_detector.detection_complete:
+        was_complete = self.context_detector.detection_complete
+        if not was_complete:
             self.context_detector.analyze_frame(frame, lm_pixel)
-            # Update context and available metrics
-            self.video_context = self.context_detector.get_context()
-            self.available_metrics = get_metrics_for_context(self.video_context)
+            
+            # Update context once detection completes
+            if self.context_detector.detection_complete:
+                self.video_context = self.context_detector.get_context()
+                self.available_metrics = get_metrics_for_context(self.video_context)
         
         if conf < self.conf_thresh:
             return frame, None
@@ -1873,6 +1876,11 @@ class SwimAnalyzer:
     def get_summary(self):
         if not self.metrics:
             return SessionSummary(0,0,0,0,0,0,0,0,0,0,0,"No data",1.0,None,None)
+        
+        # Ensure video context is finalized
+        if not self.context_detector.detection_complete:
+            self.video_context = self.context_detector.get_context()
+            self.available_metrics = get_metrics_for_context(self.video_context)
 
         d = self.metrics[-1].time_s
         high_conf_metrics = [m for m in self.metrics if m.confidence >= DEFAULT_CONF_THRESHOLD]
@@ -2289,10 +2297,10 @@ def create_results_bundle(video_path, csv_buf, pdf_buf, timestamp):
 # ─────────────────────────────────────────────
 
 def main():
-    st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro DEV")
+    st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2")
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-    st.title("🏊 Freestyle Swim Technique Analyzer Pro DEV")
+    st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
     st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
 
     if not MEDIAPIPE_TASKS_AVAILABLE:
