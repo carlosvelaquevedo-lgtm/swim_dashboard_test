@@ -954,11 +954,17 @@ class VideoContextDetector:
         self.frame_analyses = []
         self.detection_complete = False
         self.context = VideoContext()
+        self.video_width = 0
+        self.video_height = 0
         
     def analyze_frame(self, frame: np.ndarray, landmarks_pixel: Optional[Dict] = None) -> None:
         """Analyze a single frame for context detection"""
         if self.detection_complete:
             return
+        
+        # Store video dimensions from first frame
+        if self.video_height == 0:
+            self.video_height, self.video_width = frame.shape[:2]
             
         analysis = {
             'color': self._analyze_color(frame),
@@ -1172,36 +1178,63 @@ class VideoContextDetector:
             self.context.water_position = WaterPosition.MIXED
             water_confidence = 0.5
         
-        # Analyze landmarks for camera view
+        # === CAMERA VIEW DETECTION ===
+        # Use multiple signals: video aspect ratio, landmark geometry, body orientation
+        
+        # Signal 1: Video aspect ratio (very reliable!)
+        # Side view swimming videos are typically very wide (3:1 to 5:1 ratio)
+        # Front view videos are more square or portrait
+        video_aspect_ratio = self.video_width / self.video_height if hasattr(self, 'video_height') and self.video_height > 0 else 1.0
+        
+        side_view_score = 0
+        front_view_score = 0
+        top_view_score = 0
+        
+        # Wide video strongly suggests side view
+        if video_aspect_ratio > 3.0:
+            side_view_score += 3
+        elif video_aspect_ratio > 2.0:
+            side_view_score += 2
+        elif video_aspect_ratio < 1.0:  # Portrait
+            front_view_score += 2
+        
+        # Signal 2: Landmark geometry (if available)
         landmark_analyses = [a['landmarks'] for a in self.frame_analyses if a['landmarks']]
         
         if landmark_analyses:
             avg_width_height = np.mean([l['width_to_height_ratio'] for l in landmark_analyses])
             avg_hip_shoulder = np.mean([l['hip_to_shoulder_ratio'] for l in landmark_analyses])
             
-            # Side view: torso height >> shoulder width (body is elongated horizontally)
-            # Front view: shoulder width >> torso height (body faces camera)
-            # Top view: both widths similar, minimal height
-            
+            # For side view: shoulders appear stacked (small X diff)
+            # But torso height varies based on body angle
             if avg_width_height < 0.5:
-                # Shoulder width much smaller than torso height = Side view
-                self.context.camera_view = CameraView.SIDE
-                view_confidence = 0.8
-            elif avg_width_height > 2.0:
-                # Shoulder width much larger than torso height = Front or Top view
-                if avg_hip_shoulder > 0.7:
-                    self.context.camera_view = CameraView.FRONT
-                    view_confidence = 0.7
+                side_view_score += 2
+            elif avg_width_height > 3.0 and avg_hip_shoulder > 0.8:
+                front_view_score += 2
+            elif avg_width_height > 3.0:
+                # High ratio could be side view with horizontal body OR top view
+                # Use video aspect ratio to disambiguate
+                if video_aspect_ratio > 2.5:
+                    side_view_score += 1  # Wide video = probably side view
                 else:
-                    self.context.camera_view = CameraView.TOP
-                    view_confidence = 0.6
-            else:
-                # Diagonal or unclear
-                self.context.camera_view = CameraView.SIDE  # Default assumption
-                view_confidence = 0.5
-        else:
+                    top_view_score += 1
+        
+        # Signal 3: Above water typically means side view (most common filming angle)
+        if self.context.water_position == WaterPosition.ABOVE_WATER:
+            side_view_score += 1  # Slight bias toward side view for above-water
+        
+        # Determine camera view
+        max_score = max(side_view_score, front_view_score, top_view_score)
+        
+        if side_view_score == max_score:
             self.context.camera_view = CameraView.SIDE
-            view_confidence = 0.4
+            view_confidence = min(0.9, 0.4 + side_view_score * 0.1)
+        elif front_view_score == max_score:
+            self.context.camera_view = CameraView.FRONT
+            view_confidence = min(0.85, 0.4 + front_view_score * 0.1)
+        else:
+            self.context.camera_view = CameraView.TOP
+            view_confidence = min(0.7, 0.4 + top_view_score * 0.1)
         
         # Set overall confidence
         self.context.confidence = (water_confidence + view_confidence) / 2
