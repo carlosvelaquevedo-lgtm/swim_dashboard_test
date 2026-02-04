@@ -1562,10 +1562,6 @@ class SwimAnalyzer:
         if timestamp_ms <= self.last_timestamp_ms:
             timestamp_ms = self.last_timestamp_ms + 1
         self.last_timestamp_ms = timestamp_ms
-        
-        # Analyze frame for video context detection (first 30 frames)
-        if not self.context_detector.detection_complete:
-            self.context_detector.analyze_frame(frame, None)
 
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
@@ -1573,9 +1569,13 @@ class SwimAnalyzer:
         result = self.landmarker.detect_for_video(mp_image, timestamp_ms)
 
         if not result.pose_landmarks:
-            # Still analyze frame for context even without landmarks
+            # Analyze frame for context detection (even without landmarks)
             if not self.context_detector.detection_complete:
                 self.context_detector.analyze_frame(frame, None)
+                # Check if detection just completed
+                if self.context_detector.detection_complete:
+                    self.video_context = self.context_detector.get_context()
+                    self.available_metrics = get_metrics_for_context(self.video_context)
             return frame, None
 
         landmarks = result.pose_landmarks[0]
