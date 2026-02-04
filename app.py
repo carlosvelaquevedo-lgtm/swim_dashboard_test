@@ -23,6 +23,13 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 
+# MoviePy for video encoding (pure Python, no ffmpeg binary needed)
+try:
+    from moviepy.editor import VideoFileClip
+    MOVIEPY_AVAILABLE = True
+except ImportError:
+    MOVIEPY_AVAILABLE = False
+
 # ─────────────────────────────────────────────
 # MEDIAPIPE TASKS API
 # ─────────────────────────────────────────────
@@ -1466,15 +1473,24 @@ def draw_overlay_zones(frame, lm_pixel, horizontal_dev, evf_angle, phase):
 # ─────────────────────────────────────────────
 
 class SwimAnalyzer:
-    MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task"
-    MODEL_FILENAME = "pose_landmarker_heavy.task"
+    # Use LITE model for faster downloads and sufficient accuracy for swimming analysis
+    # Heavy model: ~120MB, Lite model: ~8MB
+    MODEL_URL_LITE = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task"
+    MODEL_URL_HEAVY = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_heavy/float16/1/pose_landmarker_heavy.task"
+    MODEL_FILENAME_LITE = "pose_landmarker_lite.task"
+    MODEL_FILENAME_HEAVY = "pose_landmarker_heavy.task"
+    
+    # Default to lite for cloud deployment
+    USE_LITE_MODEL = True
 
     def __init__(self, athlete: AthleteProfile, conf_thresh, yaw_thresh, 
                  manual_camera_view: Optional[CameraView] = None,
-                 manual_water_position: Optional[WaterPosition] = None):
+                 manual_water_position: Optional[WaterPosition] = None,
+                 use_heavy_model: bool = False):
         self.athlete = athlete
         self.conf_thresh = conf_thresh
         self.yaw_thresh = yaw_thresh
+        self.use_heavy_model = use_heavy_model
 
         self.landmarker = self._init_landmarker()
         
@@ -1516,19 +1532,40 @@ class SwimAnalyzer:
         # Breathing during pull tracking
         self.breaths_during_pull = 0
         
-        # Dropped elbow tracking
+        # Dropped elbow tracking (only during Pull phase for catch analysis)
         self.dropped_elbow_frames = 0
         self.pull_phase_frames = 0
+
+    @st.cache_resource
+    @staticmethod
+    def _download_model(model_url: str, model_path: str, model_size: str):
+        """Download model with caching to avoid repeated downloads"""
+        if not os.path.exists(model_path):
+            st.info(f"⏳ First run: Downloading MediaPipe Pose model ({model_size})...")
+            try:
+                urllib.request.urlretrieve(model_url, model_path)
+                st.success("✅ Model downloaded successfully!")
+            except Exception as e:
+                st.error(f"Failed to download model: {e}")
+                raise
+        return model_path
 
     def _init_landmarker(self):
         if not MEDIAPIPE_TASKS_AVAILABLE:
             raise RuntimeError("MediaPipe Tasks not available")
 
-        model_path = self.MODEL_FILENAME
-
-        if not os.path.exists(model_path):
-            with st.spinner("Downloading MediaPipe Pose Heavy model (one-time ~100 MB)..."):
-                urllib.request.urlretrieve(self.MODEL_URL, model_path)
+        # Choose model based on setting
+        if self.use_heavy_model:
+            model_url = self.MODEL_URL_HEAVY
+            model_filename = self.MODEL_FILENAME_HEAVY
+            model_size = "~120 MB - may take a minute"
+        else:
+            model_url = self.MODEL_URL_LITE
+            model_filename = self.MODEL_FILENAME_LITE
+            model_size = "~8 MB"
+        
+        # Download with caching
+        model_path = SwimAnalyzer._download_model(model_url, model_filename, model_size)
 
         base_options = python.BaseOptions(
             model_asset_path=model_path,
@@ -1613,22 +1650,36 @@ class SwimAnalyzer:
         if conf < self.conf_thresh:
             return frame, None
 
-        # Flip if upside-down
+        # Flip if upside-down (hip above shoulder in image = inverted video)
+        is_inverted = False
         if "left_hip" in lm_pixel and "left_shoulder" in lm_pixel:
-            if lm_pixel["left_hip"][1] < lm_pixel["left_shoulder"][1]:
-                frame = cv2.flip(frame, -1)
+            is_inverted = lm_pixel["left_hip"][1] < lm_pixel["left_shoulder"][1]
+        
+        if is_inverted:
+            frame = cv2.flip(frame, -1)
+            try:
                 rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
                 
                 self.last_timestamp_ms += 1
                 result = self.landmarker.detect_for_video(mp_image, self.last_timestamp_ms)
                 
-                if not result.pose_landmarks:
-                    return frame, None
-                landmarks = result.pose_landmarks[0]
-                for name, idx in zip(landmark_names, indices):
-                    lm = landmarks[idx]
-                    lm_pixel[name] = (lm.x * w, lm.y * h)
+                if result.pose_landmarks:
+                    landmarks = result.pose_landmarks[0]
+                    for name, idx in zip(landmark_names, indices):
+                        lm = landmarks[idx]
+                        lm_pixel[name] = (lm.x * w, lm.y * h)
+                # If no landmarks after flip, continue with flipped coordinates
+                # (just invert the Y coordinates of existing landmarks)
+                else:
+                    for name in lm_pixel:
+                        x, y = lm_pixel[name]
+                        lm_pixel[name] = (w - x, h - y)
+            except Exception:
+                # If re-detection fails, just use flipped coordinates
+                for name in lm_pixel:
+                    x, y = lm_pixel[name]
+                    lm_pixel[name] = (w - x, h - y)
 
         # Calculate basic metrics
         elbow = min(
@@ -1718,8 +1769,10 @@ class SwimAnalyzer:
         vertical_drop = statistics.mean(self.vertical_drop_buffer) if self.vertical_drop_buffer else vertical_drop_raw
         roll_abs = abs(roll)
         
-        # Track dropped elbow during pull phase
-        if phase in ("Pull", "Push"):
+        # Track dropped elbow ONLY during Pull phase (the catch)
+        # Dropped elbow is primarily a catch problem - during push the elbow naturally drops
+        # Also only count when elbow angle is in catch range (>100°)
+        if phase == "Pull" and elbow > 100:
             self.pull_phase_frames += 1
             if is_dropped_elbow:
                 self.dropped_elbow_frames += 1
@@ -2469,31 +2522,48 @@ def main():
             status.text("Encoding video for browser playback...")
             out_path = tempfile.mktemp(suffix=".mp4")
             
-            import subprocess
-            try:
-                # Use ffmpeg to re-encode to H.264 (browser-compatible)
-                subprocess.run([
-                    'ffmpeg', '-y', '-i', temp_out_path,
-                    '-c:v', 'libx264',
-                    '-preset', 'fast',
-                    '-crf', '23',
-                    '-pix_fmt', 'yuv420p',  # Required for browser compatibility
-                    '-movflags', '+faststart',  # Enables streaming
-                    out_path
-                ], check=True, capture_output=True)
-            except (subprocess.CalledProcessError, FileNotFoundError):
-                # Fallback: if ffmpeg fails, try copying the AVI or use original approach
+            encoding_success = False
+            
+            # Method 1: Use MoviePy (pure Python, no ffmpeg binary required)
+            if MOVIEPY_AVAILABLE:
+                try:
+                    clip = VideoFileClip(temp_out_path)
+                    clip.write_videofile(
+                        out_path, 
+                        codec='libx264',
+                        audio=False,
+                        preset='fast',
+                        ffmpeg_params=['-pix_fmt', 'yuv420p', '-movflags', '+faststart'],
+                        logger=None  # Suppress moviepy output
+                    )
+                    clip.close()
+                    encoding_success = True
+                except Exception as e:
+                    st.warning(f"MoviePy encoding failed: {e}. Trying fallback...")
+            
+            # Method 2: Fallback to ffmpeg binary if available
+            if not encoding_success:
+                import subprocess
                 try:
                     subprocess.run([
                         'ffmpeg', '-y', '-i', temp_out_path,
-                        '-c:v', 'copy',
+                        '-c:v', 'libx264',
+                        '-preset', 'fast',
+                        '-crf', '23',
+                        '-pix_fmt', 'yuv420p',
+                        '-movflags', '+faststart',
                         out_path
-                    ], check=True, capture_output=True)
-                except:
-                    # Last resort: just rename AVI to MP4 (may not play in browser)
-                    import shutil
-                    out_path = temp_out_path.replace('.avi', '.mp4')
-                    shutil.copy(temp_out_path, out_path)
+                    ], check=True, capture_output=True, timeout=120)
+                    encoding_success = True
+                except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+                    pass
+            
+            # Method 3: Last resort - just use the AVI file (may not play in browser)
+            if not encoding_success:
+                import shutil
+                out_path = temp_out_path.replace('.avi', '.mp4')
+                shutil.copy(temp_out_path, out_path)
+                st.warning("⚠️ Video encoding limited - download the video for best playback")
             
             # Clean up temp AVI
             try:
