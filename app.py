@@ -996,9 +996,13 @@ class VideoContextDetector:
         white_mask = cv2.inRange(hsv, lower_white, upper_white)
         white_ratio = np.sum(white_mask > 0) / (h * w)
         
-        # Split frame into thirds
+        # Split frame into thirds for regional analysis
         top_third = hsv[:h//3, :]
+        middle_third = hsv[h//3:2*h//3, :]
         bottom_third = hsv[2*h//3:, :]
+        
+        top_gray = gray[:h//3, :]
+        bottom_gray = gray[2*h//3:, :]
         
         # Saturation analysis
         top_saturation = np.mean(top_third[:,:,1])
@@ -1018,9 +1022,7 @@ class VideoContextDetector:
         sky_mask = cv2.inRange(top_third, np.array([90, 20, 150]), np.array([130, 100, 255]))
         sky_ratio = np.sum(sky_mask > 0) / (top_third.shape[0] * top_third.shape[1])
         
-        # === NEW: Above-water specific detection ===
-        
-        # 1. Detect horizontal lines (lane ropes seen from above create parallel horizontal lines)
+        # === HORIZONTAL LINE DETECTION ===
         edges = cv2.Canny(gray, 50, 150)
         lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold=80, minLineLength=w//6, maxLineGap=20)
         horizontal_line_count = 0
@@ -1031,26 +1033,59 @@ class VideoContextDetector:
                 if angle < 15 or angle > 165:  # Near horizontal
                     horizontal_line_count += 1
         
-        # 2. Texture variance (surface ripples create high texture in above-water)
+        # === TEXTURE VARIANCE ===
         laplacian = cv2.Laplacian(gray, cv2.CV_64F)
         texture_variance = laplacian.var()
         
-        # 3. Skin tone detection (swimmer's body visible above water)
-        # Skin tones in HSV
+        # === SKIN TONE DETECTION ===
         lower_skin = np.array([0, 20, 70])
         upper_skin = np.array([20, 150, 255])
         skin_mask = cv2.inRange(hsv, lower_skin, upper_skin)
         skin_ratio = np.sum(skin_mask > 0) / (h * w)
         
-        # 4. Color variance (above-water has more color variety: lane floats, deck, etc.)
+        # === COLOR VARIANCE ===
         b, g, r = cv2.split(frame)
         color_variance = np.std([np.mean(b), np.mean(g), np.mean(r)])
         
-        # 5. Check for lane float colors (yellow, orange, blue plastic)
-        lower_yellow = np.array([20, 80, 80])
-        upper_yellow = np.array([40, 255, 255])
-        yellow_mask = cv2.inRange(hsv, lower_yellow, upper_yellow)
-        yellow_ratio = np.sum(yellow_mask > 0) / (h * w)
+        # === NEW: UNDERWATER-SPECIFIC INDICATORS ===
+        
+        # 1. Surface ripples at TOP of frame (underwater looking up)
+        # Underwater footage shows wavy surface distortion at top
+        top_edges = cv2.Canny(top_gray, 30, 100)
+        top_edge_density = np.sum(top_edges > 0) / (top_gray.shape[0] * top_gray.shape[1])
+        
+        # 2. Pool bottom detection (darker region at bottom with lane markings)
+        # Pool bottom is typically darker and has distinct lane lines
+        bottom_edges = cv2.Canny(bottom_gray, 30, 100)
+        bottom_edge_density = np.sum(bottom_edges > 0) / (bottom_gray.shape[0] * bottom_gray.shape[1])
+        
+        # 3. Detect if bottom is darker than top (underwater: pool bottom darker)
+        # Above water: top (sky/ceiling) often darker or similar to water
+        bottom_brightness_val = np.mean(bottom_gray)
+        top_brightness_val = np.mean(top_gray)
+        bottom_darker = bottom_brightness_val < top_brightness_val - 10
+        
+        # 4. Check for uniform blue saturation (underwater indicator)
+        sat_uniformity = 1.0 - (abs(top_saturation - bottom_saturation) / max(top_saturation, bottom_saturation, 1))
+        
+        # 5. Detect vertical/diagonal lines in bottom (pool floor T-marks)
+        bottom_lines = cv2.HoughLinesP(bottom_edges, 1, np.pi/180, threshold=30, minLineLength=h//10, maxLineGap=10)
+        vertical_lines_bottom = 0
+        if bottom_lines is not None:
+            for line in bottom_lines:
+                x1, y1, x2, y2 = line[0]
+                angle = abs(math.degrees(math.atan2(y2-y1, x2-x1)))
+                if 70 < angle < 110:  # Near vertical
+                    vertical_lines_bottom += 1
+        
+        # 6. Check for wavy distortion pattern at top (water surface from below)
+        # High frequency variations in the top region indicate looking up at surface
+        top_laplacian = cv2.Laplacian(top_gray, cv2.CV_64F)
+        top_texture = top_laplacian.var()
+        
+        # 7. Lane rope appearance: from above = crisp horizontal lines
+        # From below = blurry, distorted by water
+        # Check sharpness of detected lines
         
         return {
             'blue_ratio': blue_ratio,
@@ -1062,12 +1097,18 @@ class VideoContextDetector:
             'bright_ratio_top': bright_ratio_top,
             'top_saturation': top_saturation,
             'bottom_saturation': bottom_saturation,
-            # New above-water indicators
+            # Above-water indicators
             'horizontal_lines': horizontal_line_count,
             'texture_variance': texture_variance,
             'skin_ratio': skin_ratio,
             'color_variance': color_variance,
-            'yellow_ratio': yellow_ratio,
+            # Underwater indicators
+            'top_edge_density': top_edge_density,
+            'bottom_edge_density': bottom_edge_density,
+            'bottom_darker': bottom_darker,
+            'sat_uniformity': sat_uniformity,
+            'vertical_lines_bottom': vertical_lines_bottom,
+            'top_texture': top_texture,
         }
     
     def _analyze_landmarks(self, lm_pixel: Dict) -> Dict:
@@ -1143,122 +1184,149 @@ class VideoContextDetector:
         if not self.frame_analyses:
             return
         
-        # Aggregate color analysis
+        # Aggregate all metrics
         avg_blue = np.mean([a['color']['blue_ratio'] for a in self.frame_analyses])
         avg_white = np.mean([a['color']['white_ratio'] for a in self.frame_analyses])
-        avg_sky = np.mean([a['color']['sky_ratio'] for a in self.frame_analyses])
-        has_lanes = sum([1 for a in self.frame_analyses if a['edges']]) > len(self.frame_analyses) * 0.3
+        has_pool_bottom_lanes = sum([1 for a in self.frame_analyses if a['edges']]) > len(self.frame_analyses) * 0.3
         avg_splash = np.mean([a['splash'] for a in self.frame_analyses])
         
-        # Saturation and brightness gradients
-        avg_sat_gradient = np.mean([a['color']['saturation_gradient'] for a in self.frame_analyses])
-        avg_bright_gradient = np.mean([a['color']['brightness_gradient'] for a in self.frame_analyses])
-        avg_bright_top = np.mean([a['color']['bright_ratio_top'] for a in self.frame_analyses])
+        # Regional analysis
         avg_top_sat = np.mean([a['color']['top_saturation'] for a in self.frame_analyses])
         avg_bottom_sat = np.mean([a['color']['bottom_saturation'] for a in self.frame_analyses])
+        avg_bright_gradient = np.mean([a['color']['brightness_gradient'] for a in self.frame_analyses])
         
-        # NEW: Above-water specific indicators
+        # Above-water indicators
         avg_horizontal_lines = np.mean([a['color'].get('horizontal_lines', 0) for a in self.frame_analyses])
         avg_texture = np.mean([a['color'].get('texture_variance', 0) for a in self.frame_analyses])
-        avg_skin = np.mean([a['color'].get('skin_ratio', 0) for a in self.frame_analyses])
         avg_color_variance = np.mean([a['color'].get('color_variance', 0) for a in self.frame_analyses])
-        avg_yellow = np.mean([a['color'].get('yellow_ratio', 0) for a in self.frame_analyses])
         
-        # === COMPLETELY REWRITTEN WATER POSITION DETECTION ===
-        # Key insight: Above-water pool footage has:
-        # 1. Many horizontal lines (lane ropes seen from above)
-        # 2. Higher texture variance (surface ripples)
-        # 3. Visible skin (swimmer's body above water)
-        # 4. Higher color variance (lane floats, deck, etc.)
-        # 
-        # Underwater footage has:
-        # 1. More uniform blue
-        # 2. Lane lines on pool BOTTOM (not floating lane ropes)
-        # 3. Lower texture variance
-        # 4. Less skin visible (body appears more uniform underwater)
+        # Underwater indicators
+        avg_top_edge_density = np.mean([a['color'].get('top_edge_density', 0) for a in self.frame_analyses])
+        avg_bottom_edge_density = np.mean([a['color'].get('bottom_edge_density', 0) for a in self.frame_analyses])
+        bottom_darker_pct = np.mean([1 if a['color'].get('bottom_darker', False) else 0 for a in self.frame_analyses])
+        avg_sat_uniformity = np.mean([a['color'].get('sat_uniformity', 0) for a in self.frame_analyses])
+        avg_vertical_lines_bottom = np.mean([a['color'].get('vertical_lines_bottom', 0) for a in self.frame_analyses])
+        avg_top_texture = np.mean([a['color'].get('top_texture', 0) for a in self.frame_analyses])
         
+        # === BALANCED SCORING SYSTEM ===
         above_water_score = 0
         underwater_score = 0
         
-        # === PRIMARY INDICATORS (most reliable) ===
+        # ==========================================
+        # ABOVE-WATER INDICATORS
+        # ==========================================
         
-        # 1. Horizontal lines from floating lane ropes (VERY strong above-water indicator)
-        # Above-water footage typically shows 20+ horizontal lines from lane ropes
+        # 1. Many horizontal lines from floating lane ropes (seen from above)
+        # Above-water typically has 50+ crisp horizontal lines
         if avg_horizontal_lines > 50:
-            above_water_score += 5
-        elif avg_horizontal_lines > 30:
             above_water_score += 4
-        elif avg_horizontal_lines > 15:
+        elif avg_horizontal_lines > 35:
             above_water_score += 3
-        elif avg_horizontal_lines > 5:
+        elif avg_horizontal_lines > 20:
             above_water_score += 1
-        elif avg_horizontal_lines < 3:
-            underwater_score += 1
-        
-        # 2. Texture variance (surface ripples create high texture)
-        if avg_texture > 150:
-            above_water_score += 3
-        elif avg_texture > 80:
-            above_water_score += 2
-        elif avg_texture > 50:
-            above_water_score += 1
-        elif avg_texture < 30:
-            underwater_score += 1
-        
-        # 3. Color variance (above-water has more variety)
-        if avg_color_variance > 40:
-            above_water_score += 2
-        elif avg_color_variance > 25:
-            above_water_score += 1
-        elif avg_color_variance < 15:
-            underwater_score += 1
-            
-        # 4. Skin visibility (swimmer's body above water)
-        if avg_skin > 0.03:
-            above_water_score += 2
-        elif avg_skin > 0.015:
-            above_water_score += 1
-        
-        # === SECONDARY INDICATORS ===
-        
-        # 5. Yellow/orange from lane floats
-        if avg_yellow > 0.005:
-            above_water_score += 1
-        
-        # 6. White ratio (splash, reflections)
-        if avg_white > 0.05:
-            above_water_score += 1
-        elif avg_white < 0.01:
-            underwater_score += 1
-            
-        # 7. Lane lines on pool bottom (underwater indicator)
-        # Note: This is different from horizontal lane ROPES (above water)
-        # Pool bottom lane lines are typically darker, single lines
-        if has_lanes and avg_horizontal_lines < 10:
+        # Few horizontal lines suggests underwater
+        elif avg_horizontal_lines < 15:
             underwater_score += 2
         
-        # 8. Splash indicator
-        if avg_splash > 500:
-            above_water_score += 1
-            
-        # 9. Sky detection
-        if avg_sky > 0.1:
+        # 2. High overall texture (surface ripples from above)
+        if avg_texture > 90:
+            above_water_score += 3
+        elif avg_texture > 70:
+            above_water_score += 2
+        # Low texture suggests underwater (more uniform)
+        elif avg_texture < 50:
+            underwater_score += 2
+        elif avg_texture < 70:
+            underwater_score += 1
+        
+        # 3. Top brighter than bottom (sky/ceiling above)
+        if avg_bright_gradient > 10:
+            above_water_score += 2
+        elif avg_bright_gradient > 0:
             above_water_score += 1
         
-        # === DETERMINE FINAL WATER POSITION ===
-        # IMPORTANT: Default to above-water when uncertain
-        # Above-water is much more common for swimming videos
+        # 4. White/splash ratio
+        if avg_white > 0.02:
+            above_water_score += 1
         
-        if underwater_score > above_water_score + 3:
+        # ==========================================
+        # UNDERWATER INDICATORS
+        # ==========================================
+        
+        # 5. Bottom darker than top (pool floor is darker)
+        if bottom_darker_pct > 0.6:
+            underwater_score += 3
+        elif bottom_darker_pct > 0.3:
+            underwater_score += 2
+        
+        # 6. High saturation uniformity (underwater is uniformly blue)
+        if avg_sat_uniformity > 0.92:
+            underwater_score += 3
+        elif avg_sat_uniformity > 0.85:
+            underwater_score += 2
+        elif avg_sat_uniformity > 0.75:
+            underwater_score += 1
+        # Low uniformity suggests above water (different regions)
+        elif avg_sat_uniformity < 0.7:
+            above_water_score += 1
+        
+        # 7. Vertical lines at bottom (pool floor T-marks)
+        if avg_vertical_lines_bottom > 3:
+            underwater_score += 2
+        elif avg_vertical_lines_bottom > 1:
+            underwater_score += 1
+        
+        # 8. Edge density patterns
+        # Underwater: more edges at top (wavy surface) or bottom (pool floor)
+        # Above water: edges more distributed
+        if avg_top_edge_density > 0.08 and avg_bottom_edge_density > 0.06:
+            underwater_score += 1
+        
+        # 9. Pool bottom lane lines detected by edge detector
+        if has_pool_bottom_lanes and avg_horizontal_lines < 30:
+            underwater_score += 2
+        
+        # 10. Color variance - underwater has moderate to low variance
+        if avg_color_variance < 30:
+            underwater_score += 2
+        elif avg_color_variance < 45:
+            underwater_score += 1
+        elif avg_color_variance > 60:
+            above_water_score += 1
+        
+        # 11. High blue ratio with uniform saturation = underwater
+        if avg_blue > 0.8 and avg_sat_uniformity > 0.85:
+            underwater_score += 2
+        
+        # ==========================================
+        # FINAL DETERMINATION
+        # ==========================================
+        
+        # Calculate difference
+        score_diff = above_water_score - underwater_score
+        
+        if score_diff >= 3:
+            self.context.water_position = WaterPosition.ABOVE_WATER
+            water_confidence = min(0.95, 0.6 + score_diff * 0.05)
+        elif score_diff <= -3:
             self.context.water_position = WaterPosition.UNDERWATER
-            water_confidence = min(0.9, 0.5 + (underwater_score - above_water_score) * 0.06)
-        elif above_water_score >= underwater_score:
+            water_confidence = min(0.95, 0.6 + abs(score_diff) * 0.05)
+        elif score_diff > 0:
             self.context.water_position = WaterPosition.ABOVE_WATER
-            water_confidence = min(0.9, 0.5 + (above_water_score - underwater_score) * 0.06)
+            water_confidence = 0.55 + score_diff * 0.05
+        elif score_diff < 0:
+            self.context.water_position = WaterPosition.UNDERWATER
+            water_confidence = 0.55 + abs(score_diff) * 0.05
         else:
-            # Slight underwater lead but not conclusive - default to above water
-            self.context.water_position = WaterPosition.ABOVE_WATER
-            water_confidence = 0.55
+            # Tie - use aspect ratio as tiebreaker
+            # Underwater footage tends to be more square, above-water more wide
+            aspect_ratio = self.video_width / self.video_height if self.video_height > 0 else 1.0
+            if aspect_ratio > 1.6:
+                self.context.water_position = WaterPosition.ABOVE_WATER
+                water_confidence = 0.55
+            else:
+                self.context.water_position = WaterPosition.UNDERWATER
+                water_confidence = 0.55
         
         # === CAMERA VIEW DETECTION ===
         # Use multiple signals: video aspect ratio, landmark geometry, body orientation
