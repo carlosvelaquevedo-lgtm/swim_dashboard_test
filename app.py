@@ -1389,7 +1389,7 @@ class VideoContextDetector:
         # Set overall confidence
         self.context.confidence = (water_confidence + view_confidence) / 2
         self.context.avg_blue_ratio = avg_blue
-        self.context.has_lane_lines = has_lanes
+        self.context.has_lane_lines = has_pool_bottom_lanes
         self.context.has_splash = avg_splash > 300
         self.context.detection_frames = len(self.frame_analyses)
         
