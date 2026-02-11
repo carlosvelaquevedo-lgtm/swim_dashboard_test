@@ -1820,6 +1820,78 @@ class SwimAnalyzer:
 
         conf = vis_sum / vis_count if vis_count > 0 else 0.0
         
+        # === POSE VALIDATION ===
+        # Reject false positives where MediaPipe detects pool lane markings as a person
+        # A valid human pose should have:
+        # 1. Reasonable body proportions (not too stretched or compressed)
+        # 2. Shoulder width > 0 (not a single line)
+        # 3. Body parts in realistic relative positions
+        
+        def validate_pose(lm_pixel, frame_h, frame_w):
+            """Validate that detected pose is actually a human, not a pool lane marking"""
+            try:
+                # Get key measurements
+                left_shoulder = np.array(lm_pixel["left_shoulder"])
+                right_shoulder = np.array(lm_pixel["right_shoulder"])
+                left_hip = np.array(lm_pixel["left_hip"])
+                right_hip = np.array(lm_pixel["right_hip"])
+                nose = np.array(lm_pixel["nose"])
+                
+                # 1. Shoulder width should be reasonable (not near zero)
+                shoulder_width = np.linalg.norm(left_shoulder - right_shoulder)
+                min_shoulder_width = min(frame_w, frame_h) * 0.02  # At least 2% of frame
+                if shoulder_width < min_shoulder_width:
+                    return False, "shoulders too narrow"
+                
+                # 2. Hip width should be reasonable
+                hip_width = np.linalg.norm(left_hip - right_hip)
+                if hip_width < min_shoulder_width * 0.5:
+                    return False, "hips too narrow"
+                
+                # 3. Torso length should be reasonable
+                mid_shoulder = (left_shoulder + right_shoulder) / 2
+                mid_hip = (left_hip + right_hip) / 2
+                torso_length = np.linalg.norm(mid_shoulder - mid_hip)
+                
+                # Torso should be at least as long as shoulder width (roughly)
+                if torso_length < shoulder_width * 0.3:
+                    return False, "torso too short"
+                
+                # 4. Body shouldn't be extremely elongated (like a lane line)
+                # Lane lines are very long and thin
+                body_height = max(
+                    np.linalg.norm(nose - mid_hip),
+                    torso_length
+                )
+                body_width = max(shoulder_width, hip_width)
+                
+                aspect_ratio = body_height / (body_width + 1)
+                if aspect_ratio > 15:  # Extremely elongated = probably lane line
+                    return False, "too elongated"
+                
+                # 5. Nose should be reasonably close to shoulders (not way off)
+                nose_to_shoulders = np.linalg.norm(nose - mid_shoulder)
+                if nose_to_shoulders > torso_length * 3:
+                    return False, "head too far from body"
+                
+                # 6. All key points should be within frame bounds (with some margin)
+                margin = 0.1  # 10% margin
+                for name, (x, y) in lm_pixel.items():
+                    if x < -frame_w * margin or x > frame_w * (1 + margin):
+                        return False, f"{name} out of frame horizontally"
+                    if y < -frame_h * margin or y > frame_h * (1 + margin):
+                        return False, f"{name} out of frame vertically"
+                
+                return True, "valid"
+                
+            except Exception as e:
+                return False, f"validation error: {e}"
+        
+        is_valid_pose, validation_reason = validate_pose(lm_pixel, h, w)
+        if not is_valid_pose:
+            # Not a valid human pose - skip this frame
+            return frame, None
+        
         # Continue context detection with landmarks
         was_complete = self.context_detector.detection_complete
         if not was_complete:
