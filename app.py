@@ -1114,68 +1114,108 @@ class VideoContextDetector:
         has_lanes = sum([1 for a in self.frame_analyses if a['edges']]) > len(self.frame_analyses) * 0.3
         avg_splash = np.mean([a['splash'] for a in self.frame_analyses])
         
-        # NEW: Saturation and brightness gradients
+        # Saturation and brightness gradients
         avg_sat_gradient = np.mean([a['color']['saturation_gradient'] for a in self.frame_analyses])
         avg_bright_gradient = np.mean([a['color']['brightness_gradient'] for a in self.frame_analyses])
         avg_bright_top = np.mean([a['color']['bright_ratio_top'] for a in self.frame_analyses])
         avg_top_sat = np.mean([a['color']['top_saturation'] for a in self.frame_analyses])
         avg_bottom_sat = np.mean([a['color']['bottom_saturation'] for a in self.frame_analyses])
         
-        # === IMPROVED WATER POSITION DETECTION ===
-        # Above water indicators:
-        # 1. Saturation gradient: bottom > top by significant margin (water at bottom, air at top)
-        # 2. Lower saturation in top region (sky/background vs water)
-        # 3. Bright spots in top region (reflections, sky)
+        # === FIXED WATER POSITION DETECTION ===
+        # Key insight: Above-water pool footage typically shows:
+        # 1. Brighter top region (sky, ceiling, or pool deck)
+        # 2. Water surface reflections/glare
+        # 3. Less uniform blue saturation
+        # 4. More white/bright pixels from splash and reflections
+        #
+        # Underwater footage typically shows:
+        # 1. Uniform blue/cyan throughout
+        # 2. Lane lines on pool bottom
+        # 3. More consistent saturation across frame
+        # 4. Darker overall or uniform lighting
         
         above_water_score = 0
         underwater_score = 0
         
-        # Check saturation gradient (most reliable for above-water)
-        if avg_sat_gradient > 20:  # Bottom much more saturated than top
+        # === PRIMARY INDICATORS ===
+        
+        # 1. Brightness gradient: above-water often has brighter top (sky/lights)
+        if avg_bright_gradient > 15:  # Top significantly brighter than bottom
             above_water_score += 3
-        elif avg_sat_gradient > 10:
+        elif avg_bright_gradient > 5:
             above_water_score += 2
-        elif avg_sat_gradient < -10:  # Top more saturated (unusual, likely underwater)
+        elif avg_bright_gradient < -15:  # Bottom brighter (unusual, more likely underwater with pool bottom)
+            underwater_score += 1
+        
+        # 2. White/bright ratio: above-water has more reflections and splash
+        if avg_white > 0.08:  # Significant white/bright areas
+            above_water_score += 3
+        elif avg_white > 0.04:
+            above_water_score += 2
+        elif avg_white < 0.02:  # Very little white = likely underwater
             underwater_score += 1
             
-        # Check top region saturation (low = air/sky, high = water)
-        if avg_top_sat < 80:  # Low saturation top = above water
+        # 3. Saturation uniformity: underwater is more uniform
+        sat_variance = abs(avg_top_sat - avg_bottom_sat)
+        if sat_variance > 30:  # High variance = above water (different regions)
             above_water_score += 2
-        elif avg_top_sat > 100:  # High saturation throughout = underwater
+        elif sat_variance < 10:  # Very uniform = underwater
             underwater_score += 2
             
-        # Check for bright spots in top (reflections/sky)
-        if avg_bright_top > 0.05:
+        # 4. Bright spots in top region (reflections, sky, lights)
+        if avg_bright_top > 0.1:
+            above_water_score += 2
+        elif avg_bright_top > 0.05:
             above_water_score += 1
-            
-        # Blue ratio - high blue can be either above or below!
-        # But UNIFORM high blue suggests underwater
-        if avg_blue > 0.3:
-            if avg_sat_gradient < 15:  # Uniform blue = underwater
-                underwater_score += 2
-            # If high blue but also high gradient, it's above water looking at pool
-        
-        # Lane lines typically visible underwater
-        if has_lanes:
+        elif avg_bright_top < 0.02:
             underwater_score += 1
-            
-        # Splash indicates surface
-        if avg_splash > 500:
-            above_water_score += 1
-            
-        # Sky detection
-        if avg_sky > 0.1:
+        
+        # === SECONDARY INDICATORS ===
+        
+        # 5. Blue ratio with context
+        # High uniform blue strongly suggests underwater
+        if avg_blue > 0.4 and sat_variance < 15:
+            underwater_score += 2
+        elif avg_blue > 0.3 and sat_variance < 20:
+            underwater_score += 1
+        # Low blue with high white suggests above-water outdoor
+        elif avg_blue < 0.15 and avg_white > 0.05:
             above_water_score += 1
         
-        # Determine final water position
-        if above_water_score > underwater_score + 1:
-            self.context.water_position = WaterPosition.ABOVE_WATER
-            water_confidence = min(0.9, 0.5 + (above_water_score - underwater_score) * 0.1)
-        elif underwater_score > above_water_score + 1:
+        # 6. Lane lines (strong underwater indicator)
+        if has_lanes:
+            underwater_score += 2
+            
+        # 7. Splash detection (surface indicator)
+        if avg_splash > 800:
+            above_water_score += 2
+        elif avg_splash > 400:
+            above_water_score += 1
+            
+        # 8. Sky detection
+        if avg_sky > 0.15:
+            above_water_score += 2
+        elif avg_sky > 0.05:
+            above_water_score += 1
+        
+        # 9. Overall brightness: underwater tends to be more uniform/darker
+        avg_brightness = np.mean([a['color']['avg_brightness'] for a in self.frame_analyses])
+        if avg_brightness > 140:  # Bright footage more likely above water
+            above_water_score += 1
+        elif avg_brightness < 80:  # Dark footage more likely underwater
+            underwater_score += 1
+        
+        # Determine final water position with adjusted thresholds
+        # Require clearer evidence for underwater classification
+        if underwater_score > above_water_score + 2:
             self.context.water_position = WaterPosition.UNDERWATER
-            water_confidence = min(0.9, 0.5 + (underwater_score - above_water_score) * 0.1)
+            water_confidence = min(0.9, 0.5 + (underwater_score - above_water_score) * 0.08)
+        elif above_water_score > underwater_score:
+            self.context.water_position = WaterPosition.ABOVE_WATER
+            water_confidence = min(0.9, 0.5 + (above_water_score - underwater_score) * 0.08)
         else:
-            self.context.water_position = WaterPosition.MIXED
+            # Default to ABOVE_WATER when uncertain (more common filming angle)
+            self.context.water_position = WaterPosition.ABOVE_WATER
             water_confidence = 0.5
         
         # === CAMERA VIEW DETECTION ===
@@ -1683,10 +1723,33 @@ class SwimAnalyzer:
         if conf < self.conf_thresh:
             return frame, None
 
-        # Flip if upside-down (hip above shoulder in image = inverted video)
+        # Check for inverted video (upside-down footage)
+        # IMPROVED: Only flip if there's STRONG evidence of inversion
+        # - Both hips must be significantly above both shoulders
+        # - This avoids false positives from above-water footage where body angle varies
         is_inverted = False
-        if "left_hip" in lm_pixel and "left_shoulder" in lm_pixel:
-            is_inverted = lm_pixel["left_hip"][1] < lm_pixel["left_shoulder"][1]
+        
+        # Get average positions
+        avg_hip_y = (lm_pixel["left_hip"][1] + lm_pixel["right_hip"][1]) / 2
+        avg_shoulder_y = (lm_pixel["left_shoulder"][1] + lm_pixel["right_shoulder"][1]) / 2
+        
+        # Calculate torso height for threshold
+        torso_height = abs(avg_hip_y - avg_shoulder_y)
+        
+        # Only consider inverted if hips are significantly above shoulders
+        # (more than 30% of torso height, to avoid edge cases)
+        # AND we're in underwater mode (above-water footage shouldn't be flipped)
+        hip_above_threshold = avg_shoulder_y - avg_hip_y > torso_height * 0.3
+        
+        # Additional check: nose should be below shoulders in inverted footage
+        nose_below_shoulders = False
+        if "nose" in lm_pixel:
+            nose_below_shoulders = lm_pixel["nose"][1] > avg_shoulder_y
+        
+        # Only flip if we have strong evidence AND we detected underwater footage
+        # Above-water footage should NEVER be flipped as the perspective is correct
+        is_underwater = (self.video_context.water_position == WaterPosition.UNDERWATER)
+        is_inverted = hip_above_threshold and nose_below_shoulders and is_underwater
         
         if is_inverted:
             frame = cv2.flip(frame, -1)
