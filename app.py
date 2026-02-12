@@ -644,6 +644,10 @@ class FrameMetrics:
     alignment_score: float = 100.0     # Sub-score for alignment
     evf_score: float = 100.0           # Sub-score for EVF
     breathing_during_pull: bool = False
+    # Glide metrics
+    is_gliding: bool = False           # True if in glide phase
+    glide_score: float = 100.0         # Quality of glide (streamline)
+    arm_extension: float = 0.0         # How extended the lead arm is (0-1)
 
 @dataclass
 class SessionSummary:
@@ -676,6 +680,11 @@ class SessionSummary:
     # Video context
     video_context: Optional[VideoContext] = None
     available_metrics: Dict = field(default_factory=dict)
+    # Glide metrics
+    glide_ratio: float = 0.0           # Percentage of stroke cycle spent gliding
+    avg_glide_score: float = 0.0       # Average quality of glide phases
+    glide_frames: int = 0              # Number of frames in glide
+    total_analyzed_frames: int = 0     # Total frames analyzed
 
 # ─────────────────────────────────────────────
 # HELPERS - Enhanced calculations
@@ -919,6 +928,102 @@ def detect_phase_enhanced(lm_pixel: Dict, elbow_angle: float, prev_wrist_y: Opti
             phase = "Push"
     
     return phase, wrist_velocity_y, wrist_y
+
+def compute_glide_metrics(lm_pixel: Dict, phase: str, elbow_angle: float, horizontal_dev: float) -> Tuple[bool, float, float]:
+    """
+    Compute glide metrics for freestyle swimming.
+    
+    GLIDE ASSESSMENT:
+    ================
+    Glide is the brief "catch-up" or extension phase where the lead arm is fully 
+    extended forward while the other arm completes its stroke. Good glide:
+    
+    1. Maximizes distance per stroke (DPS)
+    2. Reduces energy expenditure 
+    3. Maintains streamlined position
+    4. Allows momentary rest between strokes
+    
+    DETECTION CRITERIA:
+    - Phase: Entry or early Pull (arm extended forward)
+    - Lead arm fully extended (elbow angle > 150°)
+    - Good body alignment (low horizontal deviation)
+    - Streamlined position
+    
+    QUALITY FACTORS:
+    - Arm extension: How straight is the lead arm (elbow angle)
+    - Body alignment: Is the body streamlined during glide
+    - Duration: Longer glide (within reason) = more efficient
+    
+    Returns:
+        - is_gliding: Boolean, True if currently in glide phase
+        - glide_score: 0-100, quality of the glide position
+        - arm_extension: 0-1, how extended the lead arm is
+    """
+    
+    # Get arm measurements
+    # Find the lead arm (the one that's more extended/forward)
+    left_elbow_angle = calculate_angle(
+        lm_pixel["left_shoulder"], 
+        lm_pixel["left_elbow"], 
+        lm_pixel["left_wrist"]
+    )
+    right_elbow_angle = calculate_angle(
+        lm_pixel["right_shoulder"], 
+        lm_pixel["right_elbow"], 
+        lm_pixel["right_wrist"]
+    )
+    
+    # Lead arm is the one with higher elbow angle (more extended)
+    lead_elbow_angle = max(left_elbow_angle, right_elbow_angle)
+    
+    # Calculate arm extension (0-1 scale)
+    # 180° = fully extended = 1.0
+    # 90° = bent = 0.0
+    arm_extension = max(0, min(1, (lead_elbow_angle - 90) / 90))
+    
+    # Determine if in glide phase
+    # Glide occurs during Entry phase or very early Pull when arm is extended
+    is_gliding = False
+    
+    if phase in ("Entry", "Pull"):
+        # Check if lead arm is sufficiently extended (>140°)
+        if lead_elbow_angle > 140:
+            # Check if body is reasonably streamlined
+            if horizontal_dev < 15:  # Not too much body deviation
+                is_gliding = True
+    
+    # Calculate glide quality score
+    glide_score = 0.0
+    
+    if is_gliding:
+        # Base score from arm extension (40 points max)
+        extension_score = arm_extension * 40
+        
+        # Body alignment score (40 points max)
+        # Lower deviation = higher score
+        if horizontal_dev <= 5:
+            alignment_score = 40
+        elif horizontal_dev <= 10:
+            alignment_score = 30
+        elif horizontal_dev <= 15:
+            alignment_score = 20
+        else:
+            alignment_score = 10
+        
+        # Elbow angle bonus (20 points max)
+        # 170°+ = excellent extension
+        if lead_elbow_angle >= 170:
+            angle_bonus = 20
+        elif lead_elbow_angle >= 160:
+            angle_bonus = 15
+        elif lead_elbow_angle >= 150:
+            angle_bonus = 10
+        else:
+            angle_bonus = 5
+        
+        glide_score = extension_score + alignment_score + angle_bonus
+    
+    return is_gliding, glide_score, arm_extension
 
 def get_zone_color(val, good, ok):
     """Return color based on value zone"""
@@ -1718,6 +1823,9 @@ class SwimAnalyzer:
         # Dropped elbow tracking (only during Pull phase for catch analysis)
         self.dropped_elbow_frames = 0
         self.pull_phase_frames = 0
+        
+        # Glide tracking
+        self.glide_frames = 0
 
     @st.cache_resource
     @staticmethod
@@ -1826,8 +1934,9 @@ class SwimAnalyzer:
         # 1. Reasonable body proportions (not too stretched or compressed)
         # 2. Shoulder width > 0 (not a single line)
         # 3. Body parts in realistic relative positions
+        # 4. NOT be a pool floor marking (dark blue in bottom of frame)
         
-        def validate_pose(lm_pixel, frame_h, frame_w):
+        def validate_pose(lm_pixel, frame_bgr, frame_h, frame_w):
             """Validate that detected pose is actually a human, not a pool lane marking"""
             try:
                 # Get key measurements
@@ -1836,6 +1945,8 @@ class SwimAnalyzer:
                 left_hip = np.array(lm_pixel["left_hip"])
                 right_hip = np.array(lm_pixel["right_hip"])
                 nose = np.array(lm_pixel["nose"])
+                left_ankle = np.array(lm_pixel["left_ankle"])
+                right_ankle = np.array(lm_pixel["right_ankle"])
                 
                 # 1. Shoulder width should be reasonable (not near zero)
                 shoulder_width = np.linalg.norm(left_shoulder - right_shoulder)
@@ -1858,7 +1969,6 @@ class SwimAnalyzer:
                     return False, "torso too short"
                 
                 # 4. Body shouldn't be extremely elongated (like a lane line)
-                # Lane lines are very long and thin
                 body_height = max(
                     np.linalg.norm(nose - mid_hip),
                     torso_length
@@ -1866,28 +1976,86 @@ class SwimAnalyzer:
                 body_width = max(shoulder_width, hip_width)
                 
                 aspect_ratio = body_height / (body_width + 1)
-                if aspect_ratio > 15:  # Extremely elongated = probably lane line
+                if aspect_ratio > 15:
                     return False, "too elongated"
                 
-                # 5. Nose should be reasonably close to shoulders (not way off)
+                # 5. Nose should be reasonably close to shoulders
                 nose_to_shoulders = np.linalg.norm(nose - mid_shoulder)
                 if nose_to_shoulders > torso_length * 3:
                     return False, "head too far from body"
                 
-                # 6. All key points should be within frame bounds (with some margin)
-                margin = 0.1  # 10% margin
+                # 6. All key points should be within frame bounds
+                margin = 0.1
                 for name, (x, y) in lm_pixel.items():
                     if x < -frame_w * margin or x > frame_w * (1 + margin):
                         return False, f"{name} out of frame horizontally"
                     if y < -frame_h * margin or y > frame_h * (1 + margin):
                         return False, f"{name} out of frame vertically"
                 
+                # === POOL FLOOR MARKING DETECTION ===
+                # Pool floor markings are:
+                # - Located in bottom portion of frame (in above-water footage)
+                # - Dark blue/teal colored (not skin tones)
+                
+                # 7. Check if all major body points are in bottom 60% of frame
+                all_points = [nose, left_shoulder, right_shoulder, mid_hip, left_ankle, right_ankle]
+                points_in_bottom = sum(1 for p in all_points if p[1] > frame_h * 0.4)
+                
+                if points_in_bottom >= 5:  # Most points in bottom portion
+                    # Sample colors around the detected "body"
+                    all_x = [p[0] for p in all_points]
+                    all_y = [p[1] for p in all_points]
+                    min_x = max(0, int(min(all_x)) - 10)
+                    max_x = min(frame_w-1, int(max(all_x)) + 10)
+                    min_y = max(0, int(min(all_y)) - 10)
+                    max_y = min(frame_h-1, int(max(all_y)) + 10)
+                    
+                    if max_x > min_x + 20 and max_y > min_y + 20:
+                        roi = frame_bgr[min_y:max_y, min_x:max_x]
+                        
+                        if roi.size > 100:
+                            hsv_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+                            
+                            # Check for dark pool marking colors (dark blue/teal tiles)
+                            lower_pool_mark = np.array([85, 30, 20])
+                            upper_pool_mark = np.array([135, 255, 140])
+                            pool_mark_mask = cv2.inRange(hsv_roi, lower_pool_mark, upper_pool_mark)
+                            pool_mark_ratio = np.sum(pool_mark_mask > 0) / (roi.shape[0] * roi.shape[1])
+                            
+                            # Check for skin tones
+                            lower_skin = np.array([0, 20, 70])
+                            upper_skin = np.array([25, 150, 255])
+                            skin_mask = cv2.inRange(hsv_roi, lower_skin, upper_skin)
+                            skin_ratio = np.sum(skin_mask > 0) / (roi.shape[0] * roi.shape[1])
+                            
+                            # If mostly dark pool marking color and very little skin = reject
+                            if pool_mark_ratio > 0.25 and skin_ratio < 0.08:
+                                return False, "pool floor marking detected"
+                            
+                            # Check for cyan/teal water color (pool water around marking)
+                            lower_water = np.array([80, 30, 100])
+                            upper_water = np.array([110, 255, 255])
+                            water_mask = cv2.inRange(hsv_roi, lower_water, upper_water)
+                            water_ratio = np.sum(water_mask > 0) / (roi.shape[0] * roi.shape[1])
+                            
+                            # If very high water color + pool marking and no skin = floor marking
+                            if (water_ratio + pool_mark_ratio) > 0.7 and skin_ratio < 0.05:
+                                return False, "pool floor marking (water + marking colors)"
+                
+                # 8. Check minimum body size relative to frame
+                body_area = body_width * body_height
+                frame_area = frame_w * frame_h
+                body_ratio = body_area / frame_area
+                
+                if body_ratio < 0.003:  # Less than 0.3% of frame = too small
+                    return False, "detected body too small"
+                
                 return True, "valid"
                 
             except Exception as e:
                 return False, f"validation error: {e}"
         
-        is_valid_pose, validation_reason = validate_pose(lm_pixel, h, w)
+        is_valid_pose, validation_reason = validate_pose(lm_pixel, frame, h, w)
         if not is_valid_pose:
             # Not a valid human pose - skip this frame
             return frame, None
@@ -2126,14 +2294,25 @@ class SwimAnalyzer:
 
         # NEW: Breathing penalty
         breath_penalty = BREATH_PULL_PENALTY if breathing_during_pull else 0
+        
+        # NEW: Compute glide metrics
+        is_gliding, glide_score, arm_extension = compute_glide_metrics(
+            lm_pixel, phase, elbow, horizontal_dev
+        )
+        
+        # Track glide frames
+        if is_gliding:
+            self.glide_frames += 1
 
-        # Weighted overall score
+        # Weighted overall score (updated to include glide)
+        # Weight distribution: Alignment 20%, EVF 20%, Roll 15%, Kick 15%, Torso 10%, Glide 10%, Breathing 10%
         score = (
-            alignment_score * 0.25 +
-            evf_score * 0.25 +
+            alignment_score * 0.20 +
+            evf_score * 0.20 +
             roll_score * 0.15 +
             kick_score * 0.15 +
             torso_score * 0.10 +
+            (glide_score if is_gliding else 70) * 0.10 +  # Glide score or neutral
             100 * 0.10  # Base breathing score
         ) - breath_penalty
 
@@ -2148,7 +2327,9 @@ class SwimAnalyzer:
             'kick_depth': kick_depth,
             'kick_symmetry': kick_sym,
             'breathing_during_pull': breathing_during_pull,
-            'score': score
+            'score': score,
+            'is_gliding': is_gliding,
+            'glide_score': glide_score
         }
 
         # Draw enhanced technique panels
@@ -2163,7 +2344,9 @@ class SwimAnalyzer:
             'kick_depth': 0.25,
             'kick_symmetry': 5.0,
             'breathing_during_pull': False,
-            'score': 95
+            'score': 95,
+            'is_gliding': True,
+            'glide_score': 90
         }
         draw_technique_panel_enhanced(frame, 180, "IDEAL REFERENCE", ideal_metrics, "Pull", True, 'N')
 
@@ -2204,7 +2387,10 @@ class SwimAnalyzer:
             wrist_velocity_y=wrist_velocity_y,
             alignment_score=alignment_score,
             evf_score=evf_score,
-            breathing_during_pull=breathing_during_pull
+            breathing_during_pull=breathing_during_pull,
+            is_gliding=is_gliding,
+            glide_score=glide_score,
+            arm_extension=arm_extension
         )
         self.metrics.append(metrics)
 
@@ -2313,6 +2499,21 @@ class SwimAnalyzer:
             side = "left" if self.breath_l > self.breath_r else "right"
             diagnostics.append(f"💡 Breathing is asymmetric (favoring {side}) - practice bilateral breathing.")
 
+        # Calculate glide metrics
+        glide_metrics = [m for m in high_conf_metrics if m.is_gliding]
+        glide_ratio = (len(glide_metrics) / len(high_conf_metrics) * 100) if high_conf_metrics else 0
+        avg_glide_score = statistics.mean([m.glide_score for m in glide_metrics]) if glide_metrics else 0
+        
+        # 8. GLIDE assessment
+        if glide_ratio < 10:
+            diagnostics.append("🚨 MINIMAL GLIDE detected - you're rushing your stroke! Extend your lead arm and glide briefly after each entry to maximize distance per stroke.")
+        elif glide_ratio < 20:
+            diagnostics.append("⚠️ Low glide ratio ({:.0f}%) - try extending your lead arm longer before starting the catch. This improves efficiency.".format(glide_ratio))
+        elif glide_ratio > 40:
+            diagnostics.append("💡 High glide ratio ({:.0f}%) - good for distance swimming! For sprints, you may want to reduce glide time.".format(glide_ratio))
+        elif avg_glide_score < 60 and glide_ratio >= 15:
+            diagnostics.append("💡 Glide detected but form could improve - focus on full arm extension and streamlined body during glide phase.")
+
         if not diagnostics:
             diagnostics.append("✅ Great technique! Keep up the good work.")
 
@@ -2343,7 +2544,12 @@ class SwimAnalyzer:
             total_breaths=self.breath_l + self.breath_r,
             diagnostics=diagnostics,
             video_context=self.video_context,
-            available_metrics=self.available_metrics
+            available_metrics=self.available_metrics,
+            # Glide metrics
+            glide_ratio=glide_ratio,
+            avg_glide_score=avg_glide_score,
+            glide_frames=self.glide_frames,
+            total_analyzed_frames=len(high_conf_metrics)
         )
 
 # ─────────────────────────────────────────────
