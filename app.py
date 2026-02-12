@@ -30,6 +30,13 @@ try:
 except ImportError:
     MOVIEPY_AVAILABLE = False
 
+# Stripe for payment processing
+try:
+    import stripe
+    STRIPE_AVAILABLE = True
+except ImportError:
+    STRIPE_AVAILABLE = False
+
 # ─────────────────────────────────────────────
 # MEDIAPIPE TASKS API
 # ─────────────────────────────────────────────
@@ -2847,6 +2854,18 @@ def main():
     st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2")
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
+    # Check for payment success via query parameters
+    query_params = st.query_params
+    if query_params.get("payment") == "success":
+        st.session_state.payment_completed = True
+        st.session_state.analysis_unlocked = True
+        st.success("✅ Payment successful! You can now analyze your video.")
+        # Clear query params to avoid re-triggering
+        st.query_params.clear()
+    elif query_params.get("payment") == "cancel":
+        st.warning("⚠️ Payment cancelled. You can try again when ready.")
+        st.query_params.clear()
+
     st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
     st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
     
@@ -2939,61 +2958,164 @@ def main():
     athlete = AthleteProfile(height, discipline)
 
     # ═══════════════════════════════════════════════════════════════
-    # MANDATORY VIDEO TYPE SELECTION
+    # STEP 1: VIDEO UPLOAD
     # ═══════════════════════════════════════════════════════════════
-    
-    st.subheader("📹 Video Type Selection (Required)")
-    st.markdown("**Select your video type before uploading.** This ensures accurate analysis.")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        video_type = st.radio(
-            "Select video type:",
-            options=[
-                "Side View - Underwater",
-                "Side View - Above Water",
-                "Front View - Underwater",
-                "Front View - Above Water"
-            ],
-            index=None,  # No default selection
-            help="Choose the type that best matches your video. Side view = camera sees swimmer from the side. Front view = camera faces the swimmer."
-        )
-    
-    with col2:
-        st.markdown("""
-        **📐 Side View**: Camera positioned to see the swimmer from the side (most common for technique analysis)
-        
-        **👤 Front View**: Camera faces the swimmer head-on (good for body roll and symmetry)
-        
-        **🌊 Above Water**: Camera is above the water surface
-        
-        **🤿 Underwater**: Camera is below the water surface
-        """)
-    
-    # Map selection to enums
-    video_type_map = {
-        "Side View - Underwater": (CameraView.SIDE, WaterPosition.UNDERWATER),
-        "Side View - Above Water": (CameraView.SIDE, WaterPosition.ABOVE_WATER),
-        "Front View - Underwater": (CameraView.FRONT, WaterPosition.UNDERWATER),
-        "Front View - Above Water": (CameraView.FRONT, WaterPosition.ABOVE_WATER),
-    }
-    
-    if video_type:
-        selected_camera, selected_water = video_type_map[video_type]
-        st.success(f"✅ Selected: **{video_type}**")
-    else:
-        st.info("👆 Please select a video type above before uploading your video.")
-    
+
+    st.subheader("📹 Step 1: Upload Your Video")
+    uploaded = st.file_uploader("Upload swimming video", type=["mp4", "mov", "avi", "MOV", "MP4", "AVI"])
+
+    if uploaded:
+        file_size_mb = len(uploaded.getvalue()) / (1024 * 1024)
+        st.success(f"✅ Video uploaded: **{uploaded.name}** ({file_size_mb:.1f} MB)")
+
     st.divider()
 
-    uploaded = st.file_uploader("📹 Upload swimming video", type=["mp4", "mov", "avi"], disabled=(video_type is None))
-    
-    if video_type is None and uploaded:
-        st.error("⚠️ Please select a video type above before processing.")
-        return
+    # ═══════════════════════════════════════════════════════════════
+    # STEP 2: VIDEO TYPE SELECTION (only shown after upload)
+    # ═══════════════════════════════════════════════════════════════
 
-    if uploaded and video_type:
+    video_type = None
+    selected_camera = None
+    selected_water = None
+
+    if uploaded:
+        st.subheader("📹 Step 2: Select Video Type")
+        st.markdown("**Choose the type that matches your uploaded video** for accurate analysis.")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            video_type = st.radio(
+                "Select video type:",
+                options=[
+                    "Side View - Underwater",
+                    "Side View - Above Water",
+                    "Front View - Underwater",
+                    "Front View - Above Water"
+                ],
+                index=None,
+                help="Choose the type that best matches your video. Side view = camera sees swimmer from the side. Front view = camera faces the swimmer."
+            )
+
+        with col2:
+            st.markdown("""
+            **📐 Side View**: Camera positioned to see the swimmer from the side (most common for technique analysis)
+
+            **👤 Front View**: Camera faces the swimmer head-on (good for body roll and symmetry)
+
+            **🌊 Above Water**: Camera is above the water surface
+
+            **🤿 Underwater**: Camera is below the water surface
+            """)
+
+        # Map selection to enums
+        video_type_map = {
+            "Side View - Underwater": (CameraView.SIDE, WaterPosition.UNDERWATER),
+            "Side View - Above Water": (CameraView.SIDE, WaterPosition.ABOVE_WATER),
+            "Front View - Underwater": (CameraView.FRONT, WaterPosition.UNDERWATER),
+            "Front View - Above Water": (CameraView.FRONT, WaterPosition.ABOVE_WATER),
+        }
+
+        if video_type:
+            selected_camera, selected_water = video_type_map[video_type]
+            st.success(f"✅ Selected: **{video_type}** - Ready to analyze!")
+        else:
+            st.info("👆 Please select your video type above to start analysis.")
+
+        st.divider()
+
+        # ═══════════════════════════════════════════════════════════════
+        # STEP 3: PAYMENT FOR SINGLE ANALYSIS
+        # ═══════════════════════════════════════════════════════════════
+
+        if video_type:
+            st.subheader("💳 Step 3: Payment")
+
+            # Initialize session state for payment tracking
+            if 'payment_completed' not in st.session_state:
+                st.session_state.payment_completed = False
+            if 'analysis_unlocked' not in st.session_state:
+                st.session_state.analysis_unlocked = False
+
+            if not st.session_state.payment_completed:
+                st.markdown("""
+                **Single Video Analysis** - $9.99
+
+                ✓ Full technique analysis
+                ✓ Detailed PDF report
+                ✓ Downloadable annotated video
+                ✓ CSV data export
+                """)
+
+                if STRIPE_AVAILABLE:
+                    # Initialize Stripe with your keys (stored in Streamlit secrets)
+                    # You'll need to add these to .streamlit/secrets.toml:
+                    # [stripe]
+                    # publishable_key = "pk_test_..."
+                    # secret_key = "sk_test_..."
+                    # price_id = "price_..."  # Your Stripe Price ID for single analysis
+
+                    try:
+                        stripe_secret = st.secrets.get("stripe", {}).get("secret_key")
+                        stripe_price_id = st.secrets.get("stripe", {}).get("price_id")
+
+                        if stripe_secret and stripe_price_id:
+                            stripe.api_key = stripe_secret
+
+                            col1, col2 = st.columns([1, 2])
+                            with col1:
+                                if st.button("🚀 Pay & Analyze ($9.99)", type="primary"):
+                                    # Create Stripe Checkout Session
+                                    try:
+                                        # Get base URL from secrets or use current
+                                        base_url = st.secrets.get("stripe", {}).get("base_url", "https://yourapp.streamlit.app")
+
+                                        checkout_session = stripe.checkout.Session.create(
+                                            payment_method_types=['card'],
+                                            line_items=[{
+                                                'price': stripe_price_id,
+                                                'quantity': 1,
+                                            }],
+                                            mode='payment',
+                                            success_url=f"{base_url}?payment=success",
+                                            cancel_url=f"{base_url}?payment=cancel",
+                                        )
+
+                                        # Redirect to Stripe Checkout
+                                        st.markdown(f'<meta http-equiv="refresh" content="0; url={checkout_session.url}" />', unsafe_allow_html=True)
+                                        st.info(f"Redirecting to payment... [Click here if not redirected]({checkout_session.url})")
+
+                                    except Exception as e:
+                                        st.error(f"Payment error: {e}")
+                        else:
+                            st.warning("⚠️ Stripe configuration missing. Add your Stripe keys to `.streamlit/secrets.toml`")
+                            # For testing/development: allow bypass
+                            if st.button("🧪 Skip Payment (Testing Mode)"):
+                                st.session_state.payment_completed = True
+                                st.session_state.analysis_unlocked = True
+                                st.rerun()
+
+                    except Exception as e:
+                        st.error(f"Stripe initialization error: {e}")
+                        # Fallback for testing
+                        if st.button("🧪 Skip Payment (Testing Mode)"):
+                            st.session_state.payment_completed = True
+                            st.session_state.analysis_unlocked = True
+                            st.rerun()
+                else:
+                    st.warning("⚠️ Stripe not installed. Run: `pip install stripe`")
+                    # For testing: allow bypass
+                    if st.button("🧪 Skip Payment (Testing Mode)"):
+                        st.session_state.payment_completed = True
+                        st.session_state.analysis_unlocked = True
+                        st.rerun()
+
+                st.divider()
+            else:
+                st.success("✅ Payment Completed - Analysis Unlocked!")
+                st.divider()
+
+    if uploaded and video_type and st.session_state.get('analysis_unlocked', False):
         # Use the user-selected video type (mandatory override)
         manual_camera_view = selected_camera
         manual_water_position = selected_water
@@ -3093,12 +3215,21 @@ def main():
                     encoding_progress.progress(0.2)
                     encoding_status.text("🔄 Encoding video (20%)...")
                     
+                    # Mobile-optimized encoding settings
                     clip.write_videofile(
-                        out_path, 
+                        out_path,
                         codec='libx264',
                         audio=False,
-                        preset='fast',
-                        ffmpeg_params=['-pix_fmt', 'yuv420p', '-movflags', '+faststart'],
+                        preset='medium',  # Better quality/size ratio than 'fast'
+                        ffmpeg_params=[
+                            '-pix_fmt', 'yuv420p',  # Critical for mobile compatibility
+                            '-profile:v', 'baseline',  # H.264 baseline profile for max mobile compatibility
+                            '-level', '3.0',  # Compatible with most mobile devices
+                            '-movflags', '+faststart',  # Enable streaming/progressive download
+                            '-crf', '23',  # Constant rate factor for good quality
+                            '-maxrate', '2M',  # Limit bitrate for mobile playback
+                            '-bufsize', '4M'  # Buffer size for rate control
+                        ],
                         logger=None  # Suppress moviepy output
                     )
                     clip.close()
@@ -3118,13 +3249,18 @@ def main():
                     encoding_status.text("🔄 Encoding with ffmpeg (50%)...")
                     encoding_progress.progress(0.5)
                     
+                    # Mobile-optimized ffmpeg encoding
                     subprocess.run([
                         'ffmpeg', '-y', '-i', temp_out_path,
                         '-c:v', 'libx264',
-                        '-preset', 'fast',
-                        '-crf', '23',
-                        '-pix_fmt', 'yuv420p',
-                        '-movflags', '+faststart',
+                        '-preset', 'medium',  # Better quality/size balance
+                        '-profile:v', 'baseline',  # H.264 baseline for mobile compatibility
+                        '-level', '3.0',  # Mobile-compatible level
+                        '-crf', '23',  # Good quality
+                        '-maxrate', '2M',  # Limit bitrate for mobile
+                        '-bufsize', '4M',  # Buffer size
+                        '-pix_fmt', 'yuv420p',  # Critical for compatibility
+                        '-movflags', '+faststart',  # Enable streaming
                         out_path
                     ], check=True, capture_output=True, timeout=120)
                     encoding_success = True
