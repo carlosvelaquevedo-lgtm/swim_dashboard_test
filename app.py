@@ -2643,6 +2643,9 @@ def main():
 
     st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
     st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
+    
+    # Important notice about video requirements
+    st.warning("⚠️ **Full body must be visible for an accurate analysis.** Ensure the swimmer's entire body (head to feet) is in frame throughout the video.")
 
     if not MEDIAPIPE_TASKS_AVAILABLE:
         st.error("MediaPipe Tasks not installed. Run: pip install mediapipe>=0.10.14")
@@ -2681,30 +2684,26 @@ def main():
         
         st.divider()
         
-        # Video Context Settings
-        st.subheader("📹 Video Settings")
+        # Detection Settings with explanations
+        st.subheader("Detection Settings")
         
-        auto_detect = st.checkbox("Auto-detect camera angle & water position", value=True)
+        conf_thresh = st.slider("Confidence Threshold", 0.3, 0.7, DEFAULT_CONF_THRESHOLD, 0.05)
+        st.caption("""
+        **What it does**: Filters out frames where pose detection is uncertain.  
+        **Ideal setting**: **0.5** (default) - balances accuracy with data retention.  
+        ↑ Higher = stricter, fewer frames analyzed but more accurate.  
+        ↓ Lower = more frames but may include errors from splashing/bubbles.
+        """)
         
-        if not auto_detect:
-            st.caption("Manual override:")
-            manual_camera = st.selectbox("Camera Angle", 
-                ["Side View", "Front View", "Top View"],
-                help="Side: See swimmer from the side. Front: Facing the swimmer. Top: Looking down from above.")
-            
-            manual_water = st.selectbox("Water Position",
-                ["Underwater", "Above Water", "Mixed/Waterline"],
-                help="Underwater: Camera below surface. Above: Camera above surface. Mixed: Waterline visible.")
-            
-            # Map to enums
-            camera_map = {"Side View": CameraView.SIDE, "Front View": CameraView.FRONT, "Top View": CameraView.TOP}
-            water_map = {"Underwater": WaterPosition.UNDERWATER, "Above Water": WaterPosition.ABOVE_WATER, "Mixed/Waterline": WaterPosition.MIXED}
-            manual_camera_view = camera_map[manual_camera]
-            manual_water_position = water_map[manual_water]
-        else:
-            manual_camera_view = None
-            manual_water_position = None
-            st.caption("The analyzer will automatically detect your video type in the first few seconds.")
+        yaw_thresh = st.slider("Breath Detection Sensitivity", 0.05, 0.3, DEFAULT_YAW_THRESHOLD, 0.01)
+        st.caption("""
+        **What it does**: Detects head rotation for breath timing analysis.  
+        **Ideal setting**: **0.15** (default) - catches most breaths without false positives.  
+        ↑ Higher = only detects very pronounced head turns.  
+        ↓ Lower = more sensitive, may count minor head movements as breaths.
+        """)
+        
+        st.divider()
         
         # Show what metrics are available based on view
         with st.expander("📊 Metrics by View Type"):
@@ -2730,38 +2729,74 @@ def main():
             - Entry angle
             - Breathing side
             """)
-        
-        st.divider()
-        
-        # Detection Settings with explanations
-        st.subheader("Detection Settings")
-        
-        conf_thresh = st.slider("Confidence Threshold", 0.3, 0.7, DEFAULT_CONF_THRESHOLD, 0.05)
-        st.caption("""
-        **What it does**: Filters out frames where pose detection is uncertain.  
-        **Ideal setting**: **0.5** (default) - balances accuracy with data retention.  
-        ↑ Higher = stricter, fewer frames analyzed but more accurate.  
-        ↓ Lower = more frames but may include errors from splashing/bubbles.
-        """)
-        
-        yaw_thresh = st.slider("Breath Detection Sensitivity", 0.05, 0.3, DEFAULT_YAW_THRESHOLD, 0.01)
-        st.caption("""
-        **What it does**: Detects head rotation for breath timing analysis.  
-        **Ideal setting**: **0.15** (default) - catches most breaths without false positives.  
-        ↑ Higher = only detects very pronounced head turns.  
-        ↓ Lower = more sensitive, may count minor head movements as breaths.
-        """)
 
     athlete = AthleteProfile(height, discipline)
 
-    uploaded = st.file_uploader("📹 Upload swimming video", type=["mp4", "mov", "avi"])
+    # ═══════════════════════════════════════════════════════════════
+    # MANDATORY VIDEO TYPE SELECTION
+    # ═══════════════════════════════════════════════════════════════
+    
+    st.subheader("📹 Video Type Selection (Required)")
+    st.markdown("**Select your video type before uploading.** This ensures accurate analysis.")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        video_type = st.radio(
+            "Select video type:",
+            options=[
+                "Side View - Underwater",
+                "Side View - Above Water",
+                "Front View - Underwater",
+                "Front View - Above Water"
+            ],
+            index=None,  # No default selection
+            help="Choose the type that best matches your video. Side view = camera sees swimmer from the side. Front view = camera faces the swimmer."
+        )
+    
+    with col2:
+        st.markdown("""
+        **📐 Side View**: Camera positioned to see the swimmer from the side (most common for technique analysis)
+        
+        **👤 Front View**: Camera faces the swimmer head-on (good for body roll and symmetry)
+        
+        **🌊 Above Water**: Camera is above the water surface
+        
+        **🤿 Underwater**: Camera is below the water surface
+        """)
+    
+    # Map selection to enums
+    video_type_map = {
+        "Side View - Underwater": (CameraView.SIDE, WaterPosition.UNDERWATER),
+        "Side View - Above Water": (CameraView.SIDE, WaterPosition.ABOVE_WATER),
+        "Front View - Underwater": (CameraView.FRONT, WaterPosition.UNDERWATER),
+        "Front View - Above Water": (CameraView.FRONT, WaterPosition.ABOVE_WATER),
+    }
+    
+    if video_type:
+        selected_camera, selected_water = video_type_map[video_type]
+        st.success(f"✅ Selected: **{video_type}**")
+    else:
+        st.info("👆 Please select a video type above before uploading your video.")
+    
+    st.divider()
 
-    if uploaded:
+    uploaded = st.file_uploader("📹 Upload swimming video", type=["mp4", "mov", "avi"], disabled=(video_type is None))
+    
+    if video_type is None and uploaded:
+        st.error("⚠️ Please select a video type above before processing.")
+        return
+
+    if uploaded and video_type:
+        # Use the user-selected video type (mandatory override)
+        manual_camera_view = selected_camera
+        manual_water_position = selected_water
+        
         try:
             analyzer = SwimAnalyzer(
                 athlete, conf_thresh, yaw_thresh,
-                manual_camera_view=manual_camera_view if not auto_detect else None,
-                manual_water_position=manual_water_position if not auto_detect else None
+                manual_camera_view=manual_camera_view,
+                manual_water_position=manual_water_position
             )
         except Exception as e:
             st.error(f"Failed to initialize analyzer: {e}")
@@ -2782,9 +2817,11 @@ def main():
         fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Use XVID for intermediate
         writer = cv2.VideoWriter(temp_out_path, fourcc, fps, (w, h))
 
-        progress = st.progress(0)
-        status = st.empty()
-
+        # Progress bars for processing and encoding
+        st.markdown("### ⏳ Processing Video")
+        processing_progress = st.progress(0)
+        processing_status = st.empty()
+        
         frame_idx = 0
         try:
             while cap.isOpened():
@@ -2800,22 +2837,56 @@ def main():
 
                 frame_idx += 1
                 if total > 0:
-                    progress.progress(min(frame_idx / total, 1.0))
-                status.text(f"Processing frame {frame_idx}/{total}")
+                    pct = frame_idx / total
+                    processing_progress.progress(min(pct, 1.0))
+                processing_status.text(f"🎬 Analyzing frame {frame_idx}/{total} ({frame_idx/total*100:.1f}%)")
 
             cap.release()
             writer.release()
             
-            # Re-encode to H.264 MP4 for browser compatibility
-            status.text("Encoding video for browser playback...")
+            processing_status.text("✅ Frame analysis complete!")
+            
+            # ═══════════════════════════════════════════════════════════════
+            # ENCODING WITH PROGRESS BAR
+            # ═══════════════════════════════════════════════════════════════
+            
+            st.markdown("### 🎥 Encoding Video")
+            encoding_progress = st.progress(0)
+            encoding_status = st.empty()
+            
+            encoding_status.text("🔄 Encoding video for browser playback (0%)...")
             out_path = tempfile.mktemp(suffix=".mp4")
             
             encoding_success = False
             
-            # Method 1: Use MoviePy (pure Python, no ffmpeg binary required)
+            # Method 1: Use MoviePy with progress callback
             if MOVIEPY_AVAILABLE:
                 try:
+                    encoding_status.text("🔄 Encoding video (initializing)...")
+                    encoding_progress.progress(0.1)
+                    
                     clip = VideoFileClip(temp_out_path)
+                    duration = clip.duration
+                    
+                    # Custom progress logger for moviepy
+                    class ProgressLogger:
+                        def __init__(self, progress_bar, status_text, duration):
+                            self.progress_bar = progress_bar
+                            self.status_text = status_text
+                            self.duration = duration
+                            self.last_pct = 0
+                        
+                        def __call__(self, t=None, *args, **kwargs):
+                            if t is not None and self.duration > 0:
+                                pct = min(t / self.duration, 1.0)
+                                if pct - self.last_pct > 0.02:  # Update every 2%
+                                    self.progress_bar.progress(pct)
+                                    self.status_text.text(f"🔄 Encoding video ({pct*100:.0f}%)...")
+                                    self.last_pct = pct
+                    
+                    encoding_progress.progress(0.2)
+                    encoding_status.text("🔄 Encoding video (20%)...")
+                    
                     clip.write_videofile(
                         out_path, 
                         codec='libx264',
@@ -2826,13 +2897,21 @@ def main():
                     )
                     clip.close()
                     encoding_success = True
+                    
+                    encoding_progress.progress(1.0)
+                    encoding_status.text("✅ Encoding complete!")
+                    
                 except Exception as e:
-                    st.warning(f"MoviePy encoding failed: {e}. Trying fallback...")
+                    encoding_status.text(f"⚠️ MoviePy encoding failed: {e}. Trying fallback...")
+                    encoding_progress.progress(0.3)
             
             # Method 2: Fallback to ffmpeg binary if available
             if not encoding_success:
                 import subprocess
                 try:
+                    encoding_status.text("🔄 Encoding with ffmpeg (50%)...")
+                    encoding_progress.progress(0.5)
+                    
                     subprocess.run([
                         'ffmpeg', '-y', '-i', temp_out_path,
                         '-c:v', 'libx264',
@@ -2843,14 +2922,21 @@ def main():
                         out_path
                     ], check=True, capture_output=True, timeout=120)
                     encoding_success = True
+                    
+                    encoding_progress.progress(1.0)
+                    encoding_status.text("✅ Encoding complete!")
+                    
                 except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
-                    pass
+                    encoding_status.text("⚠️ ffmpeg not available, using fallback...")
+                    encoding_progress.progress(0.7)
             
             # Method 3: Last resort - just use the AVI file (may not play in browser)
             if not encoding_success:
                 import shutil
                 out_path = temp_out_path.replace('.avi', '.mp4')
                 shutil.copy(temp_out_path, out_path)
+                encoding_progress.progress(1.0)
+                encoding_status.text("⚠️ Video encoding limited - download the video for best playback")
                 st.warning("⚠️ Video encoding limited - download the video for best playback")
             
             # Clean up temp AVI
@@ -2886,44 +2972,54 @@ def main():
 
             st.success("✅ Analysis complete!")
             
-            # Display detected video context
-            if summary.video_context:
-                ctx = summary.video_context
-                ctx_icon = "🎥" if ctx.camera_view == CameraView.SIDE else "👤" if ctx.camera_view == CameraView.FRONT else "🔝"
-                water_icon = "🌊" if ctx.water_position == WaterPosition.UNDERWATER else "☀️" if ctx.water_position == WaterPosition.ABOVE_WATER else "〰️"
-                confidence_color = "#22c55e" if ctx.confidence >= 0.7 else "#eab308" if ctx.confidence >= 0.5 else "#ef4444"
-                
+            # Display video type information - User selected vs Auto-detected
+            st.markdown("### 📹 Video Type")
+            
+            col_user, col_auto = st.columns(2)
+            
+            with col_user:
+                user_ctx_icon = "🎥" if selected_camera == CameraView.SIDE else "👤"
+                user_water_icon = "🤿" if selected_water == WaterPosition.UNDERWATER else "☀️"
                 st.markdown(f"""
-                <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 16px; margin-bottom: 20px; border-left: 4px solid #06b6d4;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-                        <div>
-                            <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase;">Detected Video Type</span>
-                            <div style="font-size: 18px; font-weight: 600; color: white; margin-top: 4px;">
-                                {ctx_icon} {ctx.camera_view.value} &nbsp;•&nbsp; {water_icon} {ctx.water_position.value}
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <span style="color: #94a3b8; font-size: 12px;">Detection Confidence</span>
-                            <div style="font-size: 18px; font-weight: 600; color: {confidence_color};">{ctx.confidence*100:.0f}%</div>
-                        </div>
-                    </div>
-                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(100, 116, 139, 0.3);">
-                        <span style="color: #64748b; font-size: 12px;">
-                            {'📊 Full metrics available (side underwater view)' if ctx.camera_view == CameraView.SIDE and ctx.water_position == WaterPosition.UNDERWATER else 
-                             '📊 Limited metrics (best results with side underwater view)' if ctx.camera_view != CameraView.SIDE or ctx.water_position != WaterPosition.UNDERWATER else ''}
-                        </span>
+                <div style="background: rgba(34, 197, 94, 0.15); border-radius: 12px; padding: 16px; border-left: 4px solid #22c55e;">
+                    <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase;">Your Selection (Used for Analysis)</span>
+                    <div style="font-size: 18px; font-weight: 600; color: #22c55e; margin-top: 4px;">
+                        {user_ctx_icon} {selected_camera.value} &nbsp;•&nbsp; {user_water_icon} {selected_water.value}
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
-                
-                # Show warning if not optimal view
-                if ctx.camera_view != CameraView.SIDE or ctx.water_position != WaterPosition.UNDERWATER:
-                    st.warning(f"""
-                    **Note:** Your video appears to be **{ctx.camera_view.value}** / **{ctx.water_position.value}**.
+            
+            with col_auto:
+                if summary.video_context:
+                    ctx = summary.video_context
+                    ctx_icon = "🎥" if ctx.camera_view == CameraView.SIDE else "👤" if ctx.camera_view == CameraView.FRONT else "🔝"
+                    water_icon = "🤿" if ctx.water_position == WaterPosition.UNDERWATER else "☀️" if ctx.water_position == WaterPosition.ABOVE_WATER else "〰️"
+                    confidence_color = "#22c55e" if ctx.confidence >= 0.7 else "#eab308" if ctx.confidence >= 0.5 else "#ef4444"
                     
-                    For the most accurate analysis (EVF, body alignment, kick depth), use **Side View Underwater** footage.
-                    Current view provides: {', '.join(summary.available_metrics.keys()) if summary.available_metrics else 'basic metrics'}
-                    """)
+                    # Check if auto-detection matches user selection
+                    matches = (ctx.camera_view == selected_camera and ctx.water_position == selected_water)
+                    match_icon = "✅" if matches else "⚠️"
+                    border_color = "#22c55e" if matches else "#eab308"
+                    
+                    st.markdown(f"""
+                    <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 16px; border-left: 4px solid {border_color};">
+                        <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase;">Auto-Detection Result {match_icon}</span>
+                        <div style="font-size: 18px; font-weight: 600; color: white; margin-top: 4px;">
+                            {ctx_icon} {ctx.camera_view.value} &nbsp;•&nbsp; {water_icon} {ctx.water_position.value}
+                        </div>
+                        <div style="font-size: 12px; color: {confidence_color}; margin-top: 4px;">Confidence: {ctx.confidence*100:.0f}%</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    if not matches:
+                        st.caption("ℹ️ Auto-detection differs from your selection. Your selection is used for analysis.")
+                else:
+                    st.markdown("""
+                    <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 16px; border-left: 4px solid #64748b;">
+                        <span style="color: #94a3b8; font-size: 12px;">Auto-Detection</span>
+                        <div style="font-size: 14px; color: #64748b; margin-top: 4px;">Not enough data for detection</div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
             # NEW: Render visual metrics component with body silhouettes
             st.subheader("📊 Technique Breakdown")
