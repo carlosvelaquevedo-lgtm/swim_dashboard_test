@@ -16,60 +16,6 @@ st.markdown("""
     footer {visibility: hidden;}
     .block-container {padding: 0 !important; max-width: 100% !important;}
     iframe {border: none !important;}
-    
-    /* Style for native Streamlit buttons to match the landing page */
-    .stButton > button {
-        width: 100%;
-        padding: 18px 32px;
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: #0a1628;
-        background: linear-gradient(135deg, #06b6d4, #22d3ee);
-        border: none;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
-    }
-    .stButton > button:hover {
-        box-shadow: 0 6px 30px rgba(6, 182, 212, 0.5);
-    }
-    
-    /* Demo button styling */
-    div[data-testid="stHorizontalBlock"] .stButton > button {
-        background: transparent;
-        border: 1px solid rgba(240,253,255,0.3);
-        color: rgba(240,253,255,0.7);
-        padding: 12px 24px;
-        font-size: 0.95rem;
-        box-shadow: none;
-    }
-    div[data-testid="stHorizontalBlock"] .stButton > button:hover {
-        border-color: rgba(6,182,212,0.5);
-        color: #06b6d4;
-        box-shadow: none;
-    }
-    
-    /* Link button styling */
-    .stLinkButton > a {
-        width: 100%;
-        padding: 18px 32px !important;
-        font-size: 1.125rem !important;
-        font-weight: 600 !important;
-        color: #0a1628 !important;
-        background: linear-gradient(135deg, #06b6d4, #22d3ee) !important;
-        border: none !important;
-        border-radius: 12px !important;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
-        text-decoration: none !important;
-        display: inline-block;
-        text-align: center;
-    }
-    .stLinkButton > a:hover {
-        box-shadow: 0 6px 30px rgba(6, 182, 212, 0.5);
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -96,7 +42,7 @@ if "paid" not in st.session_state:
 
 def show_landing_page():
     # ─────────────────────────────────────────────
-    # FULL LANDING PAGE HTML (without interactive buttons - those are handled by Streamlit)
+    # FULL LANDING PAGE HTML WITH WORKING BUTTONS
     # ─────────────────────────────────────────────
     landing_html = f"""
     <!DOCTYPE html>
@@ -286,6 +232,53 @@ def show_landing_page():
                 margin-bottom: 32px;
             }}
 
+            /* Working button styles */
+            .cta-button {{
+                display: block;
+                width: 100%;
+                padding: 18px 32px;
+                font-size: 1.125rem;
+                font-weight: 600;
+                color: #0a1628;
+                background: linear-gradient(135deg, #06b6d4, #22d3ee);
+                border: none;
+                border-radius: 12px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
+                text-decoration: none;
+                text-align: center;
+                font-family: inherit;
+            }}
+            
+            .cta-button:hover {{
+                box-shadow: 0 6px 30px rgba(6, 182, 212, 0.5);
+                transform: translateY(-2px);
+            }}
+            
+            .demo-button {{
+                display: block;
+                width: 100%;
+                margin-top: 16px;
+                padding: 14px 24px;
+                font-size: 0.95rem;
+                font-weight: 500;
+                color: rgba(240, 253, 255, 0.7);
+                background: transparent;
+                border: 1px solid rgba(240, 253, 255, 0.3);
+                border-radius: 12px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                text-align: center;
+                font-family: inherit;
+            }}
+            
+            .demo-button:hover {{
+                border-color: rgba(6, 182, 212, 0.5);
+                color: #06b6d4;
+            }}
+
             .trust-signals {{
                 display: flex;
                 justify-content: center;
@@ -305,15 +298,6 @@ def show_landing_page():
                 content: '✓';
                 color: var(--success-green);
                 font-weight: 700;
-            }}
-
-            .button-placeholder {{
-                height: 60px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: rgba(240, 253, 255, 0.5);
-                font-size: 0.875rem;
             }}
 
             .features-section {{
@@ -372,10 +356,6 @@ def show_landing_page():
                 line-height: 1.6;
             }}
 
-            .video-section {{
-                padding: 60px 0;
-            }}
-
             .demo-section {{
                 padding: 60px 0;
                 background: linear-gradient(180deg, rgba(6, 182, 212, 0.02) 0%, transparent 100%);
@@ -384,9 +364,6 @@ def show_landing_page():
             .demo-video-container {{
                 max-width: 900px;
                 margin: 0 auto;
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-                gap: 24px;
             }}
 
             .demo-video-wrapper {{
@@ -400,34 +377,8 @@ def show_landing_page():
                 justify-content: center;
             }}
 
-            .demo-video-wrapper iframe {{
-                width: 100%;
-                height: 100%;
-                min-height: 400px;
-                border-radius: 12px;
-            }}
-
-            .demo-placeholder {{
-                text-align: center;
-                padding: 60px 40px;
-                color: rgba(240, 253, 255, 0.5);
-            }}
-
-            .demo-placeholder svg {{
-                margin-bottom: 20px;
-                opacity: 0.6;
-            }}
-
-            .demo-placeholder p {{
-                font-size: 1.125rem;
-                margin-bottom: 8px;
-                color: rgba(240, 253, 255, 0.7);
-            }}
-
-            .demo-instruction {{
-                font-size: 0.875rem;
-                color: rgba(6, 182, 212, 0.6);
-                font-style: italic;
+            .video-section {{
+                padding: 60px 0;
             }}
 
             .video-cards {{
@@ -634,6 +585,11 @@ def show_landing_page():
                 color: rgba(240, 253, 255, 0.7);
                 margin-bottom: 32px;
             }}
+            
+            .final-cta .cta-button {{
+                max-width: 400px;
+                margin: 0 auto;
+            }}
 
             footer {{
                 padding: 40px 0;
@@ -655,29 +611,10 @@ def show_landing_page():
                 text-decoration: underline;
             }}
 
-            /* Enhanced SVG Animations */
-            @keyframes swim-stroke {{
-                0%, 100% {{ transform: translateX(0) rotate(0deg); }}
-                50% {{ transform: translateX(-8px) rotate(-3deg); }}
-            }}
-
-            @keyframes arm-pull {{
-                0%, 100% {{ transform: rotate(0deg); }}
-                50% {{ transform: rotate(-15deg); }}
-            }}
-
-            @keyframes bubble-rise {{
-                0% {{ transform: translateY(0) scale(1); opacity: 0.6; }}
-                100% {{ transform: translateY(-30px) scale(0.5); opacity: 0; }}
-            }}
-
             @media (max-width: 768px) {{
                 .steps {{ flex-direction: column; }}
                 .step-arrow {{ transform: rotate(90deg); }}
                 .trust-signals {{ flex-direction: column; gap: 12px; }}
-                .demo-video-container {{ grid-template-columns: 1fr; }}
-                .demo-video-wrapper {{ min-height: 300px; }}
-                .demo-video-wrapper iframe {{ min-height: 300px; }}
             }}
         </style>
     </head>
@@ -718,8 +655,12 @@ def show_landing_page():
                             </div>
                             <p class="price-note">One video • Full PDF report • Annotated playback</p>
                             
-                            <!-- BUTTON PLACEHOLDER - Actual buttons rendered by Streamlit below -->
-                            <div class="button-placeholder">↓ Click button below ↓</div>
+                            <!-- Working buttons using standard anchor tags -->
+                            <a href="{STRIPE_PAYMENT_LINK}" class="cta-button" target="_top">
+                                🏊 Get Instant Analysis → $4.99
+                            </a>
+                            
+                            {"<a href='?demo=true' class='demo-button' target='_top'>Skip Payment – Demo Mode (testing only)</a>" if IS_DEV else ""}
                             
                             <div class="trust-signals">
                                 <span class="trust-signal">Secure checkout</span>
@@ -779,7 +720,7 @@ def show_landing_page():
                                         <circle cx="60" cy="60" r="45" fill="rgba(6, 182, 212, 0.15)"/>
                                         <path d="M 48 38 L 48 82 L 82 60 Z" fill="#06b6d4"/>
                                     </svg>
-                                    <h3 style="font-size: 1.5rem; margin-bottom: 12px; color: var(--lane-line);">Demo Video Coming Soon</h3>
+                                    <h3 style="font-size: 1.5rem; margin-bottom: 12px; color: #22d3ee;">Demo Video Coming Soon</h3>
                                     <p style="font-size: 1.1rem; max-width: 500px; line-height: 1.6;">
                                         We're finalizing a full walkthrough showing the upload, AI analysis, and instant PDF report generation.
                                     </p>
@@ -797,126 +738,159 @@ def show_landing_page():
                         <h2 class="section-title">Best camera angles</h2>
 
                         <div class="video-cards">
+                            <!-- RECOMMENDED: Side View Underwater -->
                             <div class="video-card recommended">
                                 <div class="video-preview">
                                     <svg viewBox="0 0 200 120" class="video-svg">
                                         <defs>
-                                            <linearGradient id="waterGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                <stop offset="0%" style="stop-color:#0a1628;stop-opacity:1" />
-                                                <stop offset="50%" style="stop-color:#0f2847;stop-opacity:1" />
-                                                <stop offset="100%" style="stop-color:#0a1628;stop-opacity:1" />
+                                            <linearGradient id="poolGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                                <stop offset="0%" stop-color="#0c2d4d"/>
+                                                <stop offset="100%" stop-color="#0a1628"/>
                                             </linearGradient>
-                                            <linearGradient id="swimmerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                                <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0.9" />
-                                                <stop offset="100%" style="stop-color:#22d3ee;stop-opacity:0.7" />
+                                            <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.8"/>
+                                                <stop offset="50%" stop-color="#22d3ee"/>
+                                                <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.8"/>
                                             </linearGradient>
                                         </defs>
-                                        <rect fill="url(#waterGrad1)" width="200" height="120" rx="8"/>
-                                        <line x1="0" y1="15" x2="200" y2="15" stroke="#22d3ee" stroke-width="2" stroke-dasharray="8,4" opacity="0.5"/>
-                                        <g class="swimmer-side">
-                                            <ellipse cx="45" cy="48" rx="8" ry="10" fill="url(#swimmerGrad)"/>
-                                            <ellipse cx="70" cy="50" rx="25" ry="12" fill="url(#swimmerGrad)"/>
-                                            <ellipse cx="95" cy="52" rx="12" ry="10" fill="url(#swimmerGrad)"/>
-                                            <path d="M 105 52 L 135 50 L 138 52" stroke="url(#swimmerGrad)" stroke-width="6" fill="none" stroke-linecap="round"/>
-                                            <path d="M 105 52 L 135 54 L 138 56" stroke="url(#swimmerGrad)" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.8"/>
-                                            <line x1="40" y1="45" x2="15" y2="42" stroke="url(#swimmerGrad)" stroke-width="5" stroke-linecap="round"/>
-                                            <circle cx="15" cy="42" r="4" fill="#06b6d4"/>
-                                            <path d="M 50 50 Q 75 65 95 55" stroke="url(#swimmerGrad)" stroke-width="5" fill="none" stroke-linecap="round" class="pull-arm"/>
-                                            <circle cx="95" cy="55" r="4" fill="#06b6d4"/>
+                                        <!-- Pool background -->
+                                        <rect fill="url(#poolGrad)" width="200" height="120" rx="8"/>
+                                        <!-- Water surface line -->
+                                        <path d="M0 20 Q50 15 100 20 T200 20" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.4"/>
+                                        <!-- Lane line -->
+                                        <line x1="0" y1="18" x2="200" y2="18" stroke="#22d3ee" stroke-width="3" stroke-dasharray="12,6" opacity="0.3"/>
+                                        <!-- Swimmer silhouette - clean geometric style -->
+                                        <g transform="translate(30, 45)">
+                                            <!-- Body core -->
+                                            <ellipse cx="70" cy="12" rx="55" ry="10" fill="url(#glowGrad)" opacity="0.9"/>
+                                            <!-- Head -->
+                                            <circle cx="15" cy="8" r="9" fill="#22d3ee"/>
+                                            <!-- Extended arm (front) -->
+                                            <line x1="25" y1="6" x2="-5" y2="2" stroke="#22d3ee" stroke-width="6" stroke-linecap="round"/>
+                                            <!-- Pull arm (underneath) -->
+                                            <path d="M60 15 Q75 30 95 20" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" fill="none"/>
+                                            <!-- Legs -->
+                                            <line x1="120" y1="10" x2="145" y2="5" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
+                                            <line x1="120" y1="14" x2="145" y2="20" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
                                         </g>
-                                        <circle cx="40" cy="48" r="2.5" fill="white" opacity="0.6" class="splash1"/>
-                                        <circle cx="45" cy="45" r="1.8" fill="white" opacity="0.5" class="splash2"/>
-                                        <circle cx="50" cy="50" r="2" fill="white" opacity="0.4" class="splash1"/>
-                                        <circle cx="100" cy="58" r="1.5" fill="white" opacity="0.5" class="splash2"/>
-                                        <line x1="15" y1="42" x2="15" y2="25" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2" opacity="0.7"/>
-                                        <path d="M 15 35 A 8 8 0 0 1 20 30" stroke="#fbbf24" stroke-width="1" fill="none" opacity="0.7"/>
-                                        <text x="100" y="108" fill="white" font-size="9" text-anchor="middle" opacity="0.9">Side View • Underwater</text>
+                                        <!-- Analysis overlay lines -->
+                                        <line x1="45" y1="53" x2="45" y2="30" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,2" opacity="0.6"/>
+                                        <line x1="45" y1="30" x2="55" y2="30" stroke="#fbbf24" stroke-width="1" opacity="0.6"/>
+                                        <!-- Bubbles -->
+                                        <circle cx="50" cy="60" r="2" fill="white" opacity="0.3"/>
+                                        <circle cx="55" cy="55" r="1.5" fill="white" opacity="0.2"/>
+                                        <circle cx="48" cy="65" r="1" fill="white" opacity="0.25"/>
+                                        <!-- Label -->
+                                        <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="system-ui">Side View • Underwater</text>
                                     </svg>
                                 </div>
                                 <h3>Side View + Underwater</h3>
                                 <p class="video-metrics">Streamline, pull path, elbow position, kick timing</p>
                             </div>
                         
+                            <!-- Side View Above Water -->
                             <div class="video-card">
                                 <div class="video-preview">
                                     <svg viewBox="0 0 200 120" class="video-svg">
                                         <defs>
                                             <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                                <stop offset="0%" style="stop-color:#87ceeb;stop-opacity:1" />
-                                                <stop offset="100%" style="stop-color:#4a90a4;stop-opacity:1" />
+                                                <stop offset="0%" stop-color="#1e3a5f"/>
+                                                <stop offset="100%" stop-color="#0f2847"/>
                                             </linearGradient>
                                         </defs>
+                                        <!-- Sky/indoor background -->
                                         <rect fill="url(#skyGrad)" width="200" height="120" rx="8"/>
-                                        <rect x="0" y="58" width="200" height="62" fill="#0f2847" opacity="0.6"/>
-                                        <line x1="0" y1="58" x2="200" y2="58" stroke="#22d3ee" stroke-width="2" opacity="0.8"/>
-                                        <g class="swimmer-side">
-                                            <ellipse cx="50" cy="52" rx="7" ry="9" fill="#06b6d4"/>
-                                            <ellipse cx="75" cy="58" rx="18" ry="8" fill="#06b6d4" opacity="0.8"/>
-                                            <ellipse cx="95" cy="63" rx="14" ry="9" fill="#06b6d4" opacity="0.5"/>
-                                            <path d="M 55 54 Q 85 30 115 45" stroke="#06b6d4" stroke-width="5" fill="none" stroke-linecap="round"/>
-                                            <circle cx="115" cy="45" r="4" fill="#06b6d4"/>
-                                            <path d="M 70 60 Q 80 75 90 68" stroke="#06b6d4" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6"/>
-                                            <ellipse cx="120" cy="68" rx="15" ry="7" fill="#06b6d4" opacity="0.4"/>
+                                        <!-- Water surface -->
+                                        <rect x="0" y="55" width="200" height="65" fill="#0a1628" rx="0 0 8 8"/>
+                                        <path d="M0 55 Q50 52 100 55 T200 55" stroke="#22d3ee" stroke-width="2" fill="none" opacity="0.5"/>
+                                        <!-- Swimmer at surface -->
+                                        <g transform="translate(25, 40)">
+                                            <!-- Body breaking surface -->
+                                            <ellipse cx="70" cy="18" rx="50" ry="8" fill="#06b6d4" opacity="0.6"/>
+                                            <!-- Head (above water) -->
+                                            <circle cx="20" cy="12" r="10" fill="#22d3ee"/>
+                                            <!-- Recovery arm (above water) -->
+                                            <path d="M35 8 Q70 -15 110 5" stroke="#22d3ee" stroke-width="5" stroke-linecap="round" fill="none"/>
+                                            <!-- Catch arm entering -->
+                                            <line x1="30" y1="15" x2="5" y2="20" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
                                         </g>
-                                        <circle cx="115" cy="55" r="3" fill="white" opacity="0.6" class="splash1"/>
-                                        <circle cx="120" cy="52" r="2" fill="white" opacity="0.4" class="splash2"/>
-                                        <circle cx="48" cy="56" r="2.5" fill="white" opacity="0.5" class="splash1"/>
-                                        <text x="100" y="108" fill="white" font-size="9" text-anchor="middle">Side View • Above Water</text>
+                                        <!-- Splash effect -->
+                                        <circle cx="30" cy="55" r="3" fill="white" opacity="0.4"/>
+                                        <circle cx="35" cy="52" r="2" fill="white" opacity="0.3"/>
+                                        <circle cx="140" cy="53" r="2.5" fill="white" opacity="0.35"/>
+                                        <!-- Label -->
+                                        <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="system-ui">Side View • Above Water</text>
                                     </svg>
                                 </div>
                                 <h3>Side View + Above Water</h3>
                                 <p class="video-metrics">Recovery arm, head position, breathing timing</p>
                             </div>
                         
+                            <!-- Front View Underwater -->
                             <div class="video-card">
                                 <div class="video-preview">
                                     <svg viewBox="0 0 200 120" class="video-svg">
-                                        <rect fill="url(#waterGrad1)" width="200" height="120" rx="8"/>
-                                        <line x1="0" y1="15" x2="200" y2="15" stroke="#22d3ee" stroke-width="2" stroke-dasharray="8,4" opacity="0.4"/>
-                                        <g class="swimmer-front">
-                                            <ellipse cx="100" cy="35" rx="11" ry="13" fill="#06b6d4" opacity="0.95"/>
-                                            <ellipse cx="95" cy="33" rx="3" ry="2" fill="#0a1628" opacity="0.6"/>
-                                            <ellipse cx="105" cy="33" rx="3" ry="2" fill="#0a1628" opacity="0.6"/>
-                                            <ellipse cx="100" cy="55" rx="22" ry="12" fill="#06b6d4" opacity="0.85"/>
-                                            <ellipse cx="100" cy="75" rx="18" ry="10" fill="#06b6d4" opacity="0.75"/>
-                                            <ellipse cx="100" cy="90" rx="14" ry="8" fill="#06b6d4" opacity="0.65"/>
-                                            <line x1="78" y1="52" x2="50" y2="70" stroke="#06b6d4" stroke-width="7" stroke-linecap="round" class="arm-left"/>
-                                            <circle cx="50" cy="70" r="5" fill="#06b6d4"/>
-                                            <line x1="122" y1="52" x2="150" y2="70" stroke="#06b6d4" stroke-width="7" stroke-linecap="round" class="arm-right"/>
-                                            <circle cx="150" cy="70" r="5" fill="#06b6d4"/>
-                                            <line x1="93" y1="98" x2="88" y2="115" stroke="#06b6d4" stroke-width="6" stroke-linecap="round"/>
-                                            <line x1="107" y1="98" x2="112" y2="115" stroke="#06b6d4" stroke-width="6" stroke-linecap="round"/>
+                                        <!-- Pool background -->
+                                        <rect fill="url(#poolGrad)" width="200" height="120" rx="8"/>
+                                        <!-- Lane lines (perspective) -->
+                                        <line x1="50" y1="0" x2="70" y2="120" stroke="#22d3ee" stroke-width="2" stroke-dasharray="8,4" opacity="0.2"/>
+                                        <line x1="150" y1="0" x2="130" y2="120" stroke="#22d3ee" stroke-width="2" stroke-dasharray="8,4" opacity="0.2"/>
+                                        <!-- Swimmer facing camera -->
+                                        <g transform="translate(100, 55)">
+                                            <!-- Body (torpedo shape from front) -->
+                                            <ellipse cx="0" cy="0" rx="18" ry="35" fill="#06b6d4" opacity="0.8"/>
+                                            <!-- Head -->
+                                            <circle cx="0" cy="-28" r="12" fill="#22d3ee"/>
+                                            <!-- Arms spread for catch -->
+                                            <line x1="-15" y1="-10" x2="-50" y2="5" stroke="#22d3ee" stroke-width="6" stroke-linecap="round"/>
+                                            <line x1="15" y1="-10" x2="50" y2="5" stroke="#22d3ee" stroke-width="6" stroke-linecap="round"/>
+                                            <!-- Hands -->
+                                            <circle cx="-50" cy="5" r="5" fill="#22d3ee"/>
+                                            <circle cx="50" cy="5" r="5" fill="#22d3ee"/>
                                         </g>
-                                        <path d="M 75 62 A 25 25 0 0 1 125 62" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="4,2" class="roll-arc"/>
-                                        <circle cx="95" cy="38" r="2" fill="white" opacity="0.5" class="splash1"/>
-                                        <circle cx="105" cy="40" r="1.5" fill="white" opacity="0.4" class="splash2"/>
-                                        <text x="100" y="108" fill="white" font-size="9" text-anchor="middle">Front View • Underwater</text>
+                                        <!-- Body roll indicator -->
+                                        <path d="M60 55 A40 20 0 0 1 140 55" stroke="#fbbf24" stroke-width="1.5" fill="none" stroke-dasharray="4,3" opacity="0.5"/>
+                                        <!-- Bubbles -->
+                                        <circle cx="90" cy="35" r="1.5" fill="white" opacity="0.3"/>
+                                        <circle cx="110" cy="38" r="2" fill="white" opacity="0.25"/>
+                                        <!-- Label -->
+                                        <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="system-ui">Front View • Underwater</text>
                                     </svg>
                                 </div>
                                 <h3>Front View + Underwater</h3>
                                 <p class="video-metrics">Body roll, hand entry width, kick symmetry</p>
                             </div>
                         
+                            <!-- Front View Above Water -->
                             <div class="video-card">
                                 <div class="video-preview">
                                     <svg viewBox="0 0 200 120" class="video-svg">
+                                        <!-- Background -->
                                         <rect fill="url(#skyGrad)" width="200" height="120" rx="8"/>
-                                        <rect x="0" y="62" width="200" height="58" fill="#0f2847" opacity="0.5"/>
-                                        <line x1="0" y1="62" x2="200" y2="62" stroke="#22d3ee" stroke-width="2" opacity="0.7"/>
-                                        <g class="swimmer-front-surface">
-                                            <ellipse cx="100" cy="56" rx="9" ry="11" fill="#06b6d4" opacity="0.95"/>
-                                            <ellipse cx="100" cy="68" rx="18" ry="8" fill="#06b6d4" opacity="0.6"/>
-                                            <line x1="82" y1="64" x2="58" y2="38" stroke="#06b6d4" stroke-width="6" stroke-linecap="round" class="entry-arm-l"/>
-                                            <circle cx="58" cy="38" r="4.5" fill="#06b6d4"/>
-                                            <line x1="118" y1="64" x2="142" y2="45" stroke="#06b6d4" stroke-width="6" stroke-linecap="round" class="entry-arm-r"/>
-                                            <circle cx="142" cy="45" r="4.5" fill="#06b6d4"/>
+                                        <rect x="0" y="60" width="200" height="60" fill="#0a1628"/>
+                                        <!-- Water surface with ripples -->
+                                        <ellipse cx="100" cy="60" rx="90" ry="8" fill="#0f2847"/>
+                                        <ellipse cx="100" cy="60" rx="70" ry="5" fill="none" stroke="#22d3ee" stroke-width="1" opacity="0.3"/>
+                                        <ellipse cx="100" cy="60" rx="50" ry="3" fill="none" stroke="#22d3ee" stroke-width="1" opacity="0.2"/>
+                                        <!-- Swimmer head and shoulders from front -->
+                                        <g transform="translate(100, 50)">
+                                            <!-- Shoulders at surface -->
+                                            <ellipse cx="0" cy="12" rx="30" ry="8" fill="#06b6d4" opacity="0.5"/>
+                                            <!-- Head -->
+                                            <circle cx="0" cy="-5" r="14" fill="#22d3ee"/>
+                                            <!-- Entry arm -->
+                                            <line x1="-25" y1="8" x2="-55" y2="-15" stroke="#22d3ee" stroke-width="5" stroke-linecap="round"/>
+                                            <circle cx="-55" cy="-15" r="5" fill="#22d3ee"/>
+                                            <!-- Other arm recovering -->
+                                            <path d="M25 8 Q45 -20 55 -5" stroke="#06b6d4" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.7"/>
                                         </g>
-                                        <line x1="58" y1="38" x2="58" y2="62" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2" opacity="0.8"/>
-                                        <path d="M 58 50 L 65 48" stroke="#fbbf24" stroke-width="1" opacity="0.8"/>
-                                        <circle cx="58" cy="62" r="3" fill="white" opacity="0.6" class="splash1"/>
-                                        <circle cx="62" cy="60" r="2" fill="white" opacity="0.4" class="splash2"/>
-                                        <circle cx="138" cy="62" r="2.5" fill="white" opacity="0.5" class="splash1"/>
-                                        <text x="100" y="108" fill="white" font-size="9" text-anchor="middle">Front View • Above Water</text>
+                                        <!-- Entry angle indicator -->
+                                        <line x1="45" y1="35" x2="45" y2="60" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3,2" opacity="0.6"/>
+                                        <!-- Splash -->
+                                        <circle cx="45" cy="58" r="4" fill="white" opacity="0.4"/>
+                                        <circle cx="50" cy="55" r="2" fill="white" opacity="0.3"/>
+                                        <!-- Label -->
+                                        <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="system-ui">Front View • Above Water</text>
                                     </svg>
                                 </div>
                                 <h3>Front View + Above Water</h3>
@@ -976,8 +950,9 @@ def show_landing_page():
                     <div class="container">
                         <h2>Ready to find your speed leak?</h2>
                         <p>One video. One analysis. One fix that changes everything.</p>
-                        <!-- Button placeholder - actual button rendered by Streamlit -->
-                        <div class="button-placeholder">↓ Click button below ↓</div>
+                        <a href="{STRIPE_PAYMENT_LINK}" class="cta-button" target="_top">
+                            🏊 Get Instant Analysis → $4.99
+                        </a>
                     </div>
                 </section>
             </main>
@@ -992,53 +967,8 @@ def show_landing_page():
     </html>
     """
 
-    # Render HTML landing page (without interactive buttons)
-    components.html(landing_html, height=4800, scrolling=True)
-    
-    # ─────────────────────────────────────────────
-    # NATIVE STREAMLIT BUTTONS (These actually work!)
-    # ─────────────────────────────────────────────
-    st.markdown("""
-    <style>
-        .button-container {
-            background: linear-gradient(135deg, rgba(15, 40, 71, 0.95) 0%, rgba(10, 22, 40, 0.98) 100%);
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            border-radius: 20px;
-            padding: 30px;
-            max-width: 500px;
-            margin: -100px auto 40px auto;
-            position: relative;
-            z-index: 100;
-        }
-        .button-container h3 {
-            color: #22d3ee;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.2rem;
-        }
-    </style>
-    <div class="button-container">
-        <h3>🏊 Ready to analyze your swim?</h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Create centered columns for buttons
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        # Main checkout button using st.link_button (opens in same tab)
-        st.link_button(
-            "🏊 Get Instant Analysis → $4.99",
-            STRIPE_PAYMENT_LINK,
-            use_container_width=True
-        )
-        
-        # Demo button (only in dev mode)
-        if IS_DEV:
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("Skip Payment – Enter Demo Mode (testing only)", use_container_width=True, type="secondary"):
-                st.session_state.paid = True
-                st.rerun()
+    # Render HTML landing page with working buttons
+    components.html(landing_html, height=4500, scrolling=True)
 
 
 # ─────────────────────────────────────────────
