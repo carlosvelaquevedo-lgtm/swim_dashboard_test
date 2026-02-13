@@ -1047,6 +1047,14 @@ def show_landing_page():
     # Use components.html() for full HTML rendering (st.markdown strips <script>/<link>/<head> tags)
     components.html(landing_html, height=5000, scrolling=True)
 
+    # Native Streamlit demo button (iframe sandbox blocks JS navigation)
+    st.markdown("---")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🏊 Enter Demo Mode — Skip Payment", use_container_width=True, type="primary"):
+            st.session_state.paid = True
+            st.rerun()
+
 
 # ─────────────────────────────────────────────
 # MAIN ROUTER
