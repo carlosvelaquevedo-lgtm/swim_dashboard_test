@@ -2854,6 +2854,97 @@ def main():
     st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2")
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
+    st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
+    st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
+    
+    # Important notice about video requirements
+    st.warning("⚠️ **Full body must be visible for an accurate analysis.** Ensure the swimmer's entire body (head to feet) is in frame throughout the video.")
+
+    if not MEDIAPIPE_TASKS_AVAILABLE:
+        st.error("MediaPipe Tasks not installed. Run: pip install mediapipe>=0.10.14")
+        return
+
+    with st.sidebar:
+        st.header("⚙️ Athlete & Settings")
+        
+        # Height input with feet/inches conversion
+        st.subheader("Height")
+        height_unit = st.radio("Unit", ["cm", "ft/in"], horizontal=True, label_visibility="collapsed")
+        
+        if height_unit == "cm":
+            height = st.slider("Height (cm)", 150, 210, 170)
+        else:
+            col_ft, col_in = st.columns(2)
+            with col_ft:
+                feet = st.number_input("Feet", min_value=4, max_value=7, value=5)
+            with col_in:
+                inches = st.number_input("Inches", min_value=0, max_value=11, value=7)
+            # Convert to cm
+            height = int((feet * 12 + inches) * 2.54)
+            st.caption(f"= {height} cm")
+        
+        # Discipline selection with explanation
+        st.subheader("Discipline")
+        discipline = st.selectbox("Select discipline", ["pool", "triathlon", "open water"], label_visibility="collapsed")
+        
+        # Discipline explanations
+        discipline_info = {
+            "pool": "🏊 **Pool Swimming**: Optimized for controlled environment with walls for push-offs. Focuses on precise technique metrics, flip turn timing, and maintaining consistent stroke rate.",
+            "triathlon": "🏃 **Triathlon**: Balances efficiency with energy conservation. Slightly relaxed thresholds for body position since wetsuit buoyancy helps. Emphasizes sustainable stroke rate.",
+            "open water": "🌊 **Open Water**: Accounts for waves, currents, and sighting. More tolerant of head position variations and body roll changes needed for navigation."
+        }
+        st.info(discipline_info[discipline])
+        
+        st.divider()
+        
+        # Detection Settings with explanations
+        st.subheader("Detection Settings")
+        
+        conf_thresh = st.slider("Confidence Threshold", 0.3, 0.7, DEFAULT_CONF_THRESHOLD, 0.05)
+        st.caption("""
+        **What it does**: Filters out frames where pose detection is uncertain.  
+        **Ideal setting**: **0.5** (default) - balances accuracy with data retention.  
+        ↑ Higher = stricter, fewer frames analyzed but more accurate.  
+        ↓ Lower = more frames but may include errors from splashing/bubbles.
+        """)
+        
+        yaw_thresh = st.slider("Breath Detection Sensitivity", 0.05, 0.3, DEFAULT_YAW_THRESHOLD, 0.01)
+        st.caption("""
+        **What it does**: Detects head rotation for breath timing analysis.  
+        **Ideal setting**: **0.15** (default) - catches most breaths without false positives.  
+        ↑ Higher = only detects very pronounced head turns.  
+        ↓ Lower = more sensitive, may count minor head movements as breaths.
+        """)
+        
+        st.divider()
+        
+        # Show what metrics are available based on view
+        with st.expander("📊 Metrics by View Type"):
+            st.markdown("""
+            **Side View + Underwater** *(Most metrics)*
+            - EVF (Early Vertical Forearm)
+            - Body alignment & vertical drop
+            - Kick depth
+            - Stroke phases
+            - Dropped elbow detection
+            
+            **Side View + Above Water**
+            - Recovery arm position
+            - Head position
+            - Breathing timing
+            
+            **Front View + Underwater**
+            - Body roll
+            - Hand entry width
+            - Kick symmetry
+            
+            **Front View + Above Water**
+            - Entry angle
+            - Breathing side
+            """)
+
+    athlete = AthleteProfile(height, discipline)
+    
     # ═══════════════════════════════════════════════════════════════
     # PAYMENT GATING - Check if user has access
     # ═══════════════════════════════════════════════════════════════
