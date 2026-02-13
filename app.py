@@ -774,19 +774,24 @@ def show_landing_page():
                         <h2 class="section-title">See it in action</h2>
                         <div class="demo-video-container">
                             <div class="demo-video-wrapper">
-                                <div class="demo-placeholder">
-                                    <svg viewBox="0 0 120 120" width="80" height="80">
-                                        <circle cx="60" cy="60" r="55" fill="none" stroke="rgba(6, 182, 212, 0.3)" stroke-width="2"/>
-                                        <circle cx="60" cy="60" r="45" fill="rgba(6, 182, 212, 0.1)"/>
-                                        <path d="M 50 40 L 50 80 L 80 60 Z" fill="#06b6d4"/>
+                                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: rgba(240, 253, 255, 0.8); text-align: center; padding: 40px;">
+                                    <svg viewBox="0 0 120 120" width="100" height="100" style="margin-bottom: 24px; opacity: 0.8;">
+                                        <circle cx="60" cy="60" r="55" fill="none" stroke="rgba(6, 182, 212, 0.4)" stroke-width="3"/>
+                                        <circle cx="60" cy="60" r="45" fill="rgba(6, 182, 212, 0.15)"/>
+                                        <path d="M 48 38 L 48 82 L 82 60 Z" fill="#06b6d4"/>
                                     </svg>
-                                    <p>Add your Loom demo video here</p>
-                                    <span class="demo-instruction">See HTML comments above for instructions</span>
+                                    <h3 style="font-size: 1.5rem; margin-bottom: 12px; color: var(--lane-line);">Demo Video Coming Soon</h3>
+                                    <p style="font-size: 1.1rem; max-width: 500px; line-height: 1.6;">
+                                        We're finalizing a full walkthrough showing the upload, AI analysis, and instant PDF report generation.
+                                    </p>
+                                    <p style="font-size: 0.95rem; margin-top: 20px; color: rgba(240, 253, 255, 0.6);">
+                                        In the meantime, click "Get Instant Analysis" to try it yourself!
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </section>
+                </section>    
 
                 <section class="video-section">
                     <div class="container">
