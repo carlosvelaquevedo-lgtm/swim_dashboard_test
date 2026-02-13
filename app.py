@@ -44,7 +44,7 @@ def show_landing_page():
         demo_button_html = """
         <div style="margin-top: 24px; text-align: center;">
             <button 
-                onclick="window.parent.location.href = '?demo=true';" 
+                onclick="window.parent.location.href = window.parent.location.href.split('?')[0] + '?demo=true';" 
                 style="
                     background: transparent;
                     border: 1px solid rgba(240,253,255,0.3);
