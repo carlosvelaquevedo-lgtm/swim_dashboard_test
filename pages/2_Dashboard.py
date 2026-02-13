@@ -2857,6 +2857,11 @@ def main():
     st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2",initial_sidebar_state="expanded")
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
+    st.markdown("""
+    <style>
+        #MainMenu {visibility: visible !important;}
+    </style>
+    """, unsafe_allow_html=True)
     # ═══════════════════════════════════════════════════════════════
     # PAYMENT GATING - Check if user has access
     # ═══════════════════════════════════════════════════════════════
