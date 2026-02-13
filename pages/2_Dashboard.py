@@ -2868,35 +2868,29 @@ def main():
     # ═══════════════════════════════════════════════════════════════
     # PAYMENT GATING - Check if user has access
     # ═══════════════════════════════════════════════════════════════
-    if not st.session_state.get("payment_completed", False):
-        st.warning("⚠️ Payment required to access the dashboard")
-        st.markdown("""
-        <div style="text-align: center; padding: 40px;">
-            <h2>🔒 Access Denied</h2>
-            <p style="font-size: 1.2em; color: #cbd5e1; margin: 20px 0;">
-                Please complete payment to access the swim analysis dashboard.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
 
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
-            if st.button("🔙 Back to Home", use_container_width=True):
+    # Payment gating - Use the same "paid" key as app.py
+    if not st.session_state.get("paid", False):
+        st.error("🔒 Access Denied")
+        st.markdown("Please complete payment to access the swim analysis dashboard.")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("← Back to Home"):
                 st.switch_page("app.py")
-            if st.button("💳 Go to Payment", type="primary", use_container_width=True):
-                st.switch_page("pages/1_Payment.py")
+        with col2:
+            if st.button("→ Go to Payment"):
+                st.markdown(f'<meta http-equiv="refresh" content="0;url={STRIPE_PAYMENT_LINK}">', unsafe_allow_html=True)
         st.stop()
-
-    # Check for payment success via query parameters (if redirected from Stripe)
+    
+    # Handle success query param (from Stripe redirect)
     query_params = st.query_params
     if query_params.get("payment") == "success":
-        st.session_state.payment_completed = True
-        st.session_state.analysis_unlocked = True
-        st.success("✅ Payment successful! You can now analyze your video.")
-        # Clear query params to avoid re-triggering
+        st.session_state.paid = True
+        st.success("Payment successful! Loading dashboard...")
         st.query_params.clear()
     elif query_params.get("payment") == "cancel":
-        st.warning("⚠️ Payment cancelled. You can try again when ready.")
+        st.warning("Payment cancelled. You can try again.")
         st.query_params.clear()
 
     st.title("Dashboard")
