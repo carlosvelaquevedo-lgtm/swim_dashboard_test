@@ -16,6 +16,60 @@ st.markdown("""
     footer {visibility: hidden;}
     .block-container {padding: 0 !important; max-width: 100% !important;}
     iframe {border: none !important;}
+    
+    /* Style for native Streamlit buttons to match the landing page */
+    .stButton > button {
+        width: 100%;
+        padding: 18px 32px;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #0a1628;
+        background: linear-gradient(135deg, #06b6d4, #22d3ee);
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
+    }
+    .stButton > button:hover {
+        box-shadow: 0 6px 30px rgba(6, 182, 212, 0.5);
+    }
+    
+    /* Demo button styling */
+    div[data-testid="stHorizontalBlock"] .stButton > button {
+        background: transparent;
+        border: 1px solid rgba(240,253,255,0.3);
+        color: rgba(240,253,255,0.7);
+        padding: 12px 24px;
+        font-size: 0.95rem;
+        box-shadow: none;
+    }
+    div[data-testid="stHorizontalBlock"] .stButton > button:hover {
+        border-color: rgba(6,182,212,0.5);
+        color: #06b6d4;
+        box-shadow: none;
+    }
+    
+    /* Link button styling */
+    .stLinkButton > a {
+        width: 100%;
+        padding: 18px 32px !important;
+        font-size: 1.125rem !important;
+        font-weight: 600 !important;
+        color: #0a1628 !important;
+        background: linear-gradient(135deg, #06b6d4, #22d3ee) !important;
+        border: none !important;
+        border-radius: 12px !important;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
+        text-decoration: none !important;
+        display: inline-block;
+        text-align: center;
+    }
+    .stLinkButton > a:hover {
+        box-shadow: 0 6px 30px rgba(6, 182, 212, 0.5);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -31,6 +85,8 @@ except Exception:
     APP_BASE_URL = "http://localhost:8501"
     STRIPE_CONFIGURED = False
 
+STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800"
+
 IS_DEV = True
 
 # Session state for payment
@@ -39,34 +95,8 @@ if "paid" not in st.session_state:
 
 
 def show_landing_page():
-    # Optional demo button HTML (only shown when IS_DEV = True)
-    if IS_DEV:
-        demo_button_html = """
-        <div style="margin-top: 24px; text-align: center;">
-            <button 
-                onclick="window.parent.location.href = window.parent.location.href.split('?')[0] + '?demo=true';" 
-                style="
-                    background: transparent;
-                    border: 1px solid rgba(240,253,255,0.3);
-                    color: rgba(240,253,255,0.7);
-                    padding: 12px 24px;
-                    border-radius: 12px;
-                    font-size: 0.95rem;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                "
-                onmouseover="this.style.borderColor='rgba(6,182,212,0.5)'; this.style.color='var(--surface-glow)';"
-                onmouseout="this.style.borderColor='rgba(240,253,255,0.3)'; this.style.color='rgba(240,253,255,0.7)';"
-            >
-                Skip Payment – Enter Demo Mode (for testing only)
-            </button>
-        </div>
-        """
-    else:
-        demo_button_html = ""
-
     # ─────────────────────────────────────────────
-    # FULL LANDING PAGE HTML
+    # FULL LANDING PAGE HTML (without interactive buttons - those are handled by Streamlit)
     # ─────────────────────────────────────────────
     landing_html = f"""
     <!DOCTYPE html>
@@ -164,7 +194,7 @@ def show_landing_page():
                 gap: 10px;
             }}
 
-            .hero {{ padding: 60px 0 80px; text-align: center; }}
+            .hero {{ padding: 60px 0 20px; text-align: center; }}
 
             .hero-badge {{
                 display: inline-flex;
@@ -256,29 +286,6 @@ def show_landing_page():
                 margin-bottom: 32px;
             }}
 
-            .cta-button {{
-                width: 100%;
-                padding: 18px 32px;
-                font-size: 1.125rem;
-                font-weight: 600;
-                color: var(--deep-pool);
-                background: linear-gradient(135deg, var(--surface-glow), var(--lane-line));
-                border: none;
-                border-radius: 12px;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);
-            }}
-
-            .cta-button:hover {{
-                transform: translateY(-2px);
-                box-shadow: 0 6px 30px rgba(6, 182, 212, 0.5);
-            }}
-
-            .cta-button:active {{
-                transform: translateY(0);
-            }}
-
             .trust-signals {{
                 display: flex;
                 justify-content: center;
@@ -298,6 +305,15 @@ def show_landing_page():
                 content: '✓';
                 color: var(--success-green);
                 font-weight: 700;
+            }}
+
+            .button-placeholder {{
+                height: 60px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: rgba(240, 253, 255, 0.5);
+                font-size: 0.875rem;
             }}
 
             .features-section {{
@@ -639,44 +655,6 @@ def show_landing_page():
                 text-decoration: underline;
             }}
 
-            .success-page {{
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 24px;
-            }}
-
-            .success-card {{
-                background: linear-gradient(135deg, rgba(15, 40, 71, 0.8) 0%, rgba(10, 22, 40, 0.9) 100%);
-                border: 1px solid rgba(6, 182, 212, 0.2);
-                border-radius: 24px;
-                padding: 60px 40px;
-                max-width: 500px;
-                text-align: center;
-            }}
-
-            .success-icon {{
-                font-size: 4rem;
-                margin-bottom: 24px;
-            }}
-
-            .success-card h1 {{
-                font-size: 2rem;
-                margin-bottom: 16px;
-            }}
-
-            .success-card p {{
-                color: rgba(240, 253, 255, 0.7);
-                margin-bottom: 32px;
-            }}
-
-            .success-note {{
-                font-size: 0.875rem;
-                color: rgba(240, 253, 255, 0.5);
-                margin-top: 24px !important;
-            }}
-
             /* Enhanced SVG Animations */
             @keyframes swim-stroke {{
                 0%, 100% {{ transform: translateX(0) rotate(0deg); }}
@@ -739,13 +717,15 @@ def show_landing_page():
                                 <span class="price-period">per analysis</span>
                             </div>
                             <p class="price-note">One video • Full PDF report • Annotated playback</p>
-                            <button id="checkout-button" class="cta-button">Get Instant Analysis →</button>
+                            
+                            <!-- BUTTON PLACEHOLDER - Actual buttons rendered by Streamlit below -->
+                            <div class="button-placeholder">↓ Click button below ↓</div>
+                            
                             <div class="trust-signals">
                                 <span class="trust-signal">Secure checkout</span>
                                 <span class="trust-signal">90-sec turnaround</span>
                                 <span class="trust-signal">Download forever</span>
                             </div>
-                            {demo_button_html}
                         </div>
                     </div>
                 </section>
@@ -996,7 +976,8 @@ def show_landing_page():
                     <div class="container">
                         <h2>Ready to find your speed leak?</h2>
                         <p>One video. One analysis. One fix that changes everything.</p>
-                        <button id="checkout-button" class="cta-button">Get Analysis → $4.99</button>
+                        <!-- Button placeholder - actual button rendered by Streamlit -->
+                        <div class="button-placeholder">↓ Click button below ↓</div>
                     </div>
                 </section>
             </main>
@@ -1007,48 +988,57 @@ def show_landing_page():
                 </div>
             </footer>
         </div>
-
-        <div id="success-content" style="display: none;">
-            <div class="success-page">
-                <div class="success-card">
-                    <div class="success-icon">🎉</div>
-                    <h1>Payment Successful!</h1>
-                    <p>Your analysis credit is ready. Click below to upload your swim video.</p>
-                    <a id="upload-link" href="#" class="cta-button">Upload Your Video →</a>
-                    <p class="success-note">Check your email for a receipt from Stripe</p>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            const CONFIG = {{
-                PAYMENT_LINK: 'https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800',
-                APP_URL: '{APP_BASE_URL}',
-            }};
-        
-            // Attach to ALL buttons with class "cta-button" (fixes both checkout buttons)
-            document.querySelectorAll('.cta-button').forEach(button => {{
-                button.addEventListener('click', function() {{
-                    this.disabled = true;
-                    this.textContent = 'Redirecting to checkout...';
-                    window.parent.location.href = CONFIG.PAYMENT_LINK;
-                }});
-            }});
-        
-            // Success page handling (after Stripe redirect)
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('success') === 'true') {{
-                document.getElementById('main-content').style.display = 'none';
-                document.getElementById('success-content').style.display = 'block';
-                document.getElementById('upload-link').href = CONFIG.APP_URL;
-            }}
-        </script>
     </body>
     </html>
     """
 
-    # Use components.html() for full HTML rendering (st.markdown strips <script>/<link>/<head> tags)
-    components.html(landing_html, height=5000, scrolling=True)
+    # Render HTML landing page (without interactive buttons)
+    components.html(landing_html, height=4800, scrolling=True)
+    
+    # ─────────────────────────────────────────────
+    # NATIVE STREAMLIT BUTTONS (These actually work!)
+    # ─────────────────────────────────────────────
+    st.markdown("""
+    <style>
+        .button-container {
+            background: linear-gradient(135deg, rgba(15, 40, 71, 0.95) 0%, rgba(10, 22, 40, 0.98) 100%);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            margin: -100px auto 40px auto;
+            position: relative;
+            z-index: 100;
+        }
+        .button-container h3 {
+            color: #22d3ee;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+    </style>
+    <div class="button-container">
+        <h3>🏊 Ready to analyze your swim?</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Create centered columns for buttons
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        # Main checkout button using st.link_button (opens in same tab)
+        st.link_button(
+            "🏊 Get Instant Analysis → $4.99",
+            STRIPE_PAYMENT_LINK,
+            use_container_width=True
+        )
+        
+        # Demo button (only in dev mode)
+        if IS_DEV:
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("Skip Payment – Enter Demo Mode (testing only)", use_container_width=True, type="secondary"):
+                st.session_state.paid = True
+                st.rerun()
 
 
 # ─────────────────────────────────────────────
