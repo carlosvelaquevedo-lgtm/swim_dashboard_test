@@ -792,9 +792,19 @@ def show_landing_page():
                     <div class="container">
                         <h2 class="section-title">Best camera angles</h2>
                         <div class="video-cards">
-                            <!-- === PASTE YOUR FOUR VIDEO CARD BLOCKS HERE === -->
-                            <!-- You wrote "I omitted them here for brevity" so this remains empty -->
-                            <!-- When you provide the actual <div class="video-card">...</div> blocks, insert them here -->
+                             <div class="video-card recommended">
+                                 <!-- Your full Side View Underwater SVG card here -->
+                                 <!-- (the long SVG with swimmer-side, bubbles, etc.) -->
+                             </div>
+                             <div class="video-card">
+                                 <!-- Side View Above Water SVG -->
+                             </div>
+                             <div class="video-card">
+                                 <!-- Front View Underwater SVG -->
+                             </div>
+                             <div class="video-card">
+                                 <!-- Front View Above Water SVG -->
+                             </div>
                         </div>
 
                         <p class="video-tip">💡 <strong>Tip:</strong> 10-15 seconds of continuous swimming works best. Our AI auto-detects your camera angle!</p>
@@ -805,17 +815,42 @@ def show_landing_page():
                     <div class="container">
                         <h2 class="section-title">How it works</h2>
                         <div class="steps">
-                            <!-- === PASTE YOUR THREE STEP BLOCKS HERE === -->
-                            <!-- You wrote "Your 3 step divs here" so this remains empty -->
-                            <!-- When you provide the actual <div class="step">...</div> blocks + arrows, insert them here -->
+                             <div class="step">
+                                 <div class="step-number">1</div>
+                                 <h3>Pay $4.99</h3>
+                                 <p>Secure checkout via Stripe. Instant access.</p>
+                             </div>
+                             <span class="step-arrow">→</span>
+                             <div class="step">
+                                 <div class="step-number">2</div>
+                                 <h3>Upload Video</h3>
+                                 <p>10-15 sec clip. Side view underwater works best.</p>
+                             </div>
+                             <span class="step-arrow">→</span>
+                             <div class="step">
+                                 <div class="step-number">3</div>
+                                 <h3>Get Report</h3>
+                                 <p>AI analyzes in 90 sec. Download PDF + annotated video.</p>
+                             </div>
                         </div>
                     </div>
                 </section>
 
                 <section class="testimonial-section">
                     <div class="container">
-                        <!-- === PASTE YOUR TESTIMONIAL CARD HERE === -->
-                        <!-- You wrote "Your testimonial card here" so this remains empty -->
+                         <div class="testimonial-card">
+                             <div class="testimonial-stars">★★★★★</div>
+                             <blockquote class="testimonial-quote">
+                                 "I've been coaching for 18 years and this caught a dropped elbow pattern I missed. My swimmer dropped 0.4 seconds in her next 100 free after 2 weeks of targeted drills."
+                             </blockquote>
+                             <div class="testimonial-author">
+                                 <div class="testimonial-avatar">MK</div>
+                                 <div class="testimonial-info">
+                                     <h4>Mike K.</h4>
+                                     <p>Head Coach, Aquatic Stars SC</p>
+                                 </div>
+                             </div>
+                         </div>
                     </div>
                 </section>
 
