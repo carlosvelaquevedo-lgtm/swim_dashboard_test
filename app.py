@@ -922,20 +922,27 @@ if st.session_state.paid:
     # Run dashboard (your analyzer)
     from pages.two_Dashboard import main as dashboard_main
     dashboard_main()
+
 else:
     # Handle success redirect
+    query_params = st.query_params   # ← don't forget this line!
+
     if query_params.get("success", [None])[0] == "true":
         st.session_state.paid = True
         st.success("Payment successful! Loading dashboard...")
         st.balloons()
         st.query_params.clear()
         st.rerun()
+
     elif query_params.get("demo", [None])[0] == "true":
         st.session_state.paid = True
         st.info("Demo mode activated — full access granted for testing!")
         st.query_params.clear()
         st.rerun()
+
     elif query_params.get("payment", [None])[0] == "cancel":
         st.warning("Payment cancelled. You can try again.")
         st.query_params.clear()
-    show_landing_page()
+
+    # ← Landing page should be shown when NOT paid (including after handling query params)
+    st.markdown(landing_html, unsafe_allow_html=True)
