@@ -5,7 +5,7 @@ st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
     layout="centered",  # Centered to prevent expansion
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 # Hide Streamlit default chrome
