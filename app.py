@@ -1022,7 +1022,7 @@ def show_landing_page():
 
         <script>
             const CONFIG = {{
-                PAYMENT_LINK: 'https://buy.stripe.com/test_XXXXX',  // ← REPLACE WITH REAL LINK
+                PAYMENT_LINK: 'https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800',  // ← REPLACE WITH REAL LINK
                 APP_URL: '{APP_BASE_URL}',
             }};
             
