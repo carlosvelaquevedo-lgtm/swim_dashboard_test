@@ -1035,14 +1035,21 @@ query_params = st.query_params
 
 if st.session_state.paid:
     try:
-        from pages.two_Dashboard import main as dashboard_main
-        dashboard_main()
+        import importlib.util
+        import sys
+
+        # Import the dashboard module (handles numeric prefix in filename)
+        spec = importlib.util.spec_from_file_location("dashboard", "pages/2_Dashboard.py")
+        dashboard_module = importlib.util.module_from_spec(spec)
+        sys.modules["dashboard"] = dashboard_module
+        spec.loader.exec_module(dashboard_module)
+        dashboard_module.main()
     except Exception as e:
         st.error(f"Error loading dashboard: {e}")
 else:
-    success = query_params.get("success", [None])[0] == "true"
-    demo    = query_params.get("demo",    [None])[0] == "true"
-    cancel  = query_params.get("payment", [None])[0] == "cancel"
+    success = query_params.get("success") == "true"
+    demo    = query_params.get("demo") == "true"
+    cancel  = query_params.get("payment") == "cancel"
 
     if success:
         st.session_state.paid = True
