@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_xxx"
+STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800"
 IS_DEV = True  # set False in production
 
 # =========================================================
