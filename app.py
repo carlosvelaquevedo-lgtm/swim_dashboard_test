@@ -1,16 +1,35 @@
 import streamlit as st
-import stripe
+import streamlit.components.v1 as components
+
+st.set_page_config(
+    page_title="SwimForm AI",
+    page_icon="🏊",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+)
+
+# Hide Streamlit default chrome for a clean landing page
+st.markdown("""
+<style>
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    .block-container {padding: 0 !important; max-width: 100% !important;}
+    iframe {border: none !important;}
+</style>
+""", unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
 # CONFIG & SECRETS
 # ─────────────────────────────────────────────
-# In your app.py / main.py — replace the direct access with:
 try:
+    import stripe
     stripe.api_key = st.secrets["stripe"]["secret_key"]
     APP_BASE_URL = st.secrets["stripe"].get("base_url", "http://localhost:8501")
-except KeyError:
-    st.error("Stripe secrets not found. Please add .streamlit/secrets.toml or configure secrets in Streamlit Cloud.")
-    st.stop()
+    STRIPE_CONFIGURED = True
+except Exception:
+    APP_BASE_URL = "http://localhost:8501"
+    STRIPE_CONFIGURED = False
 
 IS_DEV = True
 
@@ -25,7 +44,7 @@ def show_landing_page():
         demo_button_html = """
         <div style="margin-top: 24px; text-align: center;">
             <button 
-                onclick="window.location.href = '?demo=true';" 
+                onclick="window.parent.location.href = '?demo=true';" 
                 style="
                     background: transparent;
                     border: 1px solid rgba(240,253,255,0.3);
@@ -1010,7 +1029,7 @@ def show_landing_page():
             document.getElementById('checkout-button').addEventListener('click', function() {{
                 this.disabled = true;
                 this.textContent = 'Redirecting to checkout...';
-                window.location.href = CONFIG.PAYMENT_LINK;
+                window.parent.location.href = CONFIG.PAYMENT_LINK;
             }});
             
             const urlParams = new URLSearchParams(window.location.search);
@@ -1025,7 +1044,8 @@ def show_landing_page():
     </html>
     """
 
-    st.markdown(landing_html, unsafe_allow_html=True)
+    # Use components.html() for full HTML rendering (st.markdown strips <script>/<link>/<head> tags)
+    components.html(landing_html, height=5000, scrolling=True)
 
 
 # ─────────────────────────────────────────────
