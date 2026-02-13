@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
-    layout="wide",
+    layout="centered",
     initial_sidebar_state="collapsed",
 )
 
@@ -387,7 +387,7 @@ def show_landing_page():
                 <p style="color: rgba(240, 253, 255, 0.7);">{desc}</p>
             </div>
             """, unsafe_allow_html=True)
-
+    col1, col2, col3 = st.columns(3, gap="medium")
     # Demo Section
     st.markdown('<h2 class="section-title">See it in action</h2>', unsafe_allow_html=True)
     st.markdown("""
