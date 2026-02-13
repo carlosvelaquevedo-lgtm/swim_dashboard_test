@@ -660,7 +660,7 @@ def show_landing_page():
                                 🏊 Get Instant Analysis → $4.99
                             </a>
                             
-                            {"<a href='?demo=true' class='demo-button' target='_top'>Skip Payment – Demo Mode (testing only)</a>" if IS_DEV else ""}
+                            {f'<a href="{APP_BASE_URL}?demo=true" class="demo-button" target="_top">Skip Payment – Demo Mode (testing only)</a>' if IS_DEV else ''}
                             
                             <div class="trust-signals">
                                 <span class="trust-signal">Secure checkout</span>
@@ -990,9 +990,9 @@ if st.session_state.paid:
     except Exception as e:
         st.error(f"Error loading dashboard: {e}")
 else:
-    success = query_params.get("success") == "true"
-    demo    = query_params.get("demo") == "true"
-    cancel  = query_params.get("payment") == "cancel"
+    success = query_params.get("success", [None])[0] == "true"  # Use get with default to handle missing key
+    demo = query_params.get("demo", [None])[0] == "true"
+    cancel = query_params.get("payment", [None])[0] == "cancel"
 
     if success:
         st.session_state.paid = True
