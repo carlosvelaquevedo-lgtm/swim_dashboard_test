@@ -7,9 +7,37 @@ import stripe
 stripe.api_key = st.secrets["stripe"]["secret_key"]
 APP_BASE_URL = st.secrets["stripe"].get("base_url", "https://your-app.streamlit.app")
 
+IS_DEV = True
+
 # Session state for payment
 if "paid" not in st.session_state:
     st.session_state.paid = False
+
+# Optional demo button HTML (only shown when IS_DEV = True)
+if IS_DEV:
+    demo_button_html = """
+    <div style="margin-top: 24px; text-align: center;">
+        <button 
+            onclick="window.location.href = '?demo=true';" 
+            style="
+                background: transparent;
+                border: 1px solid rgba(240,253,255,0.3);
+                color: rgba(240,253,255,0.7);
+                padding: 12px 24px;
+                border-radius: 12px;
+                font-size: 0.95rem;
+                cursor: pointer;
+                transition: all 0.2s;
+            "
+            onmouseover="this.style.borderColor='rgba(6,182,212,0.5)'; this.style.color='var(--surface-glow)';"
+            onmouseout="this.style.borderColor='rgba(240,253,255,0.3)'; this.style.color='rgba(240,253,255,0.7)';"
+        >
+            Skip Payment – Enter Demo Mode (for testing only)
+        </button>
+    </div>
+    """
+else:
+    demo_button_html = ""
 
 # ─────────────────────────────────────────────
 # FULL LANDING PAGE HTML (your new code)
@@ -723,6 +751,27 @@ landing_html = """
                             <span class="trust-signal">90-sec turnaround</span>
                             <span class="trust-signal">Download forever</span>
                         </div>
+                        {demo_button_html}
+                        <div style="margin-top: 24px; text-align: center;">
+                            <button 
+                                onclick="window.location.href = '?demo=true';" 
+                                style="
+                                    background: transparent;
+                                    border: 1px solid rgba(240,253,255,0.3);
+                                    color: rgba(240,253,255,0.7);
+                                    padding: 12px 24px;
+                                    border-radius: 12px;
+                                    font-size: 0.95rem;
+                                    cursor: pointer;
+                                    transition: all 0.2s;
+                                "
+                                onmouseover="this.style.borderColor='rgba(6,182,212,0.5)'; this.style.color='var(--surface-glow)';"
+                                onmouseout="this.style.borderColor='rgba(240,253,255,0.3)'; this.style.color='rgba(240,253,255,0.7)';"
+                            >
+                                Skip Payment – Enter Demo Mode (for testing)
+                            </button>
+                        </div>
+                        
                     </div>
                 </div>
             </section>
@@ -875,12 +924,18 @@ if st.session_state.paid:
     dashboard_main()
 else:
     # Handle success redirect
-    query_params = st.query_params
     if query_params.get("success", [None])[0] == "true":
         st.session_state.paid = True
         st.success("Payment successful! Loading dashboard...")
         st.balloons()
         st.query_params.clear()
         st.rerun()
-
+    elif query_params.get("demo", [None])[0] == "true":
+        st.session_state.paid = True
+        st.info("Demo mode activated — full access granted for testing!")
+        st.query_params.clear()
+        st.rerun()
+    elif query_params.get("payment", [None])[0] == "cancel":
+        st.warning("Payment cancelled. You can try again.")
+        st.query_params.clear()
     show_landing_page()
