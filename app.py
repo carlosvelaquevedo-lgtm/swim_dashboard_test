@@ -1021,27 +1021,27 @@ def show_landing_page():
         </div>
 
         <script>
-            const CONFIG = {
+            const CONFIG = {{
                 PAYMENT_LINK: 'https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800',
                 APP_URL: '{APP_BASE_URL}',
-            };
+            }};
         
             // Attach to ALL buttons with class "cta-button" (fixes both checkout buttons)
-            document.querySelectorAll('.cta-button').forEach(button => {
-                button.addEventListener('click', function() {
+            document.querySelectorAll('.cta-button').forEach(button => {{
+                button.addEventListener('click', function() {{
                     this.disabled = true;
                     this.textContent = 'Redirecting to checkout...';
                     window.parent.location.href = CONFIG.PAYMENT_LINK;
-                });
-            });
+                }});
+            }});
         
             // Success page handling (after Stripe redirect)
             const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('success') === 'true') {
+            if (urlParams.get('success') === 'true') {{
                 document.getElementById('main-content').style.display = 'none';
                 document.getElementById('success-content').style.display = 'block';
                 document.getElementById('upload-link').href = CONFIG.APP_URL;
-            }
+            }}
         </script>
     </body>
     </html>
