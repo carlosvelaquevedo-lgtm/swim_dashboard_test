@@ -1019,11 +1019,10 @@ def show_landing_page():
                 </div>
             </div>
         </div>
-
-        # Replace your entire <script> block in landing_html with this (escaped braces for f-string safety)
+        
         <script>
             const CONFIG = {{
-                PAYMENT_LINK: 'https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800',  // ← REPLACE WITH YOUR REAL TEST LINK
+                PAYMENT_LINK: "https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800",
                 APP_URL: '{APP_BASE_URL}',
             }};
         
