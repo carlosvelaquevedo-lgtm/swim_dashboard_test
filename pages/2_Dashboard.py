@@ -2851,7 +2851,7 @@ def create_results_bundle(video_path, csv_buf, pdf_buf, timestamp):
 # ─────────────────────────────────────────────
 
 def main():
-    st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2")
+    st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2",initial_sidebar_state="expanded")
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
     st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
@@ -2971,9 +2971,6 @@ def main():
     elif query_params.get("payment") == "cancel":
         st.warning("Payment cancelled. You can try again.")
         st.query_params.clear()
-
-    st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
-    st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
     
     # Important notice about video requirements
     st.warning("⚠️ **Full body must be visible for an accurate analysis.** Ensure the swimmer's entire body (head to feet) is in frame throughout the video.")
