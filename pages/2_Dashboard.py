@@ -23,9 +23,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 
-
-# Then the rest of your code (imports, CSS, functions, main(), etc.)
-
 # MoviePy for video encoding (pure Python, no ffmpeg binary needed)
 try:
     from moviepy.editor import VideoFileClip
@@ -52,14 +49,6 @@ try:
 except ImportError:
     MEDIAPIPE_TASKS_AVAILABLE = False
     st.error("MediaPipe Tasks not installed → pip install mediapipe>=0.10.0")
-
-# Top of pages/2_Dashboard.py (or your analyzer file)
-if not st.session_state.get("paid", False):
-    st.error("🔒 Access requires payment.")
-    if st.button("← Go to Home"):
-        st.switch_page("app.py")  # or whatever your entrypoint file is called
-    st.stop()
-
 
 # ─────────────────────────────────────────────
 # CUSTOM CSS - Enhanced for new UI
@@ -2868,7 +2857,6 @@ def main():
     # ═══════════════════════════════════════════════════════════════
     # PAYMENT GATING - Check if user has access
     # ═══════════════════════════════════════════════════════════════
-
     # Payment gating - Use the same "paid" key as app.py
     if not st.session_state.get("paid", False):
         st.error("🔒 Access Denied")
@@ -2893,7 +2881,7 @@ def main():
         st.warning("Payment cancelled. You can try again.")
         st.query_params.clear()
 
-    st.title("Dashboard")
+    st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
     st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
     
     # Important notice about video requirements
