@@ -39,7 +39,7 @@ if IS_DEV and "demo" in params:
 # =========================================================
 
 if st.session_state.paid:
-    st.switch_page("pages/2_Ddashboard.py")
+    st.switch_page("pages/2_Dashboard.py")
 
 # =========================================================
 # LANDING PAGE
