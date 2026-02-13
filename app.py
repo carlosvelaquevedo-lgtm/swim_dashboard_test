@@ -1026,11 +1026,14 @@ def show_landing_page():
                 APP_URL: '{APP_BASE_URL}',
             }};
             
-            document.getElementById('checkout-button').addEventListener('click', function() {{
-                this.disabled = true;
-                this.textContent = 'Redirecting to checkout...';
-                window.parent.location.href = CONFIG.PAYMENT_LINK;
-            }});
+            document.querySelectorAll('.cta-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.disabled = true;
+                    this.textContent = 'Redirecting to checkout...';
+                    window.parent.location.href = CONFIG.PAYMENT_LINK;
+                });
+            });
+
             
             const urlParams = new URLSearchParams(window.location.search);
             
