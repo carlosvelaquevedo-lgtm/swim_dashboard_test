@@ -23,6 +23,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.units import inch
 
+STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800"  # From your app.py
+
 # MoviePy for video encoding (pure Python, no ffmpeg binary needed)
 try:
     from moviepy.editor import VideoFileClip
@@ -2854,66 +2856,6 @@ def main():
     st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2",initial_sidebar_state="expanded")
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-    st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
-    st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
-    
-    # Important notice about video requirements
-    st.warning("⚠️ **Full body must be visible for an accurate analysis.** Ensure the swimmer's entire body (head to feet) is in frame throughout the video.")
-
-    if not MEDIAPIPE_TASKS_AVAILABLE:
-        st.error("MediaPipe Tasks not installed. Run: pip install mediapipe>=0.10.14")
-        return
-        
-        st.divider()
-        
-        # Detection Settings with explanations
-        st.subheader("Detection Settings")
-        
-        conf_thresh = st.slider("Confidence Threshold", 0.3, 0.7, DEFAULT_CONF_THRESHOLD, 0.05)
-        st.caption("""
-        **What it does**: Filters out frames where pose detection is uncertain.  
-        **Ideal setting**: **0.5** (default) - balances accuracy with data retention.  
-        ↑ Higher = stricter, fewer frames analyzed but more accurate.  
-        ↓ Lower = more frames but may include errors from splashing/bubbles.
-        """)
-        
-        yaw_thresh = st.slider("Breath Detection Sensitivity", 0.05, 0.3, DEFAULT_YAW_THRESHOLD, 0.01)
-        st.caption("""
-        **What it does**: Detects head rotation for breath timing analysis.  
-        **Ideal setting**: **0.15** (default) - catches most breaths without false positives.  
-        ↑ Higher = only detects very pronounced head turns.  
-        ↓ Lower = more sensitive, may count minor head movements as breaths.
-        """)
-        
-        st.divider()
-        
-        # Show what metrics are available based on view
-        with st.expander("📊 Metrics by View Type"):
-            st.markdown("""
-            **Side View + Underwater** *(Most metrics)*
-            - EVF (Early Vertical Forearm)
-            - Body alignment & vertical drop
-            - Kick depth
-            - Stroke phases
-            - Dropped elbow detection
-            
-            **Side View + Above Water**
-            - Recovery arm position
-            - Head position
-            - Breathing timing
-            
-            **Front View + Underwater**
-            - Body roll
-            - Hand entry width
-            - Kick symmetry
-            
-            **Front View + Above Water**
-            - Entry angle
-            - Breathing side
-            """)
-
-    athlete = AthleteProfile(height, discipline)
-    
     # ═══════════════════════════════════════════════════════════════
     # PAYMENT GATING - Check if user has access
     # ═══════════════════════════════════════════════════════════════
@@ -2940,6 +2882,9 @@ def main():
     elif query_params.get("payment") == "cancel":
         st.warning("Payment cancelled. You can try again.")
         st.query_params.clear()
+
+    st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
+    st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
     
     # Important notice about video requirements
     st.warning("⚠️ **Full body must be visible for an accurate analysis.** Ensure the swimmer's entire body (head to feet) is in frame throughout the video.")
