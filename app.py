@@ -1020,23 +1020,24 @@ def show_landing_page():
             </div>
         </div>
 
+        # Replace your entire <script> block in landing_html with this (escaped braces for f-string safety)
         <script>
             const CONFIG = {{
-                PAYMENT_LINK: 'https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800',  // ← REPLACE WITH REAL LINK
+                PAYMENT_LINK: 'https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800',  // ← REPLACE WITH YOUR REAL TEST LINK
                 APP_URL: '{APP_BASE_URL}',
             }};
-            
-            document.querySelectorAll('.cta-button').forEach(button => {
-                button.addEventListener('click', function() {
+        
+            // Attach to all .cta-button elements (fixes both checkout buttons)
+            document.querySelectorAll('.cta-button').forEach(button => {{
+                button.addEventListener('click', function() {{
                     this.disabled = true;
                     this.textContent = 'Redirecting to checkout...';
                     window.parent.location.href = CONFIG.PAYMENT_LINK;
-                });
-            });
-
-            
+                }});
+            }});
+        
+            // Success redirect handling
             const urlParams = new URLSearchParams(window.location.search);
-            
             if (urlParams.get('success') === 'true') {{
                 document.getElementById('main-content').style.display = 'none';
                 document.getElementById('success-content').style.display = 'block';
