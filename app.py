@@ -990,9 +990,9 @@ if st.session_state.paid:
     except Exception as e:
         st.error(f"Error loading dashboard: {e}")
 else:
-    success = query_params.get("success", [None])[0] == "true"  # Use get with default to handle missing key
-    demo = query_params.get("demo", [None])[0] == "true"
-    cancel = query_params.get("payment", [None])[0] == "cancel"
+    success = query_params.get("success") == "true"
+    demo = query_params.get("demo") == "true"
+    cancel = query_params.get("payment") == "cancel"
 
     if success:
         st.session_state.paid = True
