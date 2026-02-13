@@ -55,15 +55,9 @@ except ImportError:
 
 # Top of pages/2_Dashboard.py (or your analyzer file)
 if not st.session_state.get("paid", False):
-    col1, col2 = st.columns(2)
-
-    with col1:
-        if st.button("← Go to Home", use_container_width=True):
-            st.switch_page("app.py")  # make sure this matches exactly
-
-    with col2:
-        if st.button("Refresh", use_container_width=True):
-            st.rerun()
+    st.error("🔒 Access requires payment.")
+    if st.button("← Go to Home"):
+        st.switch_page("app.py")  # or whatever your entrypoint file is called
     st.stop()
 
 
