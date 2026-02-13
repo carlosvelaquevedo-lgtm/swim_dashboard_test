@@ -4,8 +4,13 @@ import stripe
 # ─────────────────────────────────────────────
 # CONFIG & SECRETS
 # ─────────────────────────────────────────────
-stripe.api_key = st.secrets["stripe"]["secret_key"]
-APP_BASE_URL = st.secrets["stripe"].get("base_url", "https://your-app.streamlit.app")
+# In your app.py / main.py — replace the direct access with:
+try:
+    stripe.api_key = st.secrets["stripe"]["secret_key"]
+    APP_BASE_URL = st.secrets["stripe"].get("base_url", "http://localhost:8501")
+except KeyError:
+    st.error("Stripe secrets not found. Please add .streamlit/secrets.toml or configure secrets in Streamlit Cloud.")
+    st.stop()
 
 IS_DEV = True
 
