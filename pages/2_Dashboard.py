@@ -2863,37 +2863,6 @@ def main():
     if not MEDIAPIPE_TASKS_AVAILABLE:
         st.error("MediaPipe Tasks not installed. Run: pip install mediapipe>=0.10.14")
         return
-
-    with st.sidebar:
-        st.header("⚙️ Athlete & Settings")
-        
-        # Height input with feet/inches conversion
-        st.subheader("Height")
-        height_unit = st.radio("Unit", ["cm", "ft/in"], horizontal=True, label_visibility="collapsed")
-        
-        if height_unit == "cm":
-            height = st.slider("Height (cm)", 150, 210, 170)
-        else:
-            col_ft, col_in = st.columns(2)
-            with col_ft:
-                feet = st.number_input("Feet", min_value=4, max_value=7, value=5)
-            with col_in:
-                inches = st.number_input("Inches", min_value=0, max_value=11, value=7)
-            # Convert to cm
-            height = int((feet * 12 + inches) * 2.54)
-            st.caption(f"= {height} cm")
-        
-        # Discipline selection with explanation
-        st.subheader("Discipline")
-        discipline = st.selectbox("Select discipline", ["pool", "triathlon", "open water"], label_visibility="collapsed")
-        
-        # Discipline explanations
-        discipline_info = {
-            "pool": "🏊 **Pool Swimming**: Optimized for controlled environment with walls for push-offs. Focuses on precise technique metrics, flip turn timing, and maintaining consistent stroke rate.",
-            "triathlon": "🏃 **Triathlon**: Balances efficiency with energy conservation. Slightly relaxed thresholds for body position since wetsuit buoyancy helps. Emphasizes sustainable stroke rate.",
-            "open water": "🌊 **Open Water**: Accounts for waves, currents, and sighting. More tolerant of head position variations and body roll changes needed for navigation."
-        }
-        st.info(discipline_info[discipline])
         
         st.divider()
         
