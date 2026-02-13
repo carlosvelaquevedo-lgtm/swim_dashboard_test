@@ -977,36 +977,24 @@ def show_landing_page():
 query_params = st.query_params
 
 if st.session_state.paid:
-    try:
-        import importlib.util
-        import sys
+    st.switch_page("pages/2_Dashboard.py")
 
-        # Import the dashboard module (handles numeric prefix in filename)
-        spec = importlib.util.spec_from_file_location("dashboard", "pages/2_Dashboard.py")
-        dashboard_module = importlib.util.module_from_spec(spec)
-        sys.modules["dashboard"] = dashboard_module
-        spec.loader.exec_module(dashboard_module)
-        dashboard_module.main()
-    except Exception as e:
-        st.error(f"Error loading dashboard: {e}")
+success = query_params.get("success") == "true"
+demo = query_params.get("demo") == "true"
+cancel = query_params.get("payment") == "cancel"
+
+if success:
+    st.session_state.paid = True
+    st.query_params.clear()
+    st.rerun()
+
+elif demo:
+    st.session_state.paid = True
+    st.query_params.clear()
+    st.rerun()
+
+elif cancel:
+    st.warning("Payment cancelled.")
+    st.query_params.clear()
 else:
-    success = query_params.get("success") == "true"
-    demo = query_params.get("demo") == "true"
-    cancel = query_params.get("payment") == "cancel"
-
-    if success:
-        st.session_state.paid = True
-        st.success("Payment successful! Loading dashboard...")
-        st.balloons()
-        st.query_params.clear()
-        st.rerun()
-    elif demo:
-        st.session_state.paid = True
-        st.info("Demo mode activated — full access granted for testing!")
-        st.query_params.clear()
-        st.rerun()
-    elif cancel:
-        st.warning("Payment cancelled. You can try again.")
-        st.query_params.clear()
-    else:
-        show_landing_page()
+    show_landing_page()
