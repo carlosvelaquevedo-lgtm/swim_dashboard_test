@@ -2899,7 +2899,7 @@ def main():
         st.warning("⚠️ Payment cancelled. You can try again when ready.")
         st.query_params.clear()
 
-    st.title("🏊 Freestyle Swim Technique Analyzer Pro v2")
+    st.title("Dashboard")
     st.markdown("AI-powered analysis with **enhanced biomechanical metrics**")
     
     # Important notice about video requirements
