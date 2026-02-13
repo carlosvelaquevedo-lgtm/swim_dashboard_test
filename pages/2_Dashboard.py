@@ -78,6 +78,7 @@ CUSTOM_CSS = """
     .phase-pull { background: #22c55e; color: white; }
     .phase-push { background: #f59e0b; color: black; }
     .phase-recovery { background: #6b7280; color: white; }
+     #MainMenu {visibility: visible !important;}
 </style>
 """
 
