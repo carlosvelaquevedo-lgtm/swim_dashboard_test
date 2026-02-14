@@ -99,16 +99,15 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def show_landing_page():
-    # --- Navigation ---
+
     st.markdown("""
-    <div style="padding: 20px 0; display: flex; justify-content: space-between; align-items: center;">
+    <div style="padding: 20px 0; display: flex; justify-content: center; align-items: center;">
         <div style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: #22d3ee; display: flex; align-items: center; gap: 10px;">
             <svg width="30" height="30" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/><path d="M 8 16 Q 16 12 24 16" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>
             SWIMFORM AI
         </div>
     </div>
     """, unsafe_allow_html=True)
-
     # --- Hero Section ---
     st.markdown('<div style="padding: 80px 0 40px; text-align: center;">', unsafe_allow_html=True)
     st.markdown('<div class="hero-badge">⚡ Video analysis powered by Pose-Estimation AI</div>', unsafe_allow_html=True)
