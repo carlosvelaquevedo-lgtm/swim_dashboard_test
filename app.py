@@ -110,79 +110,21 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
     # --- 3. How It Works (The 3 Steps) ---
-    # --- 3. How It Works (Perfect Alignment Version) ---
-        st.markdown("""
+def show_landing_page():
+    # ... previous code ...
+
+    # LINE 114: Ensure 'st.markdown' starts at the same level as other lines
+    st.markdown("""
     <style>
-    .process-section {
-        padding: 60px 0;
-        text-align: center;
-    }
-    
-    .process-title {
-        font-size: 2.8rem;
-        font-weight: 700;
-        margin-bottom: 50px;
-        color: white !important;
-    }
-    
-    .process-grid {
-        display: flex;
-        justify-content: center;
-        align-items: center; /* This aligns cards and arrows on the same center line */
-        gap: 15px;
-        flex-wrap: nowrap; /* Prevents jumping to next line on desktop */
-        max-width: 1100px;
-        margin: 0 auto;
-    }
-    
-    .process-card {
-        background: linear-gradient(180deg, rgba(20,50,90,0.9), rgba(15,40,71,0.9));
-        border-radius: 24px;
-        padding: 30px 20px;
-        width: 260px;
-        border: 1px solid rgba(34,211,238,0.15);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.4);
-        text-align: center;
-    }
-    
-    .process-number {
-        width: 45px;
-        height: 45px;
-        margin: 0 auto 15px auto;
-        border-radius: 50%;
-        background: #22d3ee;
-        color: #0a1628;
-        font-weight: 800;
-        font-size: 1.1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .process-card h3 {
-        color: #22d3ee !important;
-        margin-bottom: 10px;
-        font-size: 1.25rem;
-    }
-    
-    .process-card p {
-        color: #94a3b8 !important;
-        font-size: 0.9rem;
-        line-height: 1.5;
-    }
-    
-    .process-arrow {
-        font-size: 1.8rem;
-        color: rgba(34,211,238,0.4);
-        font-weight: bold;
-        user-select: none;
-    }
-    
-    /* Mobile Responsive: Stack them vertically on small screens */
-    @media (max-width: 900px) {
-        .process-grid { flex-direction: column; }
-        .process-arrow { transform: rotate(90deg); margin: 10px 0; }
-    }
+    .process-section { padding: 60px 0; text-align: center; }
+    .process-title { font-size: 2.8rem; font-weight: 700; margin-bottom: 50px; color: white !important; }
+    .process-grid { display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: nowrap; margin: 0 auto; }
+    .process-card { background: linear-gradient(180deg, rgba(20,50,90,0.9), rgba(15,40,71,0.9)); border-radius: 24px; padding: 30px 20px; width: 260px; border: 1px solid rgba(34,211,238,0.15); text-align: center; }
+    .process-number { width: 45px; height: 45px; margin: 0 auto 15px auto; border-radius: 50%; background: #22d3ee; color: #0a1628; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+    .process-card h3 { color: #22d3ee !important; margin-bottom: 10px; font-size: 1.25rem; }
+    .process-card p { color: #94a3b8 !important; font-size: 0.9rem; line-height: 1.5; }
+    .process-arrow { font-size: 1.8rem; color: rgba(34,211,238,0.4); font-weight: bold; }
+    @media (max-width: 900px) { .process-grid { flex-direction: column; } .process-arrow { transform: rotate(90deg); } }
     </style>
     
     <div class="process-section">
@@ -208,6 +150,7 @@ def show_landing_page():
     </div>
     </div>
     """, unsafe_allow_html=True)
+
     # --- 2. Hero Section + Loom Placeholder ---
     components.html("""
     <style>
