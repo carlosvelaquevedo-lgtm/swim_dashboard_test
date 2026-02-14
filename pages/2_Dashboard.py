@@ -2866,6 +2866,69 @@ def main():
         #MainMenu {visibility: visible !important;}
     </style>
     """, unsafe_allow_html=True)
+
+    # ─────────────────────────────────────────────
+    # Force SHOW menu on analysis / dashboard page
+    # ─────────────────────────────────────────────
+    
+    st.markdown("""
+    <style>
+        /* Very strong force-show – overrides previous hiding */
+        [data-testid="stToolbar"] {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        button[kind="menu"] {
+            display: inline-flex !important;
+            visibility: visible !important;
+        }
+        
+        /* Make sure any legacy hiding is defeated */
+        .st-emotion-cache-1cpxqw2 {
+            display: block !important;
+            visibility: visible !important;
+        }
+        
+        /* Optional: visual feedback so you see it's working */
+        [data-testid="stToolbar"] button {
+            background: rgba(6, 182, 212, 0.2) !important;
+            border: 1px solid #06b6d4 !important;
+            border-radius: 6px !important;
+            padding: 4px 8px !important;
+        }
+    </style>
+    
+    <script>
+        // Aggressive force-show on every render
+        function forceShowMenu() {
+            const toolbar = document.querySelector('[data-testid="stToolbar"]');
+            const menuBtn = document.querySelector('button[kind="menu"]');
+            
+            if (toolbar) {
+                toolbar.style.display = 'flex';
+                toolbar.style.visibility = 'visible';
+                toolbar.style.opacity = '1';
+            }
+            if (menuBtn) {
+                menuBtn.style.display = 'inline-flex';
+                menuBtn.style.visibility = 'visible';
+            }
+        }
+        
+        // Run immediately
+        forceShowMenu();
+        
+        // Run again after small delay (Streamlit can render toolbar late)
+        setTimeout(forceShowMenu, 300);
+        
+        // Watch for any DOM changes (Streamlit React re-renders)
+        const observer = new MutationObserver(forceShowMenu);
+        observer.observe(document.body, { childList: true, subtree: true });
+    </script>
+    """, unsafe_allow_html=True)
+    
     # ═══════════════════════════════════════════════════════════════
     # PAYMENT GATING - Check if user has access
     # ═══════════════════════════════════════════════════════════════
