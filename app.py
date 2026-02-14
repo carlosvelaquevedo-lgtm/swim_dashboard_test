@@ -350,14 +350,14 @@ def show_landing_page():
         """, unsafe_allow_html=True)
         st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
         st.link_button("🏊 Get My Biomechanics Report →", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
-        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+
         if IS_DEV:
             if st.button("Developer: Skip to Dashboard", use_container_width=True):
                 st.session_state.paid = True
                 st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     # --- Feature Grid ---
-    st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 50px;">The Analysis Engine</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 30px 0 30px;">The Analysis Engine</h2>', unsafe_allow_html=True)
     
     f_cols = st.columns(3)
     features = [
