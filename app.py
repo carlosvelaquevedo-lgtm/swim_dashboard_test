@@ -6,68 +6,84 @@ import streamlit as st
 st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
-    layout="centered",                # changed back to wide — centered usually breaks full bg
-    initial_sidebar_state="expanded"
+    layout="centered",
+    initial_sidebar_state="expanded"  # Forces sidebar open on load
 )
 
 # =============================================
-# BACKGROUND + MENU HIDE
+# CSS STYLING (Theming & Layout)
 # =============================================
 st.markdown("""
 <style>
-    /* Force full background */
+    /* Main Background Theme */
     .stApp, [data-testid="stAppViewContainer"], .main, .block-container {
         background: #0a1628 !important;
         background-image: linear-gradient(180deg, #0a1628 0%, #0f2847 30%, #0e3d6b 60%, #0f2847 100%) !important;
     }
 
-    /* Background layers */
+    /* Animated Water Effect */
     .water-bg {
-        position: fixed !important;
-        inset: 0 !important;
-        z-index: -999 !important;
+        position: fixed; inset: 0; z-index: -999;
         background: linear-gradient(180deg, #0a1628 0%, #0f2847 30%, #0e3d6b 60%, #0f2847 100%);
     }
-
     .water-bg::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: 
-            radial-gradient(ellipse at 20% 20%, rgba(6,182,212,0.15) 0%, transparent 50%),
-            radial-gradient(ellipse at 80% 80%, rgba(6,182,212,0.1) 0%, transparent 50%);
+        content: ''; position: absolute; inset: 0;
+        background: radial-gradient(ellipse at 20% 20%, rgba(6,182,212,0.15) 0%, transparent 50%);
         animation: waterShimmer 8s ease-in-out infinite;
     }
+    @keyframes waterShimmer { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 
-    @keyframes waterShimmer {
-        0%, 100% { opacity: 0.5; }
-        50% { opacity: 1; }
+    /* Component Styling */
+    .section-title { text-align: center; font-size: 2.2rem; margin: 60px 0 30px; color: #f0fdff; }
+    
+    .feature-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(6, 182, 212, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        height: 100%;
+        transition: 0.3s;
+    }
+    .feature-card:hover {
+        transform: translateY(-5px);
+        background: rgba(6, 182, 212, 0.08);
+        border-color: #06b6d4;
     }
 
-    .lane-lines {
-        position: fixed;
-        inset: 0;
-        z-index: -998;
-        opacity: 0.03;
-        background: repeating-linear-gradient(90deg, #22d3ee 0px, #22d3ee 4px, transparent 4px, transparent 150px);
+    .step-box { text-align: center; padding: 20px; }
+    .step-num {
+        width: 40px; height: 40px; background: #06b6d4; color: #0a1628;
+        border-radius: 50%; display: flex; align-items: center; 
+        justify-content: center; font-weight: 800; margin: 0 auto 15px;
     }
 
-    /* Hide menu / toolbar / options button */
-    header button[aria-label="View more options"],
-    [data-testid="stToolbar"],
-    button[kind="menu"],
-    .st-emotion-cache-1cpxqw2,
-    section[data-testid="stSidebar"] + div [data-testid="stToolbar"] {
-        display: none !important;
+    /* Keep Sidebar visible but styled */
+    [data-testid="stSidebar"] {
+        background-color: #07111d !important;
+        border-right: 1px solid rgba(6, 182, 212, 0.2);
     }
+    
+    /* Hide top toolbar only (keeps sidebar toggle visible) */
+    header[data-testid="stHeader"] { background: transparent !important; }
+    [data-testid="stToolbar"] { visibility: hidden !important; }
 </style>
-
 <div class="water-bg"></div>
-<div class="lane-lines"></div>
 """, unsafe_allow_html=True)
 
 # =============================================
-# CONFIG
+# SIDEBAR CONTENT
+# =============================================
+with st.sidebar:
+    st.image("https://img.icons8.com", width=80)
+    st.title("SwimForm AI")
+    st.markdown("---")
+    st.info("💡 **Tip:** Underwater side-view videos provide the most accurate biomechanical data.")
+    st.markdown("### Settings")
+    st.toggle("High-Contrast Mode")
+    st.selectbox("Metric System", ["Meters/Seconds", "Yards/Seconds"])
+
+# =============================================
+# APP LOGIC
 # =============================================
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800"
 IS_DEV = True
@@ -76,108 +92,50 @@ if "paid" not in st.session_state:
     st.session_state.paid = False
 
 def show_landing_page():
-    # No extra container needed unless you want max-width centering
-
-    # Header
-    st.markdown("""
-    <div style="padding: 20px 0; text-align: left;">
-        <a href="#" style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: #06b6d4; text-decoration: none;">
-            SwimForm AI
-        </a>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Hero + CTA
-    st.markdown('<div style="padding: 80px 0 40px; text-align: center;">', unsafe_allow_html=True)
-    st.markdown('<div style="background: rgba(6,182,212,0.15); border: 1px solid #06b6d4; border-radius: 50px; padding: 8px 20px; display: inline-block; margin-bottom: 20px;">⚡ Video analysis powered by Claude AI</div>', unsafe_allow_html=True)
-    st.markdown('<h1 style="font-size: 3.2rem; line-height: 1.1;">Find the <span style="background: linear-gradient(90deg, #06b6d4, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">one fix</span><br>that makes you faster</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="font-size: 1.3rem; color: #a5b4fc; max-width: 700px; margin: 20px auto;">Upload your swim video. Get a biomechanics report in 90 seconds.</p>', unsafe_allow_html=True)
-
-    # PAYMENT BUTTONS
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        if st.button("🏊 Get Instant Analysis → $4.99", key="cta_main", use_container_width=True, type="primary"):
-            st.markdown(f'<meta http-equiv="refresh" content="0;url={STRIPE_PAYMENT_LINK}">', unsafe_allow_html=True)
-
-    if IS_DEV:
-        if st.button("Skip Payment – Demo Mode", key="demo_btn"):
-            st.session_state.paid = True
-            st.rerun()
-
+    # Hero Section
+    st.markdown('<div style="padding: 40px 0; text-align: center;">', unsafe_allow_html=True)
+    st.markdown('<div style="background: rgba(6,182,212,0.15); border: 1px solid #06b6d4; border-radius: 50px; padding: 8px 20px; display: inline-block; margin-bottom: 20px; color: #22d3ee; font-weight: 600;">⚡ AI Video Analysis</div>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 3.5rem; line-height: 1.1; color: white;">Find the <span style="color: #06b6d4;">One Fix</span><br>That Makes You Faster</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="font-size: 1.2rem; color: #a5b4fc; margin: 20px 0;">Upload your swim video. Get a biomechanics report in 90 seconds.</p>', unsafe_allow_html=True)
+    
+    # CTA Buttons
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.link_button("🏊 Get Instant Analysis — $4.99", STRIPE_PAYMENT_LINK, use_container_width=True, type="primary")
+        if IS_DEV:
+            if st.button("Developer: Skip Payment", use_container_width=True):
+                st.session_state.paid = True
+                st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Features Section
-    st.markdown('<h2 class="section-title">What you get</h2>', unsafe_allow_html=True)
-    cols = st.columns(3, gap="medium")
+    # Features Grid
+    st.markdown('<h2 class="section-title">Analysis Features</h2>', unsafe_allow_html=True)
+    f_cols = st.columns(3)
     features = [
-        ("📊", "7 Biomechanical Metrics", "Stroke rate, DPS, entry angle, elbow drop, kick depth, head position, body rotation—all measured frame-by-frame."),
-        ("🎯", "Ranked Issues (1-3)", "Not just a list. We tell you which fix will move the needle most based on your specific technique patterns."),
-        ("🏊", "Drill Prescription", "Exact drills with rep counts, focus cues, and when to return to full stroke. No guessing."),
-        ("🎥", "Side-by-Side Comparison", "Your stroke vs. Olympic reference footage with synchronized playback and annotation overlays."),
-        ("📈", "Progress Tracking", "Upload follow-up videos. We'll chart your improvement across all metrics session by session."),
-        ("⚡", "Instant PDF Download", "Complete report with screenshots, data tables, and drill cards. Share with coaches or keep for your records."),
+        ("📊", "7 Biometrics", "Stroke rate, DPS, and entry angles measured frame-by-frame."),
+        ("🎯", "Ranked Fixes", "We rank issues 1-3 so you know what to prioritize first."),
+        ("🎥", "Pro Comparison", "Your stroke vs. Olympic reference footage side-by-side.")
     ]
     for i, (icon, title, desc) in enumerate(features):
-        with cols[i % 3]:
+        with f_cols[i]:
             st.markdown(f"""
-            <div class="feature">
-                <div class="feature-icon">{icon}</div>
-                <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 12px; color: #22d3ee;">{title}</h3>
-                <p style="color: rgba(240, 253, 255, 0.7); line-height: 1.6;">{desc}</p>
+            <div class="feature-card">
+                <div style="font-size: 2rem; margin-bottom: 10px;">{icon}</div>
+                <h3 style="color: #22d3ee; margin-bottom: 10px;">{title}</h3>
+                <p style="color: rgba(240, 253, 255, 0.7); font-size: 0.95rem;">{desc}</p>
             </div>
             """, unsafe_allow_html=True)
 
-    # ... add Demo, Video Section, How It Works, Testimonial, Final CTA, Footer here ...
-    # (copy them from your previous working version)
+def show_dashboard():
+    st.title("🏊 Analysis Dashboard")
+    st.write("Ready to analyze. Drag your video file here.")
+    st.file_uploader("Upload MP4/MOV clip (Max 30s)", type=['mp4', 'mov'])
+    if st.button("Log Out"):
+        st.session_state.paid = False
+        st.rerun()
 
-    # Demo Section
-    st.markdown('<h2 class="section-title">See it in action</h2>', unsafe_allow_html=True)
-    st.markdown("""
-    <div style="background: rgba(15, 40, 71, 0.4); border: 1px solid rgba(6, 182, 212, 0.15); border-radius: 16px; padding: 40px; text-align: center; max-width: 900px; margin: 0 auto;">
-        <h3 style="font-size: 1.5rem; margin-bottom: 12px; color: #22d3ee;">Demo Video Coming Soon</h3>
-        <p style="font-size: 1.1rem; max-width: 500px; line-height: 1.6; margin: 0 auto;">
-            We're finalizing a full walkthrough showing the upload, AI analysis, and instant PDF report generation.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Video Section
-    st.markdown('<h2 class="section-title">Best camera angles</h2>', unsafe_allow_html=True)
-    cols = st.columns(4, gap="medium")
-    # Add your video cards here (you had only one in the paste)
-    st.info("Video cards go here...")
-
-    # How It Works
-    st.markdown('<h2 class="section-title">How it works</h2>', unsafe_allow_html=True)
-    cols = st.columns(3, gap="medium")
-    steps = [
-        ("1", "Pay $4.99", "Secure checkout via Stripe. Instant access."),
-        ("2", "Upload Video", "10-15 sec clip. Side view underwater works best."),
-        ("3", "Get Report", "AI analyzes in 90 sec. Download PDF + annotated video."),
-    ]
-    for i, (num, title, desc) in enumerate(steps):
-        with cols[i]:
-            st.markdown(f"""
-            <div class="step">
-                <div class="step-number">{num}</div>
-                <h3 style="color: #22d3ee;">{title}</h3>
-                <p style="color: rgba(240, 253, 255, 0.7);">{desc}</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-# =============================================
-# MAIN ROUTER
-# =============================================
+# Router
 if st.session_state.paid:
-    try:
-        import importlib.util
-        import sys
-        spec = importlib.util.spec_from_file_location("dashboard", "pages/2_Dashboard.py")
-        dashboard_module = importlib.util.module_from_spec(spec)
-        sys.modules["dashboard"] = dashboard_module
-        spec.loader.exec_module(dashboard_module)
-        dashboard_module.main()
-    except Exception as e:
-        st.error(f"Error loading dashboard: {e}")
+    show_dashboard()
 else:
     show_landing_page()
