@@ -189,7 +189,31 @@ def show_landing_page():
             </div>
             <div style="height: 25px;"></div>
             """, unsafe_allow_html=True)
-
+    # --- 6. Final CTA / Pricing (Centered with Demo) ---
+    st.markdown('<div style="margin-top: 100px;"></div>', unsafe_allow_html=True)
+    
+    # Using columns to constrain the width and center the box
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown("""
+        <div class="cta-box">
+            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">GET STARTED</div>
+            <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ report</span></div>
+            <p style="color: #94a3b8; margin: 15px 0 30px;">Secure payment via Stripe. One-time analysis.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Payment Button
+        st.link_button("🏊 Analyze My Stroke Now — $4.99", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
+        
+        # Demo / Developer Button
+        if IS_DEV:
+            st.markdown('<div style="margin-top: 12px;"></div>', unsafe_allow_html=True)
+            if st.button("🧪 Try Developer Demo (Skip Payment)", use_container_width=True):
+                st.session_state.paid = True
+                st.balloons()
+                st.rerun()
     # --- Camera Angles (Animated Skeletal SVGs) ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 40px;">Optimized Recording Angles</h2>', unsafe_allow_html=True)
     a_cols = st.columns(4)
