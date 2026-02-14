@@ -385,10 +385,9 @@ def show_landing_page():
     }
     </style>
     """, unsafe_allow_html=True)
-    for i in range(0, len(features), 3):
-        row_features = features[i:i+3]
+    for row in range(2):
         st.markdown('<div class="row-flex">', unsafe_allow_html=True)
-        for icon, title, desc in row_features:
+        for icon, title, desc in features[row*3:(row+1)*3]:
             st.markdown(f"""
             <div class="f-card">
                 <div style="font-size: 2rem; margin-bottom: 15px;">{icon}</div>
@@ -397,7 +396,6 @@ def show_landing_page():
             </div>
             """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-
     # --- Camera Angles (Animated Skeletal SVGs) ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 40px;">Optimized Recording Angles</h2>', unsafe_allow_html=True)
     a_cols = st.columns(4)
