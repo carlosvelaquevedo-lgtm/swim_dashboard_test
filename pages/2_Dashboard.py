@@ -3162,32 +3162,78 @@ def main():
             h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
             total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
-            out_path = tempfile.mktemp(suffix=".mp4")
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
-    
+
+            temp_raw_path = tempfile.mktemp(suffix=".avi")
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Use XVID for intermediate
+            writer = cv2.VideoWriter(temp_raw_path, fourcc, fps, (w, h))
+            
             st.markdown("### ⏳ Processing Video")
             processing_progress = st.progress(0)
             processing_status = st.empty()
-    
+            
             frame_idx = 0
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret: break
-    
+            
                 timestamp_ms = frame_idx * 33 + 1
                 real_t = frame_idx / fps
-    
+            
                 annotated, _ = analyzer.process(frame, real_t, timestamp_ms, fps)
                 writer.write(annotated)
-    
+            
                 frame_idx += 1
                 if total > 0:
                     processing_progress.progress(frame_idx / total)
                 processing_status.text(f"🎬 Analyzing frame {frame_idx}/{total}")
-    
+            
             cap.release()
             writer.release()
+            processing_status.text("✅ Analysis complete!")
+            
+            # Re-encode to H.264 for web compatibility
+            st.markdown("### 🎥 Finalizing Video")
+            encoding_status = st.empty()
+            encoding_status.text("🔄 Converting to web-compatible format...")
+            
+            out_path = tempfile.mktemp(suffix=".mp4")
+            
+            try:
+                # Try using ffmpeg via subprocess (most reliable)
+                import subprocess
+                
+                ffmpeg_cmd = [
+                    'ffmpeg', '-i', temp_raw_path,
+                    '-c:v', 'libx264',  # H.264 codec
+                    '-preset', 'fast',
+                    '-crf', '23',  # Quality (lower = better, 18-28 is good range)
+                    '-pix_fmt', 'yuv420p',  # Ensure compatibility
+                    '-y',  # Overwrite output
+                    out_path
+                ]
+                
+                result = subprocess.run(
+                    ffmpeg_cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    timeout=300  # 5 minute timeout
+                )
+                
+                if result.returncode != 0:
+                    raise Exception(f"FFmpeg failed: {result.stderr.decode()}")
+                
+                encoding_status.text("✅ Video conversion complete!")
+                
+            except Exception as e:
+                encoding_status.warning(f"⚠️ FFmpeg conversion failed: {e}. Using original format.")
+                # Fallback: just copy the original
+                import shutil
+                shutil.copy(temp_raw_path, out_path)
+
+            
+            
+            
+            
             processing_status.text("✅ Analysis complete!")
     
             st.markdown("### 🎥 Finalizing Video")
