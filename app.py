@@ -368,7 +368,20 @@ def show_landing_page():
         ("📈", "Progress Charting", "Upload follow-up videos to track improvement across all metrics session-over-session."),
         ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
     ]
-    
+    card_style = """
+    <style>
+    .f-card {
+        min-height: 220px;        
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-start;
+        padding: 20px;
+        border-radius: 12px;
+        background-color: #1e293b; /* optional: card background */
+    }
+    </style>
+    """
     for i, (icon, title, desc) in enumerate(features):
         with f_cols[i % 3]:
             st.markdown(f"""
