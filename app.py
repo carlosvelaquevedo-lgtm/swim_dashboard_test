@@ -343,7 +343,7 @@ def show_landing_page():
     with col2:
         st.markdown("""
         <div class="cta-box">
-            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">INSTANT ANALYSIS</div>
+            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 8px; letter-spacing: 1px;">INSTANT ANALYSIS</div>
             <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ video</span></div>
             <p style="color: #94a3b8; margin: 15px 0 30px;">Full PDF Report • Side-by-Side Playback • Drill Cards</p>
         </div>
