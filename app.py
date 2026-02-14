@@ -1,4 +1,4 @@
-import streamlit as st
+rimport streamlit as st
 
 # ─────────────────────────────────────────────
 # PAGE CONFIG
@@ -6,8 +6,8 @@ import streamlit as st
 st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
-    layout="wide",
-    initial_sidebar_state="expanded",
+    layout="centered",
+    initial_sidebar_state="hidden",
 )
 
 # ─────────────────────────────────────────────
