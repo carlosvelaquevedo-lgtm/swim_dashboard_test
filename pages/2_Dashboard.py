@@ -25,13 +25,6 @@ from reportlab.lib.units import inch
 
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800"  # From your app.py
 
-# MoviePy for video encoding (pure Python, no ffmpeg binary needed)
-try:
-    from moviepy.editor import VideoFileClip
-    MOVIEPY_AVAILABLE = True
-except ImportError:
-    MOVIEPY_AVAILABLE = False
-
 # pyav for fast, reliable encoding (preferred)
 try:
     import av
@@ -3169,150 +3162,53 @@ def main():
         total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
         # Write to temporary file with OpenCV
-        temp_out_path = tempfile.mktemp(suffix=".avi")
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')  # Use XVID for intermediate
-        writer = cv2.VideoWriter(temp_out_path, fourcc, fps, (w, h))
+        # ────── DIRECT MP4 WRITING (THE FIX) ──────
+        out_path = tempfile.mktemp(suffix=".mp4")
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')          # Most reliable for browsers
+        writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
 
-        # Progress bars for processing and encoding
+        # Progress
         st.markdown("### ⏳ Processing Video")
         processing_progress = st.progress(0)
         processing_status = st.empty()
-        
+
         frame_idx = 0
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret: break
+
+            timestamp_ms = frame_idx * 33 + 1
+            real_t = frame_idx / fps
+
+            annotated, _ = analyzer.process(frame, real_t, timestamp_ms, fps)
+            writer.write(annotated)
+
+            frame_idx += 1
+            if total > 0:
+                processing_progress.progress(frame_idx / total)
+            processing_status.text(f"🎬 Analyzing frame {frame_idx}/{total}")
+
+        cap.release()
+        writer.release()
+
+        processing_status.text("✅ Analysis complete!")
+
+        # ────── ENCODING STATUS (no heavy re-encode) ──────
+        st.markdown("### 🎥 Finalizing Video")
+        encoding_status = st.empty()
+        encoding_status.text("✅ Video saved as native MP4 (ready for playback)")
+
+        # Read final video bytes
+        with open(out_path, 'rb') as f:
+            video_bytes = f.read()
+
+        # Clean up
         try:
-            while cap.isOpened():
-                ret, frame = cap.read()
-                if not ret: 
-                    break
-
-                timestamp_ms = frame_idx * 33 + 1
-                real_t = frame_idx / fps
-
-                annotated, _ = analyzer.process(frame, real_t, timestamp_ms, fps)
-                writer.write(annotated)
-
-                frame_idx += 1
-                if total > 0:
-                    pct = frame_idx / total
-                    processing_progress.progress(min(pct, 1.0))
-                processing_status.text(f"🎬 Analyzing frame {frame_idx}/{total} ({frame_idx/total*100:.1f}%)")
-
-            cap.release()
-            writer.release()
+            os.unlink(input_path)
+            os.unlink(out_path)
+        except:
+            pass
             
-            processing_status.text("✅ Frame analysis complete!")
-            
-            # ═══════════════════════════════════════════════════════════════
-            # ENCODING WITH PROGRESS BAR - IMPROVED WITH pyav
-            # ═══════════════════════════════════════════════════════════════
-            
-            st.markdown("### 🎥 Encoding Video")
-            encoding_progress = st.progress(0)
-            encoding_status = st.empty()
-            
-            encoding_status.text("🔄 Encoding video for browser playback (0%)...")
-            out_path = tempfile.mktemp(suffix=".mp4")
-            
-            encoding_success = False
-            
-            # Method 1: pyav (fastest and most reliable)
-            if PYAV_AVAILABLE:
-                try:
-                    encoding_status.text("🔄 Encoding with pyav (20%)...")
-                    encoding_progress.progress(0.2)
-                    
-                    container_in = av.open(temp_out_path)
-                    container_out = av.open(out_path, mode='w')
-                    
-                    stream_in = container_in.streams.video[0]
-                    stream_out = container_out.add_stream('h264', rate=stream_in.average_rate)
-                    stream_out.width = stream_in.width
-                    stream_out.height = stream_in.height
-                    stream_out.pix_fmt = 'yuv420p'
-                    stream_out.options = {
-                        'crf': '23',
-                        'preset': 'medium',
-                        'profile': 'baseline',
-                        'level': '3.0'
-                    }
-                    
-                    frame_count = 0
-                    total_frames = sum(1 for _ in container_in.decode(video=0))
-                    container_in.seek(0)
-                    
-                    for frame in container_in.decode(video=0):
-                        container_out.mux(stream_out.encode(frame))
-                        frame_count += 1
-                        if total_frames > 0:
-                            pct = min(frame_count / total_frames, 1.0)
-                            encoding_progress.progress(pct)
-                            encoding_status.text(f"🔄 Encoding video ({pct*100:.0f}%)...")
-                    
-                    container_out.close()
-                    encoding_success = True
-                    
-                    encoding_progress.progress(1.0)
-                    encoding_status.text("✅ Encoding complete!")
-                    
-                except Exception as e:
-                    encoding_status.text(f"⚠️ pyav encoding failed: {e}. Trying fallback...")
-                    encoding_progress.progress(0.3)
-            
-            # Method 2: MoviePy fallback
-            if not encoding_success and MOVIEPY_AVAILABLE:
-                try:
-                    encoding_status.text("🔄 Encoding with MoviePy (50%)...")
-                    encoding_progress.progress(0.5)
-                    
-                    clip = VideoFileClip(temp_out_path)
-                    duration = clip.duration
-                    
-                    clip.write_videofile(
-                        out_path,
-                        codec='libx264',
-                        audio=False,
-                        preset='medium',
-                        ffmpeg_params=[
-                            '-pix_fmt', 'yuv420p',
-                            '-profile:v', 'baseline',
-                            '-level', '3.0',
-                            '-movflags', '+faststart',
-                            '-crf', '23',
-                            '-maxrate', '2M',
-                            '-bufsize', '4M'
-                        ],
-                        logger=None
-                    )
-                    clip.close()
-                    encoding_success = True
-                    
-                    encoding_progress.progress(1.0)
-                    encoding_status.text("✅ Encoding complete!")
-                    
-                except Exception as e:
-                    encoding_status.text(f"⚠️ MoviePy encoding failed: {e}. Trying final fallback...")
-                    encoding_progress.progress(0.7)
-            
-            # Method 3: Last resort - copy AVI and rename
-            if not encoding_success:
-                import shutil
-                out_path = temp_out_path.replace('.avi', '.mp4')
-                shutil.copy(temp_out_path, out_path)
-                encoding_progress.progress(1.0)
-                encoding_status.text("⚠️ Video encoding limited - download the video for best playback")
-                st.warning("⚠️ Video encoding limited - download the video for best playback")
-            
-            # Clean up temp AVI
-            try:
-                os.unlink(temp_out_path)
-            except:
-                pass
-
-            try:
-                os.unlink(input_path)
-            except:
-                pass
-
             summary = analyzer.get_summary()
             plot_buf = generate_plots(analyzer)
             pdf_buf = generate_pdf_report(summary, uploaded.name, plot_buf)
