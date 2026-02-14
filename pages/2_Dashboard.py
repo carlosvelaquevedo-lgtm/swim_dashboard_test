@@ -2953,29 +2953,27 @@ def main():
     # PAYMENT GATING - Check if user has access
     # ═══════════════════════════════════════════════════════════════
     # Payment gating - Use the same "paid" key as app.py
-
     if not st.session_state.get("paid", False):
-    st.error("🔒 Access Denied")
-    st.markdown("Please complete payment to access the swim analysis dashboard.")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("← Back to Home"):
-            st.switch_page("app.py")
-    with col2:
-        if st.button("→ Go to Payment"):
-            # Reliable external redirect using JavaScript injection
-            components.html(
-                f"""
-                <script>
-                    window.location.href = "{STRIPE_PAYMENT_LINK}";
-                </script>
-                """,
-                height=0,
-                width=0
-            )
-    st.stop()
-    
+        st.error("🔒 Access Denied")
+        st.markdown("Please complete payment to access the swim analysis dashboard.")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("← Back to Home"):
+                st.switch_page("app.py")
+        with col2:
+            if st.button("→ Go to Payment"):
+                # Reliable external redirect using JavaScript injection
+                components.html(
+                    f"""
+                    <script>
+                        window.location.href = "{STRIPE_PAYMENT_LINK}";
+                    </script>
+                    """,
+                    height=0,
+                    width=0
+                )
+        st.stop()    
     # Handle success query param (from Stripe redirect)
     query_params = st.query_params
     if query_params.get("payment") == "success":
