@@ -109,11 +109,20 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
     # --- Hero Section ---
-    st.markdown('<div style="padding: 80px 0 40px; text-align: center;">', unsafe_allow_html=True)
-    st.markdown('<div class="hero-badge">⚡ Video analysis powered by Pose-Estimation AI</div>', unsafe_allow_html=True)
-    st.markdown('<h1 style="font-size: 4.2rem; font-weight: 800; line-height: 1; margin: 25px 0;">Find the <span style="background: linear-gradient(90deg, #22d3ee, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">one fix</span><br>that makes you faster</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="font-size: 1.3rem; color: #94a3b8; max-width: 700px; margin: 0 auto 50px;">Upload your swim video. Get a full biomechanics report in 90 seconds. We pinpoint the technical leaks that coaches miss.</p>', unsafe_allow_html=True)
-
+# --- Hero Section (Consolidated & Centered) ---
+    st.markdown(f"""
+    <div style="padding: 80px 0 40px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+        <div class="hero-badge">⚡ Video analysis powered by Pose-Estimation AI</div>
+        <h1 style="font-size: 4.2rem; font-weight: 800; line-height: 1.1; margin: 25px 0; color: white;">
+            Find the <span style="background: linear-gradient(90deg, #22d3ee, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">one fix</span><br>
+            that makes you faster
+        </h1>
+        <p style="font-size: 1.3rem; color: #94a3b8; max-width: 700px; margin: 0 auto 50px; line-height: 1.6;">
+            Upload your swim video. Get a full biomechanics report in 90 seconds. 
+            We pinpoint the technical leaks that coaches miss.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     # Pricing Box
     col1, col2, col3 = st.columns([1, 1.8, 1])
     with col2:
