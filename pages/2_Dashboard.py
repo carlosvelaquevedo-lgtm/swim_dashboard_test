@@ -2959,21 +2959,14 @@ def main():
         
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("← Back to Home"):
+            if st.button("← Back to Home", use_container_width=True):
                 st.switch_page("app.py")
+                
         with col2:
-            if st.button("→ Go to Payment"):
-                # Reliable external redirect using JavaScript injection
-                components.html(
-                    f"""
-                    <script>
-                        window.location.href = "{STRIPE_PAYMENT_LINK}";
-                    </script>
-                    """,
-                    height=0,
-                    width=0
-                )
-        st.stop()    
+            # st.link_button is the most reliable way to handle Stripe redirects
+            st.link_button("→ Go to Payment", STRIPE_PAYMENT_LINK, use_container_width=True, type="primary")
+            
+        st.stop() 
     # Handle success query param (from Stripe redirect)
     query_params = st.query_params
     if query_params.get("payment") == "success":
