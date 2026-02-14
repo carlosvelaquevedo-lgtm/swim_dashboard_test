@@ -137,35 +137,150 @@ def show_landing_page():
             </div>
             """, unsafe_allow_html=True)
     # --- 2. Hero Section + Loom Placeholder ---
-    st.markdown(f"""
-    <div style="padding: 60px 0 10px; text-align: center; display: flex; flex-direction: column; align-items: center;">
-        <div style="font-size: 2.4rem; font-weight: 800; color: #06b6d4; margin-bottom: 40px; letter-spacing: 0.5px;">
-            ⚡ Video analysis powered by Pose-Estimation AI
-        </div>
-        
-        <h1 style="font-size: 4.2rem; font-weight: 800; line-height: 1.1; margin: 25px 0; color: white;">
-            Find the <span style="background: linear-gradient(90deg, #22d3ee, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">one fix</span><br>
-            that makes you faster
-        </h1>
-        
-        <p style="font-size: 1.3rem; color: #94a3b8; max-width: 700px; margin: 0 auto 40px; line-height: 1.6;">
-            Upload your swim video. Get a full biomechanics report in 90 seconds. 
-            We pinpoint the technical leaks that coaches miss.
-        </p>
+    st.markdown("""
+    <style>
     
-        <div style="width: 100%; max-width: 800px; border-radius: 24px; overflow: hidden; border: 1px solid rgba(6, 182, 212, 0.3); background: rgba(0,0,0,0.2); box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin-bottom: 80px;">
-            <div style="position: relative; padding-bottom: 56.25%; height: 0;">
+    /* ================= HERO VIDEO STRIPE STYLE ================= */
+    
+    .hero-video-wrapper {
+        position: relative;
+        width: 100%;
+        max-width: 1000px;
+        margin: 0 auto 120px auto;
+    }
+    
+    /* Gradient Glow */
+    .hero-glow {
+        position: absolute;
+        inset: -40px;
+        background: radial-gradient(circle at 50% 50%, rgba(6,182,212,0.35), transparent 60%);
+        filter: blur(80px);
+        z-index: 0;
+        animation: glowPulse 6s ease-in-out infinite;
+    }
+    
+    @keyframes glowPulse {
+        0%,100% { opacity: 0.6; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.05); }
+    }
+    
+    .hero-video {
+        position: relative;
+        border-radius: 32px;
+        overflow: hidden;
+        border: 1px solid rgba(6,182,212,0.25);
+        background: rgba(0,0,0,0.4);
+        box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+        z-index: 1;
+    }
+    
+    /* 16:9 container */
+    .hero-video-inner {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+    }
+    
+    .hero-video iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* Scan Line */
+    .scan-line {
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #22d3ee, transparent);
+        animation: scanMove 3s linear infinite;
+        opacity: 0.8;
+    }
+    
+    @keyframes scanMove {
+        0% { top: 0%; }
+        100% { top: 100%; }
+    }
+    
+    /* Floating Metrics */
+    .metric-badge {
+        position: absolute;
+        background: rgba(15,40,71,0.8);
+        border: 1px solid rgba(34,211,238,0.3);
+        padding: 10px 16px;
+        border-radius: 14px;
+        font-size: 0.8rem;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        animation: floatMetric 4s ease-in-out infinite;
+    }
+    
+    .metric-1 { top: 20px; left: 20px; }
+    .metric-2 { bottom: 20px; right: 20px; animation-delay: -2s; }
+    
+    @keyframes floatMetric {
+        0%,100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .metric-value {
+        color: #22d3ee;
+        font-weight: 700;
+    }
+    
+    </style>
+    
+    <div class="hero-video-wrapper">
+    
+        <div class="hero-glow"></div>
+    
+        <div class="hero-video">
+    
+            <div class="hero-video-inner">
                 <iframe 
-                    src="https://www.youtube.com/embed/5HLW2AI1Ink?autoplay=1&mute=1&loop=1&playlist=5HLW2AI1Ink" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen 
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                    id="heroVideo"
+                    src="https://www.youtube.com/embed/5HLW2AI1Ink?mute=1&controls=0&rel=0&modestbranding=1&enablejsapi=1"
+                    frameborder="0"
+                    allow="autoplay; encrypted-media">
                 </iframe>
+    
+                <div class="scan-line"></div>
+    
+                <div class="metric-badge metric-1">
+                    Elbow Angle<br>
+                    <span class="metric-value">118°</span>
+                </div>
+    
+                <div class="metric-badge metric-2">
+                    Stroke Rate<br>
+                    <span class="metric-value">32 spm</span>
+                </div>
+    
             </div>
+    
         </div>
+    
     </div>
+    
+    <script>
+    const iframe = document.getElementById("heroVideo");
+    
+    const wrapper = iframe.closest(".hero-video");
+    
+    wrapper.addEventListener("mouseenter", () => {
+        iframe.contentWindow.postMessage(
+            '{"event":"command","func":"playVideo","args":""}', '*');
+    });
+    
+    wrapper.addEventListener("mouseleave", () => {
+        iframe.contentWindow.postMessage(
+            '{"event":"command","func":"pauseVideo","args":""}', '*');
+    });
+    </script>
     """, unsafe_allow_html=True)
+
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 50px;">The Analysis Engine</h2>', unsafe_allow_html=True)
     
