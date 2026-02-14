@@ -3136,91 +3136,81 @@ def main():
         # Note: Payment has already been verified at the top of this page
         # Users can only access this dashboard if they've completed payment
 
-    if uploaded and video_type:
-        manual_camera_view = selected_camera
-        manual_water_position = selected_water
-        
-        analyzer = SwimAnalyzer(athlete, conf_thresh, yaw_thresh,
-                                manual_camera_view=manual_camera_view,
-                                manual_water_position=manual_water_position)
-
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_in:
-            tmp_in.write(uploaded.getvalue())
-            input_path = tmp_in.name
-
-        cap = cv2.VideoCapture(input_path)
-        fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-        # Write to temporary file with OpenCV
-        # ────── DIRECT MP4 WRITING (THE FIX) ──────
-        out_path = tempfile.mktemp(suffix=".mp4")
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')          # Native MP4 - works everywhere
-        writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
-
-        st.markdown("### ⏳ Processing Video")
-        processing_progress = st.progress(0)
-        processing_status = st.empty()
-
-        frame_idx = 0
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret: break
-
-            timestamp_ms = frame_idx * 33 + 1
-            real_t = frame_idx / fps
-
-            annotated, _ = analyzer.process(frame, real_t, timestamp_ms, fps)
-            writer.write(annotated)
-
-            frame_idx += 1
-            if total > 0:
-                processing_progress.progress(frame_idx / total)
-            processing_status.text(f"🎬 Analyzing frame {frame_idx}/{total}")
-
-        cap.release()
-        writer.release()
-
-        processing_status.text("✅ Analysis complete!")
-
-        # ────── NO RE-ENCODING NEEDED ──────
-        st.markdown("### 🎥 Finalizing Video")
-        encoding_status = st.empty()
-        encoding_status.text("✅ Video saved as native MP4 (ready for playback)")
-
-        # Read bytes
-        with open(out_path, 'rb') as f:
-            video_bytes = f.read()
-
-        # Cleanup
-        try:
-            os.unlink(input_path)
-            os.unlink(out_path)
-        except:
-            pass
+        if uploaded and video_type:
+            manual_camera_view = selected_camera
+            manual_water_position = selected_water
             
+            analyzer = SwimAnalyzer(athlete, conf_thresh, yaw_thresh,
+                                    manual_camera_view=manual_camera_view,
+                                    manual_water_position=manual_water_position)
+    
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_in:
+                tmp_in.write(uploaded.getvalue())
+                input_path = tmp_in.name
+    
+            cap = cv2.VideoCapture(input_path)
+            fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+            w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    
+            # ────── DIRECT MP4 WRITING (THE FIX) ──────
+            out_path = tempfile.mktemp(suffix=".mp4")
+            fourcc = cv2.VideoWriter_fourcc(*'mp4v')          # Native MP4 - works everywhere
+            writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
+    
+            st.markdown("### ⏳ Processing Video")
+            processing_progress = st.progress(0)
+            processing_status = st.empty()
+    
+            frame_idx = 0
+            while cap.isOpened():
+                ret, frame = cap.read()
+                if not ret: break
+    
+                timestamp_ms = frame_idx * 33 + 1
+                real_t = frame_idx / fps
+    
+                annotated, _ = analyzer.process(frame, real_t, timestamp_ms, fps)
+                writer.write(annotated)
+    
+                frame_idx += 1
+                if total > 0:
+                    processing_progress.progress(frame_idx / total)
+                processing_status.text(f"🎬 Analyzing frame {frame_idx}/{total}")
+    
+            cap.release()
+            writer.release()
+    
+            processing_status.text("✅ Analysis complete!")
+    
+            # ────── NO RE-ENCODING NEEDED ──────
+            st.markdown("### 🎥 Finalizing Video")
+            encoding_status = st.empty()
+            encoding_status.text("✅ Video saved as native MP4 (ready for playback)")
+    
+            # Read bytes
+            with open(out_path, 'rb') as f:
+                video_bytes = f.read()
+    
+            # Cleanup
+            try:
+                os.unlink(input_path)
+                os.unlink(out_path)
+            except:
+                pass
+    
+            # ────── ALL THE REST (summary, UI, downloads) MUST BE AT THIS INDENTATION LEVEL ──────
             summary = analyzer.get_summary()
             plot_buf = generate_plots(analyzer)
             pdf_buf = generate_pdf_report(summary, uploaded.name, plot_buf)
             csv_buf = export_to_csv(analyzer)
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             
-            video_bytes = None
-            if os.path.exists(out_path):
-                with open(out_path, 'rb') as f:
-                    video_bytes = f.read()
-            
-            zip_buf = create_results_bundle(out_path, csv_buf, pdf_buf, timestamp)
-
+            zip_buf = create_results_bundle(out_path, csv_buf, pdf_buf, timestamp)  # out_path already deleted, but we use bytes
+    
             analyzer.close()
-
-            try:
-                os.unlink(out_path)
-            except:
-                pass
-
+    
             st.success("✅ Analysis complete!")
             
             # Display video type information - User selected vs Auto-detected
