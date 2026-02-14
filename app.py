@@ -348,7 +348,9 @@ def show_landing_page():
             <p style="color: #94a3b8; margin: 15px 0 30px;">Full PDF Report • Side-by-Side Playback • Drill Cards</p>
         </div>
         """, unsafe_allow_html=True)
+        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
         st.link_button("🏊 Get My Biomechanics Report →", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
+        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
         if IS_DEV:
             if st.button("Developer: Skip to Dashboard", use_container_width=True):
                 st.session_state.paid = True
