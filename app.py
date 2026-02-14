@@ -99,30 +99,101 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def show_landing_page():
-
+def show_landing_page():
+    # --- 1. Navigation (Centered) ---
     st.markdown("""
     <div style="padding: 20px 0; display: flex; justify-content: center; align-items: center;">
-        <div style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: #22d3ee; display: flex; align-items: center; gap: 10px;">
+        <div style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: #22d3ee; display: flex; align-items: center; gap: 12px;">
             <svg width="30" height="30" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/><path d="M 8 16 Q 16 12 24 16" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>
             SWIMFORM AI
         </div>
     </div>
     """, unsafe_allow_html=True)
-    # --- Hero Section ---
-# --- Hero Section (Consolidated & Centered) ---
+
+    # --- 2. Hero Section (Centered + Loom Placeholder) ---
     st.markdown(f"""
-    <div style="padding: 80px 0 40px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+    <div style="padding: 60px 0 10px; text-align: center; display: flex; flex-direction: column; align-items: center;">
         <div class="hero-badge">⚡ Video analysis powered by Pose-Estimation AI</div>
+        
         <h1 style="font-size: 4.2rem; font-weight: 800; line-height: 1.1; margin: 25px 0; color: white;">
             Find the <span style="background: linear-gradient(90deg, #22d3ee, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">one fix</span><br>
             that makes you faster
         </h1>
-        <p style="font-size: 1.3rem; color: #94a3b8; max-width: 700px; margin: 0 auto 50px; line-height: 1.6;">
+        
+        <p style="font-size: 1.3rem; color: #94a3b8; max-width: 700px; margin: 0 auto 40px; line-height: 1.6;">
             Upload your swim video. Get a full biomechanics report in 90 seconds. 
             We pinpoint the technical leaks that coaches miss.
         </p>
+
+        <div style="width: 100%; max-width: 800px; border-radius: 24px; overflow: hidden; border: 1px solid rgba(6, 182, 212, 0.3); background: rgba(0,0,0,0.2); box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin-bottom: 80px;">
+            <div style="position: relative; padding-bottom: 56.25%; height: 0;">
+                <iframe src="https://www.loom.com/embed/REPLACE_WITH_YOUR_ID" 
+                        frameborder="0" 
+                        webkitallowfullscreen mozallowfullscreen allowfullscreen 
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                </iframe>
+            </div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
+
+    # --- 3. How It Works (The 3 Steps) ---
+    st.markdown('<h2 style="text-align: center; font-size: 2.2rem; margin-bottom: 50px;">The 90-Second Process</h2>', unsafe_allow_html=True)
+    s_cols = st.columns(3)
+    steps = [
+        ("01", "Activate", "Complete the secure $4.99 payment to unlock your processing tunnel."),
+        ("02", "Drop", "Upload a 10-30s raw video clip. Our AI handles the tracking automatically."),
+        ("03", "Review", "Receive a data-rich PDF report and synchronized video analysis instantly.")
+    ]
+    
+    for i, (num, title, desc) in enumerate(steps):
+        with s_cols[i]:
+            st.markdown(f"""
+            <div style="text-align: center; padding: 20px;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: #06b6d4; color: #0a1628; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; margin: 0 auto 20px; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); border: 4px solid rgba(255,255,255,0.1);">
+                    {num}
+                </div>
+                <h3 style="color: white; margin-bottom: 12px; font-size: 1.3rem;">{title}</h3>
+                <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5;">{desc}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # --- 4. Feature Grid ---
+    st.markdown('<h2 style="text-align: center; font-size: 2.2rem; margin: 100px 0 50px;">Deep-Dive Analytics</h2>', unsafe_allow_html=True)
+    f_cols = st.columns(3)
+    features = [
+        ("📊", "Anatomical Tracking", "We track 15+ points including wrist, elbow, and hip for exact angles."),
+        ("🎯", "Prioritized Fixes", "Don't get overwhelmed. We highlight the top 3 changes that drop the most time."),
+        ("🩹", "Drill Library", "Personalized PDF including video-guided drills for your specific leaks."),
+        ("🎥", "Pro-Sync Overlay", "View your stroke side-by-side with Olympic reference footage."),
+        ("📈", "Progress History", "Track your technical improvement across multiple sessions."),
+        ("⚡", "Cloud GPU Speed", "Analysis that used to take days now takes less than two minutes.")
+    ]
+    
+    for i, (icon, title, desc) in enumerate(features):
+        with f_cols[i % 3]:
+            st.markdown(f"""
+            <div class="f-card">
+                <div style="font-size: 2rem; margin-bottom: 15px;">{icon}</div>
+                <h3 style="color: #22d3ee; margin-bottom: 10px; font-size: 1.2rem;">{title}</h3>
+                <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">{desc}</p>
+            </div>
+            <div style="height: 25px;"></div>
+            """, unsafe_allow_html=True)
+
+    # --- 5. Final CTA / Pricing ---
+    st.markdown('<div style="margin-top: 80px;"></div>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1.8, 1])
+    with col2:
+        st.markdown("""
+        <div class="cta-box">
+            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">GET STARTED</div>
+            <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ report</span></div>
+            <p style="color: #94a3b8; margin: 15px 0 30px;">No subscription. Pay only when you want an analysis.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.link_button("🏊 Analyze My Stroke Now — $4.99", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
+
     # Pricing Box
     col1, col2, col3 = st.columns([1, 1.8, 1])
     with col2:
