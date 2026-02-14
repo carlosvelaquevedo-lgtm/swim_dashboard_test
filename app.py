@@ -1,4 +1,7 @@
 import streamlit as st
+import streamlit.components.v1 as components
+
+import streamlit as st
 
 # ─────────────────────────────────────────────
 # PAGE CONFIG - Wide + Expanded
@@ -192,7 +195,7 @@ def show_landing_page():
     <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="system-ui">Side View • Underwater</text>
 </svg>
 """, "Side View + Underwater", "Streamline, pull path, elbow position, kick timing"),
-            # Add your other 3 video cards here if you have them
+        # (other SVGs unchanged...)
         ]
         for i, (class_name, svg, title, metrics) in enumerate(video_cards):
             with cols[i]:
@@ -204,53 +207,94 @@ def show_landing_page():
 
         st.markdown('<p style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px; padding: 16px 20px; font-size: 0.9375rem; color: rgba(240, 253, 255, 0.9); text-align: center; margin-top: 32px;">💡 <strong>Tip:</strong> 10-15 seconds of continuous swimming works best. Our AI auto-detects your camera angle!</p>', unsafe_allow_html=True)
 
-        # How It Works
-        st.markdown('<h2 class="section-title">How it works</h2>', unsafe_allow_html=True)
-        cols = st.columns(3, gap="medium")
-        steps = [
-            ("1", "Pay $4.99", "Secure checkout via Stripe. Instant access."),
-            ("2", "Upload Video", "10-15 sec clip. Side view underwater works best."),
-            ("3", "Get Report", "AI analyzes in 90 sec. Download PDF + annotated video."),
-        ]
-        for i, (num, title, desc) in enumerate(steps):
-            with cols[i]:
-                st.markdown(f"""
-                <div class="step">
-                    <div class="step-number">{num}</div>
-                    <h3 style="color: var(--lane-line);">{title}</h3>
-                    <p style="color: rgba(240, 253, 255, 0.7);">{desc}</p>
-                </div>
-                """, unsafe_allow_html=True)
+    # How It Works (with gap)
+    st.markdown('<h2 class="section-title">How it works</h2>', unsafe_allow_html=True)
+    cols = st.columns(3, gap="medium")
 
-        # Testimonial
-        st.markdown('<div class="testimonial-card">', unsafe_allow_html=True)
-        st.markdown('<div style="font-size: 1.5rem; color: var(--gold-medal); margin-bottom: 20px;">★★★★★</div>', unsafe_allow_html=True)
-        st.markdown('<blockquote style="font-size: 1.125rem; line-height: 1.7; color: rgba(240, 253, 255, 0.9); margin-bottom: 24px; font-style: italic;">"I\'ve been coaching for 18 years and this caught a dropped elbow pattern I missed. My swimmer dropped 0.4 seconds in her next 100 free after 2 weeks of targeted drills."</blockquote>', unsafe_allow_html=True)
-        st.markdown("""
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--surface-glow), var(--lane-line)); color: var(--deep-pool); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 1.125rem;">MK</div>
-            <div>
-                <h4 style="color: var(--lane-line);">Mike K.</h4>
-                <p style="font-size: 0.875rem; color: rgba(240, 253, 255, 0.6);">Head Coach, Aquatic Stars SC</p>
+    steps = [
+        ("1", "Pay $4.99", "Secure checkout via Stripe. Instant access."),
+        ("2", "Upload Video", "10-15 sec clip. Side view underwater works best."),
+        ("3", "Get Report", "AI analyzes in 90 sec. Download PDF + annotated video."),
+    ]
+    for i, (num, title, desc) in enumerate(steps):
+        with cols[i]:
+            st.markdown(f"""
+            <div class="step">
+                <div class="step-number">{num}</div>
+                <h3 style="color: var(--lane-line);">{title}</h3>
+                <p style="color: rgba(240, 253, 255, 0.7);">{desc}</p>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-        # Final CTA
-        st.markdown('<div class="final-cta">', unsafe_allow_html=True)
-        st.markdown('<h2>Ready to find your speed leak?</h2>', unsafe_allow_html=True)
-        st.markdown('<p>One video. One analysis. One fix that changes everything.</p>', unsafe_allow_html=True)
-        if st.button("🏊 Get Instant Analysis → $4.99", key="cta2", use_container_width=True):
-            st.markdown(f'<meta http-equiv="refresh" content="0;url={STRIPE_PAYMENT_LINK}">', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # Footer
-        st.markdown("""
-        <div style="padding: 40px 0; border-top: 1px solid rgba(6, 182, 212, 0.1); text-align: center; color: rgba(240, 253, 255, 0.5); font-size: 0.875rem;">
-            © 2026 SwimForm AI · <a href="#" style="color: var(--surface-glow); text-decoration: none;">Privacy</a> · <a href="#" style="color: var(--surface-glow); text-decoration: none;">Terms</a> · <a href="mailto:support@swimform.ai" style="color: var(--surface-glow); text-decoration: none;">support@swimform.ai</a>
+    # Testimonial
+    st.markdown('<div class="testimonial-card">', unsafe_allow_html=True)
+    st.markdown('<div style="font-size: 1.5rem; color: var(--gold-medal); margin-bottom: 20px;">★★★★★</div>', unsafe_allow_html=True)
+    st.markdown('<blockquote style="font-size: 1.125rem; line-height: 1.7; color: rgba(240, 253, 255, 0.9); margin-bottom: 24px; font-style: italic;">"I\'ve been coaching for 18 years and this caught a dropped elbow pattern I missed. My swimmer dropped 0.4 seconds in her next 100 free after 2 weeks of targeted drills."</blockquote>', unsafe_allow_html=True)
+    st.markdown("""
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--surface-glow), var(--lane-line)); color: var(--deep-pool); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 1.125rem;">MK</div>
+        <div>
+            <h4 style="color: var(--lane-line);">Mike K.</h4>
+            <p style="font-size: 0.875rem; color: rgba(240, 253, 255, 0.6);">Head Coach, Aquatic Stars SC</p>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Final CTA
+    st.markdown('<div class="final-cta">', unsafe_allow_html=True)
+    st.markdown('<h2>Ready to find your speed leak?</h2>', unsafe_allow_html=True)
+    st.markdown('<p>One video. One analysis. One fix that changes everything.</p>', unsafe_allow_html=True)
+    if st.button("🏊 Get Instant Analysis → $4.99", key="cta2", use_container_width=True):
+        st.markdown(f'<meta http-equiv="refresh" content="0;url={STRIPE_PAYMENT_LINK}">', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Footer
+    st.markdown("""
+    <div style="padding: 40px 0; border-top: 1px solid rgba(6, 182, 212, 0.1); text-align: center; color: rgba(240, 253, 255, 0.5); font-size: 0.875rem;">
+        © 2026 SwimForm AI · <a href="#" style="color: var(--surface-glow); text-decoration: none;">Privacy</a> · <a href="#" style="color: var(--surface-glow); text-decoration: none;">Terms</a> · <a href="mailto:support@swimform.ai" style="color: var(--surface-glow); text-decoration: none;">support@swimform.ai</a>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ─────────────────────────────────────────────
+# MAIN ROUTER
+# ─────────────────────────────────────────────
+query_params = st.query_params
+
+if st.session_state.paid:
+    try:
+        import importlib.util
+        import sys
+        spec = importlib.util.spec_from_file_location("dashboard", "pages/2_Dashboard.py")
+        dashboard_module = importlib.util.module_from_spec(spec)
+        sys.modules["dashboard"] = dashboard_module
+        spec.loader.exec_module(dashboard_module)
+        dashboard_module.main()
+    except Exception as e:
+        st.error(f"Error loading dashboard: {e}")
+else:
+    success = query_params.get("success", [None])[0] == "true"
+    demo = query_params.get("demo", [None])[0] == "true"
+    cancel = query_params.get("payment", [None])[0] == "cancel"
+
+    if success:
+        st.session_state.paid = True
+        st.success("Payment successful! Loading dashboard...")
+        st.balloons()
+        st.query_params.clear()
+        st.rerun()
+    elif demo:
+        st.session_state.paid = True
+        st.info("Demo mode activated — full access granted for testing!")
+        st.query_params.clear()
+        st.rerun()
+    elif cancel:
+        st.warning("Payment cancelled. You can try again.")
+        st.query_params.clear()
+    else:
+        show_landing_page()
+
+
 # ─────────────────────────────────────────────
 # MAIN ROUTER
 # ─────────────────────────────────────────────
@@ -280,4 +324,3 @@ else:
         st.query_params.clear()
     else:
         show_landing_page()
-
