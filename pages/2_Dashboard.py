@@ -32,6 +32,13 @@ try:
 except ImportError:
     MOVIEPY_AVAILABLE = False
 
+# pyav for fast, reliable encoding (preferred)
+try:
+    import av
+    PYAV_AVAILABLE = True
+except ImportError:
+    PYAV_AVAILABLE = False
+
 # Stripe for payment processing
 try:
     import stripe
@@ -83,11 +90,12 @@ CUSTOM_CSS = """
     padding: 2rem 3rem !important;
     max-width: none !important;
     }
+    .coach-mode { background: #1e2937; border: 1px solid #334155; border-radius: 12px; padding: 16px; margin: 12px 0; }
 </style>
 """
 
 # ─────────────────────────────────────────────
-# SWIM METRICS VISUALIZATION COMPONENT
+# SWIM METRICS VISUALIZATION COMPONENT - ENHANCED WITH LIMITS
 # ─────────────────────────────────────────────
 
 def get_viz_zone_class(value, good_range, ok_range):
@@ -267,7 +275,7 @@ def get_kick_silhouette(depth, symmetry):
     '''
 
 def get_swim_metrics_html(metrics: dict) -> str:
-    """Generate complete HTML for swim metrics visualization"""
+    """Generate complete HTML for swim metrics visualization - ENHANCED WITH LIMITS"""
     
     h_dev = metrics.get('horizontal_deviation', 0)
     v_drop = metrics.get('vertical_drop', 0)
@@ -409,6 +417,7 @@ def get_swim_metrics_html(metrics: dict) -> str:
                 color: #64748b;
             }}
             .range-labels .warn {{ color: #f59e0b; }}
+            .limit-text {{ font-size: 10px; color: #64748b; margin-top: 4px; }}
         </style>
     </head>
     <body>
@@ -433,6 +442,7 @@ def get_swim_metrics_html(metrics: dict) -> str:
                             <span>Streamlined</span>
                             <span class="warn">Sinking →</span>
                         </div>
+                        <div class="limit-text">Ideal: &lt;8° • OK: &lt;15° • Fix: &gt;15°</div>
                     </div>
                 </div>
             </div>
@@ -459,6 +469,7 @@ def get_swim_metrics_html(metrics: dict) -> str:
                             <span>High elbow</span>
                             <span class="warn">Dropped elbow →</span>
                         </div>
+                        <div class="limit-text">Ideal: 0-25° • OK: 0-40° • Fix: &gt;40° (or &gt;30% drop)</div>
                     </div>
                 </div>
             </div>
@@ -482,6 +493,7 @@ def get_swim_metrics_html(metrics: dict) -> str:
                             <span class="warn">← Too flat</span>
                             <span class="warn">Over-rotation →</span>
                         </div>
+                        <div class="limit-text">Ideal: 35-55° • OK: 25-65° • Fix: &lt;25° or &gt;65°</div>
                     </div>
                 </div>
             </div>
@@ -506,6 +518,7 @@ def get_swim_metrics_html(metrics: dict) -> str:
                             <span class="warn">← Shallow</span>
                             <span class="warn">Too deep →</span>
                         </div>
+                        <div class="limit-text">Ideal: 0.15-0.35 • OK: 0.10-0.45 • Fix: outside range</div>
                     </div>
                 </div>
             </div>
@@ -959,7 +972,7 @@ def compute_glide_metrics(lm_pixel: Dict, phase: str, elbow_angle: float, horizo
     
     DETECTION CRITERIA:
     - Phase: Entry or early Pull (arm extended forward)
-    - Lead arm fully extended (elbow angle > 150°)
+    - Lead arm fully extended (elbow angle > 155° - stricter)
     - Good body alignment (low horizontal deviation)
     - Streamlined position
     
@@ -995,15 +1008,15 @@ def compute_glide_metrics(lm_pixel: Dict, phase: str, elbow_angle: float, horizo
     # 90° = bent = 0.0
     arm_extension = max(0, min(1, (lead_elbow_angle - 90) / 90))
     
-    # Determine if in glide phase
+    # Determine if in glide phase - IMPROVED
     # Glide occurs during Entry phase or very early Pull when arm is extended
     is_gliding = False
     
     if phase in ("Entry", "Pull"):
-        # Check if lead arm is sufficiently extended (>140°)
-        if lead_elbow_angle > 140:
+        # Check if lead arm is sufficiently extended (>155° - stricter)
+        if lead_elbow_angle > 155:
             # Check if body is reasonably streamlined
-            if horizontal_dev < 15:  # Not too much body deviation
+            if horizontal_dev < 12:  # Stricter
                 is_gliding = True
     
     # Calculate glide quality score
@@ -2101,6 +2114,7 @@ class SwimAnalyzer:
             self.video_context.confidence > 0.7
         )
         
+        # IMPROVED INVERTED DETECTION
         if is_confirmed_underwater:
             # Get average positions
             avg_hip_y = (lm_pixel["left_hip"][1] + lm_pixel["right_hip"][1]) / 2
@@ -2111,19 +2125,17 @@ class SwimAnalyzer:
             
             # Only consider inverted if hips are VERY significantly above shoulders
             # (more than 50% of torso height, to be very conservative)
-            hip_above_threshold = avg_shoulder_y - avg_hip_y > torso_height * 0.5
-            
-            # Additional check: nose should be well below shoulders in inverted footage
-            nose_below_shoulders = False
-            if "nose" in lm_pixel:
-                nose_below_shoulders = lm_pixel["nose"][1] > avg_shoulder_y + torso_height * 0.3
-            
+            hips_above_shoulders = avg_hip_y < avg_shoulder_y - torso_height * 0.65
             # Additional check: ankles should be above hips in inverted footage
             avg_ankle_y = (lm_pixel["left_ankle"][1] + lm_pixel["right_ankle"][1]) / 2
-            ankles_above_hips = avg_ankle_y < avg_hip_y
+            ankles_above_hips = avg_ankle_y < avg_hip_y - 30
+            # Additional check: nose should be well below shoulders in inverted footage
+            head_below_shoulders = False
+            if "nose" in lm_pixel:
+                head_below_shoulders = lm_pixel["nose"][1] > avg_shoulder_y + torso_height * 0.4
             
             # Require ALL conditions for flipping
-            is_inverted = hip_above_threshold and nose_below_shoulders and ankles_above_hips
+            is_inverted = hips_above_shoulders and ankles_above_hips and head_below_shoulders
         
         if is_inverted:
             frame = cv2.flip(frame, -1)
@@ -2309,7 +2321,7 @@ class SwimAnalyzer:
         # NEW: Breathing penalty
         breath_penalty = BREATH_PULL_PENALTY if breathing_during_pull else 0
         
-        # NEW: Compute glide metrics
+        # NEW: Compute glide metrics - IMPROVED
         is_gliding, glide_score, arm_extension = compute_glide_metrics(
             lm_pixel, phase, elbow, horizontal_dev
         )
@@ -2728,6 +2740,7 @@ def generate_pdf_report(summary: SessionSummary, filename: str, plot_buffer: io.
         ['EVF (Pull Phase)', f"{summary.avg_evf_score:.1f}", f"Dropped: {summary.dropped_elbow_pct:.0f}%" if summary.dropped_elbow_pct > 10 else get_zone_status(summary.avg_evf_angle, DEFAULT_EVF_ANGLE_GOOD, DEFAULT_EVF_ANGLE_OK)],
         ['Body Roll', f"{summary.avg_body_roll:.1f}°", get_zone_status(summary.avg_body_roll, DEFAULT_ROLL_GOOD, DEFAULT_ROLL_OK)],
         ['Kick', summary.kick_status, summary.kick_status],
+        ['Glide Ratio', f"{summary.glide_ratio:.0f}%", "Good" if summary.glide_ratio > 20 else "Low"],
     ]
     t = Table(subscore_data, colWidths=[2*inch, 1.3*inch, 1.7*inch])
     t.setStyle(TableStyle([
@@ -2754,6 +2767,7 @@ def generate_pdf_report(summary: SessionSummary, filename: str, plot_buffer: io.
         ['Avg EVF Angle', f"{summary.avg_evf_angle:.1f}°", 'lower is better'],
         ['Kick Depth', f"{summary.avg_kick_depth:.2f}", 'relative to hip-ankle'],
         ['Kick Symmetry', f"{summary.avg_kick_symmetry:.1f}°", 'L-R difference'],
+        ['Glide Ratio', f"{summary.glide_ratio:.0f}%", 'time in glide phase'],
     ]
     t = Table(metrics_data, colWidths=[1.8*inch, 1.2*inch, 2*inch])
     t.setStyle(TableStyle([
@@ -3024,6 +3038,9 @@ def main():
         ↓ Lower = more sensitive, may count minor head movements as breaths.
         """)
         
+        # NEW: Coach Mode toggle
+        coach_mode = st.checkbox("🛠️ Coach Mode (technical details)", value=False)
+        
         st.divider()
         
         # Show what metrics are available based on view
@@ -3186,7 +3203,7 @@ def main():
             processing_status.text("✅ Frame analysis complete!")
             
             # ═══════════════════════════════════════════════════════════════
-            # ENCODING WITH PROGRESS BAR
+            # ENCODING WITH PROGRESS BAR - IMPROVED WITH pyav
             # ═══════════════════════════════════════════════════════════════
             
             st.markdown("### 🎥 Encoding Video")
@@ -3198,50 +3215,73 @@ def main():
             
             encoding_success = False
             
-            # Method 1: Use MoviePy with progress callback
-            if MOVIEPY_AVAILABLE:
+            # Method 1: pyav (fastest and most reliable)
+            if PYAV_AVAILABLE:
                 try:
-                    encoding_status.text("🔄 Encoding video (initializing)...")
-                    encoding_progress.progress(0.1)
+                    encoding_status.text("🔄 Encoding with pyav (20%)...")
+                    encoding_progress.progress(0.2)
+                    
+                    container_in = av.open(temp_out_path)
+                    container_out = av.open(out_path, mode='w')
+                    
+                    stream_in = container_in.streams.video[0]
+                    stream_out = container_out.add_stream('h264', rate=stream_in.average_rate)
+                    stream_out.width = stream_in.width
+                    stream_out.height = stream_in.height
+                    stream_out.pix_fmt = 'yuv420p'
+                    stream_out.options = {
+                        'crf': '23',
+                        'preset': 'medium',
+                        'profile': 'baseline',
+                        'level': '3.0'
+                    }
+                    
+                    frame_count = 0
+                    total_frames = sum(1 for _ in container_in.decode(video=0))
+                    container_in.seek(0)
+                    
+                    for frame in container_in.decode(video=0):
+                        container_out.mux(stream_out.encode(frame))
+                        frame_count += 1
+                        if total_frames > 0:
+                            pct = min(frame_count / total_frames, 1.0)
+                            encoding_progress.progress(pct)
+                            encoding_status.text(f"🔄 Encoding video ({pct*100:.0f}%)...")
+                    
+                    container_out.close()
+                    encoding_success = True
+                    
+                    encoding_progress.progress(1.0)
+                    encoding_status.text("✅ Encoding complete!")
+                    
+                except Exception as e:
+                    encoding_status.text(f"⚠️ pyav encoding failed: {e}. Trying fallback...")
+                    encoding_progress.progress(0.3)
+            
+            # Method 2: MoviePy fallback
+            if not encoding_success and MOVIEPY_AVAILABLE:
+                try:
+                    encoding_status.text("🔄 Encoding with MoviePy (50%)...")
+                    encoding_progress.progress(0.5)
                     
                     clip = VideoFileClip(temp_out_path)
                     duration = clip.duration
                     
-                    # Custom progress logger for moviepy
-                    class ProgressLogger:
-                        def __init__(self, progress_bar, status_text, duration):
-                            self.progress_bar = progress_bar
-                            self.status_text = status_text
-                            self.duration = duration
-                            self.last_pct = 0
-                        
-                        def __call__(self, t=None, *args, **kwargs):
-                            if t is not None and self.duration > 0:
-                                pct = min(t / self.duration, 1.0)
-                                if pct - self.last_pct > 0.02:  # Update every 2%
-                                    self.progress_bar.progress(pct)
-                                    self.status_text.text(f"🔄 Encoding video ({pct*100:.0f}%)...")
-                                    self.last_pct = pct
-                    
-                    encoding_progress.progress(0.2)
-                    encoding_status.text("🔄 Encoding video (20%)...")
-                    
-                    # Mobile-optimized encoding settings
                     clip.write_videofile(
                         out_path,
                         codec='libx264',
                         audio=False,
-                        preset='medium',  # Better quality/size ratio than 'fast'
+                        preset='medium',
                         ffmpeg_params=[
-                            '-pix_fmt', 'yuv420p',  # Critical for mobile compatibility
-                            '-profile:v', 'baseline',  # H.264 baseline profile for max mobile compatibility
-                            '-level', '3.0',  # Compatible with most mobile devices
-                            '-movflags', '+faststart',  # Enable streaming/progressive download
-                            '-crf', '23',  # Constant rate factor for good quality
-                            '-maxrate', '2M',  # Limit bitrate for mobile playback
-                            '-bufsize', '4M'  # Buffer size for rate control
+                            '-pix_fmt', 'yuv420p',
+                            '-profile:v', 'baseline',
+                            '-level', '3.0',
+                            '-movflags', '+faststart',
+                            '-crf', '23',
+                            '-maxrate', '2M',
+                            '-bufsize', '4M'
                         ],
-                        logger=None  # Suppress moviepy output
+                        logger=None
                     )
                     clip.close()
                     encoding_success = True
@@ -3250,40 +3290,10 @@ def main():
                     encoding_status.text("✅ Encoding complete!")
                     
                 except Exception as e:
-                    encoding_status.text(f"⚠️ MoviePy encoding failed: {e}. Trying fallback...")
-                    encoding_progress.progress(0.3)
-            
-            # Method 2: Fallback to ffmpeg binary if available
-            if not encoding_success:
-                import subprocess
-                try:
-                    encoding_status.text("🔄 Encoding with ffmpeg (50%)...")
-                    encoding_progress.progress(0.5)
-                    
-                    # Mobile-optimized ffmpeg encoding
-                    subprocess.run([
-                        'ffmpeg', '-y', '-i', temp_out_path,
-                        '-c:v', 'libx264',
-                        '-preset', 'medium',  # Better quality/size balance
-                        '-profile:v', 'baseline',  # H.264 baseline for mobile compatibility
-                        '-level', '3.0',  # Mobile-compatible level
-                        '-crf', '23',  # Good quality
-                        '-maxrate', '2M',  # Limit bitrate for mobile
-                        '-bufsize', '4M',  # Buffer size
-                        '-pix_fmt', 'yuv420p',  # Critical for compatibility
-                        '-movflags', '+faststart',  # Enable streaming
-                        out_path
-                    ], check=True, capture_output=True, timeout=120)
-                    encoding_success = True
-                    
-                    encoding_progress.progress(1.0)
-                    encoding_status.text("✅ Encoding complete!")
-                    
-                except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
-                    encoding_status.text("⚠️ ffmpeg not available, using fallback...")
+                    encoding_status.text(f"⚠️ MoviePy encoding failed: {e}. Trying final fallback...")
                     encoding_progress.progress(0.7)
             
-            # Method 3: Last resort - just use the AVI file (may not play in browser)
+            # Method 3: Last resort - copy AVI and rename
             if not encoding_success:
                 import shutil
                 out_path = temp_out_path.replace('.avi', '.mp4')
@@ -3387,8 +3397,8 @@ def main():
             }
             render_swim_metrics_component(metrics_for_viz, height=440)
 
-            # Display score cards in columns
-            col1, col2, col3 = st.columns(3)
+            # Display score cards in columns - ENHANCED
+            col1, col2, col3, col4 = st.columns(4)
             
             with col1:
                 score_color = "#22c55e" if summary.avg_score >= 70 else "#eab308" if summary.avg_score >= 50 else "#ef4444"
@@ -3410,7 +3420,7 @@ def main():
                     <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">BODY ALIGNMENT</h4>
                     <div style="font-size: 48px; font-weight: bold; color: {align_color};">{summary.avg_vertical_drop:.1f}°</div>
                     <div style="font-size: 12px; color: {align_color}; font-weight: 600;">{align_status}</div>
-                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: &lt;8° (flat body position)</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: &lt;8° • OK: &lt;15°</div>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -3422,7 +3432,19 @@ def main():
                     <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">EVF (CATCH)</h4>
                     <div style="font-size: 48px; font-weight: bold; color: {evf_color};">{summary.dropped_elbow_pct:.0f}%</div>
                     <div style="font-size: 12px; color: {evf_color}; font-weight: 600;">{evf_status}</div>
-                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: &lt;10% dropped elbow frames</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: &lt;10% drop</div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            with col4:
+                glide_color = "#22c55e" if summary.glide_ratio > 25 else "#eab308" if summary.glide_ratio > 15 else "#ef4444"
+                glide_status = "Strong" if summary.glide_ratio > 25 else "OK" if summary.glide_ratio > 15 else "Improve"
+                st.markdown(f"""
+                <div style="background: linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(34,197,94,0.2) 100%); border: 2px solid {glide_color}; border-radius: 16px; padding: 20px; text-align: center;">
+                    <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">GLIDE RATIO</h4>
+                    <div style="font-size: 48px; font-weight: bold; color: {glide_color};">{summary.glide_ratio:.0f}%</div>
+                    <div style="font-size: 12px; color: {glide_color}; font-weight: 600;">{glide_status}</div>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: 20-35% for efficiency</div>
                 </div>
                 """, unsafe_allow_html=True)
 
