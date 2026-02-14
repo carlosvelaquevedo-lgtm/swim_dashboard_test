@@ -3199,26 +3199,34 @@ def main():
             with open(out_path, 'rb') as f:
                 video_bytes = f.read()
     
-            # CLEANUP TEMP FILES
+            # PROCESS RESULTS (before cleanup)
+            summary = analyzer.get_summary()
+            plot_buf = generate_plots(analyzer)
+            pdf_buf = generate_pdf_report(summary, uploaded.name, plot_buf)
+            csv_buf = export_to_csv(analyzer)
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Create ZIP bundle with video bytes instead of file path
+            zip_buf = io.BytesIO()
+            with zipfile.ZipFile(zip_buf, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                zipf.writestr(f"annotated_video_{timestamp}.mp4", video_bytes)
+                zipf.writestr(f"technique_report_{timestamp}.pdf", pdf_buf.getvalue())
+                zipf.writestr(f"frame_data_{timestamp}.csv", csv_buf.getvalue())
+            zip_buf.seek(0)
+    
+            # CLEANUP TEMP FILES (after everything is processed)
             try:
                 os.unlink(input_path)
                 os.unlink(out_path)
             except:
                 pass
     
-            # NOW PROCESS RESULTS
-            summary = analyzer.get_summary()
-            plot_buf = generate_plots(analyzer)
-            pdf_buf = generate_pdf_report(summary, uploaded.name, plot_buf)
-            csv_buf = export_to_csv(analyzer)
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            zip_buf = create_results_bundle(out_path, csv_buf, pdf_buf, timestamp)
-    
             analyzer.close()
     
             st.success("✅ Analysis complete!")
              
             # Display video type information - User selected vs Auto-detected
+            
             st.markdown("### 📹 Video Type")
             
             col_user, col_auto = st.columns(2)
