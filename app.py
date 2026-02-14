@@ -7,7 +7,7 @@ import streamlit.components.v1 as components
 st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
-    layout="wide",                      # wide is better for full background
+    layout="centered",                      # wide is better for full background
     initial_sidebar_state="expanded"    # sidebar open by default
 )
 
