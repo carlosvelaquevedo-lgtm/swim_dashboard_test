@@ -190,38 +190,22 @@ def show_landing_page():
             <div style="height: 25px;"></div>
             """, unsafe_allow_html=True)
     # --- 6. Final CTA / Pricing (Centered with Demo) ---
-    st.markdown('<div style="margin-top: 100px;"></div>', unsafe_allow_html=True)
-    
-    # This layout centers the action area on the page
-    col_left, col_mid, col_right = st.columns([1, 2, 1])
-    
-    with col_mid:
-        # The Pricing Box
+    # Pricing Box
+    col1, col2, col3 = st.columns([1, 1.8, 1])
+    with col2:
         st.markdown("""
         <div class="cta-box">
-            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">GET STARTED</div>
-            <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ report</span></div>
-            <p style="color: #94a3b8; margin: 15px 0 30px;">Secure payment via Stripe. One-time analysis.</p>
+            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">INSTANT ANALYSIS</div>
+            <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ video</span></div>
+            <p style="color: #94a3b8; margin: 15px 0 30px;">Full PDF Report • Side-by-Side Playback • Drill Cards</p>
         </div>
         """, unsafe_allow_html=True)
-        
-        # side-by-side Button Layout
-        btn_col1, btn_col2 = st.columns(2)
-        
-        with btn_col1:
-            # Primary Action
-            st.link_button("🏊 Analyze Now", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
-        
-        with btn_col2:
-            # Demo Action (visible if IS_DEV is True)
-            if IS_DEV:
-                if st.button("🧪 Try Demo", use_container_width=True):
-                    st.session_state.paid = True
-                    st.balloons()
-                    st.rerun()
-            else:
-                # If not in dev mode, you could put a "Contact" or "Sample Report" button here
-                st.button("📄 View Sample", use_container_width=True)
+        st.link_button("🏊 Get My Biomechanics Report →", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
+        if IS_DEV:
+            if st.button("Developer: Skip to Dashboard", use_container_width=True):
+                st.session_state.paid = True
+                st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
     # --- Camera Angles (Animated Skeletal SVGs) ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 40px;">Optimized Recording Angles</h2>', unsafe_allow_html=True)
     a_cols = st.columns(4)
