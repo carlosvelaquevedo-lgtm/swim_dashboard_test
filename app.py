@@ -153,7 +153,7 @@ def show_landing_page():
 
         <div style="width: 100%; max-width: 800px; border-radius: 24px; overflow: hidden; border: 1px solid rgba(6, 182, 212, 0.3); background: rgba(0,0,0,0.2); box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin-bottom: 80px;">
             <div style="position: relative; padding-bottom: 56.25%; height: 0;">
-                <iframe src="https://www.loom.com/embed/REPLACE_WITH_YOUR_ID" 
+                <iframe src="https://pixabay.com/videos/swimming-pool-swimmers-swimming-78059/" 
                         frameborder="0" 
                         webkitallowfullscreen mozallowfullscreen allowfullscreen 
                         style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
