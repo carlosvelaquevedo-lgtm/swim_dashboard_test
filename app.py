@@ -7,7 +7,6 @@ st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
     layout="centered",
-    initial_sidebar_state="expanded",
 )
 
 # =============================================
@@ -58,7 +57,7 @@ st.markdown("""
 # =============================================
 # CONFIG
 # =============================================
-STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800"
+STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800'
 IS_DEV = True
 
 if "paid" not in st.session_state:
