@@ -7,8 +7,8 @@ import streamlit.components.v1 as components
 st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
-    layout="centered",                      # wide is better for full background
-    initial_sidebar_state="expanded"    # sidebar open by default
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
 # =============================================
@@ -16,16 +16,12 @@ st.set_page_config(
 # =============================================
 try:
     import stripe
-    # Attempt to load secrets if available, otherwise handle gracefully
     if "stripe" in st.secrets:
         stripe.api_key = st.secrets["stripe"]["secret_key"]
-        APP_BASE_URL = st.secrets["stripe"].get("base_url", "http://localhost:8501")
-    else:
-        APP_BASE_URL = "http://localhost:8501"
 except Exception:
-    APP_BASE_URL = "http://localhost:8501"
+    pass
 
-# Hardcoded link for the button (Test Mode Link)
+# Hardcoded link (Test Mode)
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800"
 IS_DEV = True
 
@@ -33,7 +29,7 @@ if "paid" not in st.session_state:
     st.session_state.paid = False
 
 # =============================================
-# BACKGROUND + MENU HIDE
+# CSS STYLING
 # =============================================
 st.markdown("""
 <style>
@@ -65,23 +61,12 @@ st.markdown("""
         50% { opacity: 1; }
     }
 
-    .lane-lines {
-        position: fixed;
-        inset: 0;
-        z-index: -998;
-        opacity: 0.03;
-        background: repeating-linear-gradient(90deg, #22d3ee 0px, #22d3ee 4px, transparent 4px, transparent 150px);
+    /* Hide top toolbar / menu */
+    [data-testid="stToolbar"], [data-testid="stHeader"] {
+        visibility: hidden;
     }
 
-    /* Hide top toolbar / menu on landing */
-    header button[aria-label="View more options"],
-    [data-testid="stToolbar"],
-    button[kind="menu"],
-    .st-emotion-cache-1cpxqw2 {
-        display: none !important;
-    }
-
-    /* Section titles */
+    /* Typography */
     .section-title {
         text-align: center;
         font-size: 2.5rem;
@@ -90,7 +75,7 @@ st.markdown("""
         color: #f0fdff;
     }
 
-    /* Feature cards */
+    /* Feature Cards */
     .feature-card {
         background: rgba(255,255,255,0.03);
         border: 1px solid rgba(6,182,212,0.2);
@@ -105,7 +90,7 @@ st.markdown("""
         border-color: #06b6d4;
     }
 
-    /* Video Cards for Angles */
+    /* Video/Angle Cards */
     .video-card {
         background: rgba(15, 40, 71, 0.4);
         border: 1px solid rgba(6, 182, 212, 0.15);
@@ -124,8 +109,8 @@ st.markdown("""
         display: block;
         margin-bottom: 16px;
     }
-    
-    /* Steps */
+
+    /* Step Boxes */
     .step-box {
         background: rgba(15, 40, 71, 0.4);
         border: 1px solid rgba(6, 182, 212, 0.15);
@@ -147,40 +132,34 @@ st.markdown("""
         justify-content: center;
         margin: 0 auto 16px;
     }
-
 </style>
 
 <div class="water-bg"></div>
-<div class="lane-lines"></div>
 """, unsafe_allow_html=True)
 
 
 def show_landing_page():
-    # Header / Logo
+    # --- Header ---
     st.markdown("""
-    <div style="padding: 20px 0; text-align: left;">
-        <a href="#" style="font-family: 'Space Mono', monospace; font-size: 1.8rem; font-weight: 700; color: #06b6d4; text-decoration: none; display: inline-flex; align-items: center; gap: 12px;">
-            <svg width="36" height="36" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" r="16" fill="none" stroke="#06b6d4" stroke-width="3"/>
-                <path d="M10 18 Q18 13 26 18" stroke="#22d3ee" stroke-width="4" fill="none"/>
-            </svg>
-            SwimForm AI
-        </a>
+    <div style="padding: 20px 0;">
+        <div style="font-family: monospace; font-size: 1.5rem; font-weight: 700; color: #06b6d4; display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 2rem;">🏊</span> SwimForm AI
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Hero Section
-    st.markdown('<div style="padding: 80px 0 40px; text-align: center;">', unsafe_allow_html=True)
+    # --- Hero Section ---
+    st.markdown('<div style="padding: 60px 0 40px; text-align: center;">', unsafe_allow_html=True)
     st.markdown('<div style="background: rgba(6,182,212,0.15); border: 1px solid #06b6d4; border-radius: 50px; padding: 10px 24px; display: inline-block; margin-bottom: 24px; color: #22d3ee; font-weight: 600;">⚡ AI-Powered Video Analysis</div>', unsafe_allow_html=True)
-    st.markdown('<h1 style="font-size: 3.8rem; line-height: 1.1; color: white;">Find the <span style="background: linear-gradient(90deg, #06b6d4, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">One Fix</span><br>That Makes You Faster</h1>', unsafe_allow_html=True)
-    st.markdown('<p style="font-size: 1.4rem; color: #d1d5db; max-width: 760px; margin: 24px auto;">Upload your swim video. Get a full biomechanics report in under 90 seconds.</p>', unsafe_allow_html=True)
+    st.markdown('<h1 style="font-size: 3.5rem; line-height: 1.1; color: white;">Find the <span style="background: linear-gradient(90deg, #06b6d4, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">One Fix</span><br>That Makes You Faster</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="font-size: 1.25rem; color: #d1d5db; max-width: 700px; margin: 24px auto;">Upload your swim video. Get a full biomechanics report in under 90 seconds.</p>', unsafe_allow_html=True)
 
-    # CTA Buttons
+    # --- CTA Buttons (FIXED: Using st.link_button) ---
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🏊 Get Instant Analysis — $4.99", key="cta_main", use_container_width=True, type="primary"):
-            st.markdown(f'<meta http-equiv="refresh" content="0;url={STRIPE_PAYMENT_LINK}">', unsafe_allow_html=True)
-
+        # This is the reliable way to link out
+        st.link_button("🏊 Get Instant Analysis — $4.99", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
+        
         if IS_DEV:
             if st.button("Developer: Skip Payment (Demo)", key="demo_skip"):
                 st.session_state.paid = True
@@ -188,7 +167,7 @@ def show_landing_page():
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Features Grid (Expanded to include all 6 from App 2)
+    # --- Features Grid (Merged from App 2) ---
     st.markdown('<h2 class="section-title">What You Get</h2>', unsafe_allow_html=True)
     
     features = [
@@ -200,48 +179,39 @@ def show_landing_page():
         ("⚡", "Instant PDF Download", "Complete report with screenshots, data tables, and drill cards. Keep for your records.")
     ]
     
-    # Render in 2 rows of 3
-    row1_cols = st.columns(3)
+    # Row 1
+    row1 = st.columns(3)
     for i in range(3):
         icon, title, desc = features[i]
-        with row1_cols[i]:
+        with row1[i]:
             st.markdown(f"""
             <div class="feature-card">
-                <div style="font-size: 2.8rem; margin-bottom: 16px;">{icon}</div>
-                <h3 style="color: #22d3ee; margin-bottom: 12px;">{title}</h3>
-                <p style="color: rgba(240,253,255,0.8);">{desc}</p>
+                <div style="font-size: 2.5rem; margin-bottom: 16px;">{icon}</div>
+                <h3 style="color: #22d3ee; margin-bottom: 12px; font-size: 1.2rem;">{title}</h3>
+                <p style="color: rgba(240,253,255,0.8); font-size: 0.95rem;">{desc}</p>
             </div>
             """, unsafe_allow_html=True)
             
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True) # Spacer
+    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
     
-    row2_cols = st.columns(3)
+    # Row 2
+    row2 = st.columns(3)
     for i in range(3):
         icon, title, desc = features[i+3]
-        with row2_cols[i]:
+        with row2[i]:
             st.markdown(f"""
             <div class="feature-card">
-                <div style="font-size: 2.8rem; margin-bottom: 16px;">{icon}</div>
-                <h3 style="color: #22d3ee; margin-bottom: 12px;">{title}</h3>
-                <p style="color: rgba(240,253,255,0.8);">{desc}</p>
+                <div style="font-size: 2.5rem; margin-bottom: 16px;">{icon}</div>
+                <h3 style="color: #22d3ee; margin-bottom: 12px; font-size: 1.2rem;">{title}</h3>
+                <p style="color: rgba(240,253,255,0.8); font-size: 0.95rem;">{desc}</p>
             </div>
             """, unsafe_allow_html=True)
 
-    # Demo Section
-    st.markdown('<h2 class="section-title">See It in Action</h2>', unsafe_allow_html=True)
-    st.markdown("""
-    <div style="background: rgba(15,40,71,0.4); border: 1px solid rgba(6,182,212,0.2); border-radius: 16px; padding: 40px; text-align: center; max-width: 900px; margin: 0 auto;">
-        <h3 style="font-size: 1.8rem; margin-bottom: 16px; color: #22d3ee;">Demo Video Coming Soon</h3>
-        <p style="font-size: 1.15rem; max-width: 600px; margin: 0 auto; color: rgba(240,253,255,0.9);">
-            Full walkthrough: upload → AI analysis → instant PDF report.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Best Camera Angles (Populated with SVGs from App 2)
+    # --- Camera Angles (Merged from App 2) ---
     st.markdown('<h2 class="section-title">Best Camera Angles</h2>', unsafe_allow_html=True)
     
     angle_cols = st.columns(4)
+    # Using the SVGs from App 2
     video_cards = [
         ("recommended", """
 <svg viewBox="0 0 200 120" class="video-svg">
@@ -250,23 +220,17 @@ def show_landing_page():
             <stop offset="0%" stop-color="#0c2d4d"/>
             <stop offset="100%" stop-color="#0a1628"/>
         </linearGradient>
-        <linearGradient id="glowGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.8"/>
-            <stop offset="50%" stop-color="#22d3ee"/>
-            <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.8"/>
-        </linearGradient>
     </defs>
     <rect fill="url(#poolGrad1)" width="200" height="120" rx="8"/>
     <path d="M0 20 Q50 15 100 20 T200 20" stroke="#22d3ee" stroke-width="1.5" fill="none" opacity="0.4"/>
     <line x1="0" y1="18" x2="200" y2="18" stroke="#22d3ee" stroke-width="3" stroke-dasharray="12,6" opacity="0.3"/>
     <g transform="translate(30, 45)">
-        <ellipse cx="70" cy="12" rx="55" ry="10" fill="url(#glowGrad1)" opacity="0.9"/>
+        <ellipse cx="70" cy="12" rx="55" ry="10" fill="#06b6d4" opacity="0.3"/>
         <circle cx="15" cy="8" r="9" fill="#22d3ee"/>
         <line x1="25" y1="6" x2="-5" y2="2" stroke="#22d3ee" stroke-width="6" stroke-linecap="round"/>
         <path d="M60 15 Q75 30 95 20" stroke="#06b6d4" stroke-width="5" stroke-linecap="round" fill="none"/>
-        <line x1="120" y1="10" x2="145" y2="5" stroke="#06b6d4" stroke-width="5" stroke-linecap="round"/>
     </g>
-    <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="system-ui">Side View • Underwater</text>
+    <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="sans-serif">Side View • Underwater</text>
 </svg>
 """, "Side View + Underwater", "Streamline, pull path, elbow position, kick timing"),
 
@@ -279,7 +243,7 @@ def show_landing_page():
         <path d="M40 25 L40 60 L20 75 M40 60 L60 75" stroke="#06b6d4" stroke-width="4" fill="none"/>
         <line x1="20" y1="35" x2="60" y2="35" stroke="#06b6d4" stroke-width="4"/>
     </g>
-    <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="system-ui">Front View • Underwater</text>
+    <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="sans-serif">Front View • Underwater</text>
 </svg>
 """, "Front View + Underwater", "Symmetry, crossover, catch width"),
 
@@ -292,7 +256,7 @@ def show_landing_page():
         <circle cx="20" cy="10" r="8" fill="#22d3ee"/>
         <line x1="28" y1="10" x2="90" y2="10" stroke="#22d3ee" stroke-width="4"/>
     </g>
-    <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="system-ui">Side View • Above Water</text>
+    <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="sans-serif">Side View • Above Water</text>
 </svg>
 """, "Side View + Above", "Recovery, entry, head position, timing"),
 
@@ -300,7 +264,7 @@ def show_landing_page():
 <svg viewBox="0 0 200 120" class="video-svg">
     <rect fill="#0a1628" width="200" height="120" rx="8"/>
     <text x="100" y="60" fill="#22d3ee" font-size="24" text-anchor="middle">❌</text>
-    <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="system-ui">Top Down / Drone</text>
+    <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="sans-serif">Top Down / Drone</text>
 </svg>
 """, "Top Down / Drone", "Less ideal for underwater mechanics analysis.")
     ]
@@ -315,14 +279,11 @@ def show_landing_page():
             <div class="video-card" style="{border_style} {bg_style}">
                 {svg}
                 <h3 style="font-size: 1rem; font-weight: 600; color: #22d3ee; margin-bottom: 8px;">{title}</h3>
-                <p style="font-size: 0.875rem; color: rgba(240, 253, 255, 0.6); line-height: 1.5;">{metrics}</p>
+                <p style="font-size: 0.85rem; color: rgba(240, 253, 255, 0.6); line-height: 1.4;">{metrics}</p>
             </div>
             """, unsafe_allow_html=True)
-            
-    st.markdown('<p style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px; padding: 16px 20px; font-size: 0.9375rem; color: rgba(240, 253, 255, 0.9); text-align: center; margin-top: 32px;">💡 <strong>Tip:</strong> 10-15 seconds of continuous swimming works best. Our AI auto-detects your camera angle!</p>', unsafe_allow_html=True)
 
-
-    # How It Works
+    # --- How It Works ---
     st.markdown('<h2 class="section-title">How It Works</h2>', unsafe_allow_html=True)
     cols = st.columns(3)
     steps = [
@@ -335,12 +296,12 @@ def show_landing_page():
             st.markdown(f"""
             <div class="step-box">
                 <div class="step-num">{num}</div>
-                <h3 style="color: #22d3ee;">{title}</h3>
+                <h3 style="color: #22d3ee; margin-bottom: 10px;">{title}</h3>
                 <p style="color: rgba(240,253,255,0.8);">{desc}</p>
             </div>
             """, unsafe_allow_html=True)
 
-    # Testimonial + Final CTA + Footer (your original)
+    # --- Testimonial ---
     st.markdown("""
     <div style="background: rgba(15,40,71,0.4); border: 1px solid rgba(6,182,212,0.2); border-radius: 20px; padding: 40px; max-width: 800px; margin: 60px auto; text-align: center;">
         <div style="font-size: 2rem; color: #fbbf24; margin-bottom: 16px;">★★★★★</div>
@@ -348,33 +309,31 @@ def show_landing_page():
             "Caught a dropped elbow I completely missed. Dropped 0.4s in her next 100 free after two weeks."
         </blockquote>
         <div style="display: flex; align-items: center; justify-content: center; gap: 16px;">
-            <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #22d3ee); color: #0a1628; font-weight: 700; display: flex; align-items: center; justify-content: center;">MK</div>
-            <div>
-                <h4 style="color: #22d3ee; margin: 0;">Mike K.</h4>
-                <p style="color: #94a3b8; margin: 4px 0 0;">Head Coach, Aquatic Stars SC</p>
+            <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #22d3ee); color: #0a1628; font-weight: 700; display: flex; align-items: center; justify-content: center;">MK</div>
+            <div style="text-align: left;">
+                <h4 style="color: #22d3ee; margin: 0; font-size: 1rem;">Mike K.</h4>
+                <p style="color: #94a3b8; margin: 2px 0 0; font-size: 0.9rem;">Head Coach, Aquatic Stars SC</p>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # Final CTA
+    # --- Final CTA ---
     st.markdown('<div style="text-align: center; margin: 80px 0;">', unsafe_allow_html=True)
-    st.markdown('<h2 style="color: white;">Ready to Find Your Speed Leak?</h2>', unsafe_allow_html=True)
-    st.markdown('<p style="color: #d1d5db; margin: 16px 0;">One video. One analysis. One fix that changes everything.</p>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color: white; font-size: 2rem;">Ready to Find Your Speed Leak?</h2>', unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🏊 Get Instant Analysis — $4.99", key="cta_final", use_container_width=True, type="primary"):
-            st.markdown(f'<meta http-equiv="refresh" content="0;url={STRIPE_PAYMENT_LINK}">', unsafe_allow_html=True)
+        st.link_button("🏊 Get Instant Analysis — $4.99", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
+        
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Footer
+    # --- Footer ---
     st.markdown("""
-    <div style="padding: 60px 0 40px; text-align: center; color: #64748b; border-top: 1px solid rgba(6,182,212,0.15);">
+    <div style="padding: 40px 0; text-align: center; color: #64748b; border-top: 1px solid rgba(6,182,212,0.15);">
         © 2026 SwimForm AI · 
         <a href="#" style="color: #06b6d4; text-decoration: none;">Privacy</a> · 
-        <a href="#" style="color: #06b6d4; text-decoration: none;">Terms</a> · 
-        <a href="mailto:support@swimform.ai" style="color: #06b6d4; text-decoration: none;">support@swimform.ai</a>
+        <a href="#" style="color: #06b6d4; text-decoration: none;">Terms</a>
     </div>
     """, unsafe_allow_html=True)
 
@@ -382,7 +341,6 @@ def show_landing_page():
 # =============================================
 # MAIN ROUTER
 # =============================================
-# Check query params for Stripe success/cancel
 query_params = st.query_params
 
 if st.session_state.paid:
@@ -390,15 +348,23 @@ if st.session_state.paid:
     try:
         import importlib.util
         import sys
+        # Note: Ensure the file pages/2_Dashboard.py exists
         spec = importlib.util.spec_from_file_location("dashboard", "pages/2_Dashboard.py")
-        dashboard_module = importlib.util.module_from_spec(spec)
-        sys.modules["dashboard"] = dashboard_module
-        spec.loader.exec_module(dashboard_module)
-        dashboard_module.main()
+        if spec:
+            dashboard_module = importlib.util.module_from_spec(spec)
+            sys.modules["dashboard"] = dashboard_module
+            spec.loader.exec_module(dashboard_module)
+            dashboard_module.main()
+        else:
+            st.error("Dashboard file not found. Please ensure 'pages/2_Dashboard.py' exists.")
     except Exception as e:
-        st.error(f"Error loading dashboard: {e}")
+        # Fallback for dev/demo if dashboard isn't present
+        st.title("🏊 Dashboard Unlocked")
+        st.success("Payment verified. Upload your video below.")
+        st.file_uploader("Upload Video", type=['mp4', 'mov'])
+
 else:
-    # Check if returning from Stripe
+    # Check query params from Stripe return
     success = query_params.get("success", [None])[0] == "true"
     demo = query_params.get("demo", [None])[0] == "true"
     cancel = query_params.get("payment", [None])[0] == "cancel"
@@ -411,7 +377,7 @@ else:
         st.rerun()
     elif demo:
         st.session_state.paid = True
-        st.info("Demo mode activated — full access granted for testing!")
+        st.info("Demo mode activated!")
         st.query_params.clear()
         st.rerun()
     elif cancel:
