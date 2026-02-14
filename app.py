@@ -109,8 +109,24 @@ def show_landing_page():
     </div>
     </div>
     """, unsafe_allow_html=True)
+    st.markdown("""
+    <div style="
+        background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
+        padding: 25px;
+        border-radius: 12px;
+        text-align: center;
+        color: white;
+        margin-bottom: 25px;
+    ">
+        <h1 style="margin-bottom: 10px;">
+            🏊 Swim Technique Analyzer
+        </h1>
+        <h3 style="margin-top: 0; font-weight: 400;">
+            ⚡ Video analysis powered by Pose-Estimation AI
+        </h3>
+    </div>
+    """, unsafe_allow_html=True)
     # --- 3. How It Works (The 3 Steps) ---
-    # LINE 114: Ensure 'st.markdown' starts at the same level as other lines
     st.markdown("""
     <style>
     .process-section { padding: 60px 0; text-align: center; }
