@@ -1,46 +1,37 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
+# ─────────────────────────────────────────────
+# PAGE CONFIG
+# ─────────────────────────────────────────────
 st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
-    layout="centered",                     # Changed to wide → full-screen background
+    layout="centered",
     initial_sidebar_state="expanded",
 )
 
 # ─────────────────────────────────────────────
-# Force HIDE menu on landing page only
+# FORCE HIDE MENU + STRONG BACKGROUND (TOP LEVEL)
 # ─────────────────────────────────────────────
-
 st.markdown("""
 <style>
-    /* Hide toolbar / three-dot / hamburger on landing page */
-    [data-testid="stToolbar"] {
-        display: none !important;
-    }
-    
-    button[kind="menu"] {
-        display: none !important;
-    }
-    
-    /* Extra cleanup for legacy classes */
-    .st-emotion-cache-1cpxqw2 {
-        display: none !important;
-    }
+    /* === MENU HIDING (Landing page only) === */
+    [data-testid="stToolbar"] { display: none !important; }
+    button[kind="menu"] { display: none !important; }
+    .st-emotion-cache-1cpxqw2 { display: none !important; }
 
-    /* Make sure content wrappers don't add white background */
+    /* === BACKGROUND FIXES === */
+    .stApp {
+        background: #0a1628 !important;
+        background-image: linear-gradient(180deg, #0a1628 0%, #0f2847 30%, #0e3d6b 60%, #0f2847 100%) !important;
+    }
+    
     [data-testid="stAppViewContainer"],
     .main,
     .block-container,
     .st-emotion-cache-1wivap2 {
         background: transparent !important;
-        background-color: transparent !important;
-    }
-
-    /* Force full background coverage */
-    .stApp {
-        background: var(--deep-pool) !important;
-        background-image: linear-gradient(180deg, var(--deep-pool) 0%, var(--mid-water) 30%, #0e3d6b 60%, var(--mid-water) 100%) !important;
     }
 
     .water-bg {
@@ -48,66 +39,6 @@ st.markdown("""
         inset: 0 !important;
         z-index: -999 !important;
         pointer-events: none;
-    }
-</style>
-
-<script>
-    // Immediate cleanup for menu
-    document.addEventListener('DOMContentLoaded', () => {
-        const els = [
-            document.querySelector('[data-testid="stToolbar"]'),
-            document.querySelector('button[kind="menu"]'),
-            ...document.querySelectorAll('.st-emotion-cache-1cpxqw2')
-        ];
-        els.forEach(el => { if (el) el.style.display = 'none'; });
-    });
-    
-    setTimeout(() => {
-        const toolbar = document.querySelector('[data-testid="stToolbar"]');
-        if (toolbar) toolbar.style.display = 'none';
-    }, 100);
-</script>
-""", unsafe_allow_html=True)
-
-# ─────────────────────────────────────────────
-# Background layers + full landing styles (one consolidated block)
-# ─────────────────────────────────────────────
-
-st.markdown("""
-<div class="water-bg"></div>
-<div class="lane-lines"></div>
-<div class="bubble"></div>
-<div class="bubble"></div>
-<div class="bubble"></div>
-<div class="bubble"></div>
-
-<style>
-    :root {
-        --deep-pool: #0a1628;
-        --mid-water: #0f2847;
-        --surface-glow: #06b6d4;
-        --lane-line: #22d3ee;
-        --bubble-white: #f0fdff;
-        --alert-red: #ff4757;
-        --success-green: #10b981;
-        --gold-medal: #fbbf24;
-    }
-
-    .stApp {
-        background: var(--deep-pool) !important;
-        color: var(--bubble-white) !important;
-    }
-
-    .stMarkdown div, p, h1, h2, h3, h4, blockquote {
-        color: var(--bubble-white) !important;
-    }
-
-    h1, h2, h3 {
-        color: var(--bubble-white) !important;
-    }
-
-    .water-bg {
-        background: linear-gradient(180deg, var(--deep-pool) 0%, var(--mid-water) 30%, #0e3d6b 60%, var(--mid-water) 100%);
     }
 
     .water-bg::before {
@@ -128,9 +59,9 @@ st.markdown("""
     .lane-lines {
         position: fixed;
         inset: 0;
-        z-index: -9;
+        z-index: -998;
         opacity: 0.03;
-        background: repeating-linear-gradient(90deg, var(--lane-line) 0px, var(--lane-line) 4px, transparent 4px, transparent 150px);
+        background: repeating-linear-gradient(90deg, #22d3ee 0px, #22d3ee 4px, transparent 4px, transparent 150px);
     }
 
     .bubble {
@@ -138,7 +69,7 @@ st.markdown("""
         border-radius: 50%;
         background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(6, 182, 212, 0.1));
         animation: float 15s infinite ease-in-out;
-        z-index: -8;
+        z-index: -997;
     }
 
     @keyframes float {
@@ -146,222 +77,20 @@ st.markdown("""
         33% { transform: translateY(-30px) rotate(5deg); }
         66% { transform: translateY(20px) rotate(-5deg); }
     }
-
-    .bubble:nth-child(1) { width: 80px; height: 80px; top: 20%; left: 10%; }
-    .bubble:nth-child(2) { width: 40px; height: 40px; top: 60%; left: 85%; animation-delay: -5s; }
-    .bubble:nth-child(3) { width: 60px; height: 60px; top: 80%; left: 20%; animation-delay: -10s; }
-    .bubble:nth-child(4) { width: 30px; height: 30px; top: 40%; left: 70%; animation-delay: -3s; }
-
-    .hero-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(6, 182, 212, 0.15);
-        border: 1px solid rgba(6, 182, 212, 0.3);
-        padding: 8px 16px;
-        border-radius: 100px;
-        font-size: 0.875rem;
-        color: var(--lane-line);
-        margin-bottom: 24px;
-        animation: fadeInUp 0.6s ease-out;
-    }
-
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    h1 {
-        font-size: clamp(2.5rem, 6vw, 4rem);
-        font-weight: 700;
-        line-height: 1.1;
-        margin-bottom: 20px;
-        animation: fadeInUp 0.6s ease-out 0.1s both;
-    }
-
-    h1 .highlight {
-        background: linear-gradient(135deg, var(--surface-glow), var(--lane-line));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .hero-subtitle {
-        font-size: 1.25rem;
-        color: rgba(240, 253, 255, 0.7);
-        max-width: 600px;
-        margin: 0 auto 40px;
-        line-height: 1.6;
-        animation: fadeInUp 0.6s ease-out 0.2s both;
-    }
-
-    .cta-box {
-        background: linear-gradient(135deg, rgba(15, 40, 71, 0.8) 0%, rgba(10, 22, 40, 0.9) 100%);
-        border: 1px solid rgba(6, 182, 212, 0.2);
-        border-radius: 24px;
-        padding: 40px;
-        max-width: 500px;
-        margin: 0 auto 60px;
-        position: relative;
-        overflow: hidden;
-        animation: fadeInUp 0.6s ease-out 0.3s both;
-    }
-
-    .price-tag {
-        display: flex;
-        align-items: baseline;
-        justify-content: center;
-        gap: 8px;
-        margin-bottom: 8px;
-        font-size: 3rem;
-        font-weight: 700;
-        color: var(--surface-glow);
-    }
-
-    .price-period {
-        font-size: 1.125rem;
-        color: rgba(240, 253, 255, 0.6);
-    }
-
-    .price-note {
-        font-size: 0.875rem;
-        color: rgba(240, 253, 255, 0.5);
-        margin-bottom: 32px;
-        text-align: center;
-    }
-
-    .trust-signals {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-top: 24px;
-        font-size: 0.875rem;
-        color: rgba(240, 253, 255, 0.6);
-    }
-
-    .trust-signal::before {
-        content: '✓';
-        color: var(--success-green);
-        font-weight: 700;
-    }
-
-    .section-title {
-        text-align: center;
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 48px;
-        margin-top: 60px;
-    }
-
-    .feature {
-        background: rgba(15, 40, 71, 0.4);
-        border: 1px solid rgba(6, 182, 212, 0.15);
-        border-radius: 16px;
-        padding: 32px;
-        transition: all 0.3s ease;
-        height: 100%;
-    }
-
-    .feature:hover {
-        border-color: rgba(6, 182, 212, 0.4);
-        transform: translateY(-4px);
-        box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
-    }
-
-    .feature-icon {
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(34, 211, 238, 0.1));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.75rem;
-        margin-bottom: 20px;
-    }
-
-    .video-card {
-        background: rgba(15, 40, 71, 0.4);
-        border: 1px solid rgba(6, 182, 212, 0.15);
-        border-radius: 16px;
-        padding: 20px;
-        transition: all 0.3s ease;
-        height: 100%;
-    }
-
-    .video-card:hover {
-        border-color: rgba(6, 182, 212, 0.4);
-        transform: translateY(-4px);
-    }
-
-    .video-card.recommended {
-        border: 2px solid var(--gold-medal);
-        background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(15, 40, 71, 0.4) 100%);
-        position: relative;
-    }
-
-    .video-card.recommended::before {
-        content: '⭐ RECOMMENDED';
-        position: absolute;
-        top: -12px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--gold-medal);
-        color: var(--deep-pool);
-        font-size: 0.75rem;
-        font-weight: 700;
-        padding: 4px 12px;
-        border-radius: 100px;
-        letter-spacing: 0.5px;
-    }
-
-    .video-svg {
-        width: 100%;
-        height: 120px;
-        display: block;
-        margin-bottom: 16px;
-    }
-
-    .step {
-        background: rgba(15, 40, 71, 0.4);
-        border: 1px solid rgba(6, 182, 212, 0.15);
-        border-radius: 16px;
-        padding: 32px;
-        text-align: center;
-        height: 100%;
-    }
-
-    .step-number {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--surface-glow), var(--lane-line));
-        color: var(--deep-pool);
-        font-size: 1.5rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 16px;
-    }
-
-    .testimonial-card {
-        background: rgba(15, 40, 71, 0.4);
-        border: 1px solid rgba(6, 182, 212, 0.15);
-        border-radius: 20px;
-        padding: 40px;
-        max-width: 700px;
-        margin: 60px auto;
-    }
-
-    .final-cta {
-        text-align: center;
-        margin: 80px 0;
-    }
 </style>
+
+<!-- Background layers -->
+<div class="water-bg"></div>
+<div class="lane-lines"></div>
+<div class="bubble" style="width:80px;height:80px;top:20%;left:10%;"></div>
+<div class="bubble" style="width:40px;height:40px;top:60%;left:85%;animation-delay:-5s;"></div>
+<div class="bubble" style="width:60px;height:60px;top:80%;left:20%;animation-delay:-10s;"></div>
+<div class="bubble" style="width:30px;height:30px;top:40%;left:70%;animation-delay:-3s;"></div>
 """, unsafe_allow_html=True)
 
-# CONFIG & SECRETS (unchanged)
+# ─────────────────────────────────────────────
+# CONFIG & SECRETS
+# ─────────────────────────────────────────────
 try:
     import stripe
     stripe.api_key = st.secrets["stripe"]["secret_key"]
@@ -372,22 +101,19 @@ except Exception:
     STRIPE_CONFIGURED = False
 
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800"
-
 IS_DEV = True
 
-# Session state for payment
 if "paid" not in st.session_state:
     st.session_state.paid = False
 
 
 def show_landing_page():
     container = st.container()
-
     with container:
         # Header/Logo
         st.markdown("""
         <div style="padding: 20px 0; position: relative; z-index: 10; text-align: left;">
-            <a href="#" style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--surface-glow); text-decoration: none; display: inline-flex; align-items: center; gap: 10px;">
+            <a href="#" style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: #06b6d4; text-decoration: none; display: inline-flex; align-items: center; gap: 10px;">
                 <svg width="32" height="32" viewBox="0 0 32 32">
                     <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/>
                     <path d="M 8 16 Q 16 12 24 16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/>
@@ -508,7 +234,7 @@ def show_landing_page():
     <text x="100" y="108" fill="rgba(255,255,255,0.8)" font-size="9" text-anchor="middle" font-family="system-ui">Side View • Underwater</text>
 </svg>
 """, "Side View + Underwater", "Streamline, pull path, elbow position, kick timing"),
-        # (other SVGs unchanged...)
+            # Add your other 3 video cards here if you have them
         ]
         for i, (class_name, svg, title, metrics) in enumerate(video_cards):
             with cols[i]:
@@ -520,57 +246,57 @@ def show_landing_page():
 
         st.markdown('<p style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: 12px; padding: 16px 20px; font-size: 0.9375rem; color: rgba(240, 253, 255, 0.9); text-align: center; margin-top: 32px;">💡 <strong>Tip:</strong> 10-15 seconds of continuous swimming works best. Our AI auto-detects your camera angle!</p>', unsafe_allow_html=True)
 
-    # How It Works (with gap)
-    st.markdown('<h2 class="section-title">How it works</h2>', unsafe_allow_html=True)
-    cols = st.columns(3, gap="medium")
+        # How It Works
+        st.markdown('<h2 class="section-title">How it works</h2>', unsafe_allow_html=True)
+        cols = st.columns(3, gap="medium")
+        steps = [
+            ("1", "Pay $4.99", "Secure checkout via Stripe. Instant access."),
+            ("2", "Upload Video", "10-15 sec clip. Side view underwater works best."),
+            ("3", "Get Report", "AI analyzes in 90 sec. Download PDF + annotated video."),
+        ]
+        for i, (num, title, desc) in enumerate(steps):
+            with cols[i]:
+                st.markdown(f"""
+                <div class="step">
+                    <div class="step-number">{num}</div>
+                    <h3 style="color: var(--lane-line);">{title}</h3>
+                    <p style="color: rgba(240, 253, 255, 0.7);">{desc}</p>
+                </div>
+                """, unsafe_allow_html=True)
 
-    steps = [
-        ("1", "Pay $4.99", "Secure checkout via Stripe. Instant access."),
-        ("2", "Upload Video", "10-15 sec clip. Side view underwater works best."),
-        ("3", "Get Report", "AI analyzes in 90 sec. Download PDF + annotated video."),
-    ]
-    for i, (num, title, desc) in enumerate(steps):
-        with cols[i]:
-            st.markdown(f"""
-            <div class="step">
-                <div class="step-number">{num}</div>
-                <h3 style="color: var(--lane-line);">{title}</h3>
-                <p style="color: rgba(240, 253, 255, 0.7);">{desc}</p>
+        # Testimonial
+        st.markdown('<div class="testimonial-card">', unsafe_allow_html=True)
+        st.markdown('<div style="font-size: 1.5rem; color: var(--gold-medal); margin-bottom: 20px;">★★★★★</div>', unsafe_allow_html=True)
+        st.markdown('<blockquote style="font-size: 1.125rem; line-height: 1.7; color: rgba(240, 253, 255, 0.9); margin-bottom: 24px; font-style: italic;">"I\'ve been coaching for 18 years and this caught a dropped elbow pattern I missed. My swimmer dropped 0.4 seconds in her next 100 free after 2 weeks of targeted drills."</blockquote>', unsafe_allow_html=True)
+        st.markdown("""
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--surface-glow), var(--lane-line)); color: var(--deep-pool); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 1.125rem;">MK</div>
+            <div>
+                <h4 style="color: var(--lane-line);">Mike K.</h4>
+                <p style="font-size: 0.875rem; color: rgba(240, 253, 255, 0.6);">Head Coach, Aquatic Stars SC</p>
             </div>
-            """, unsafe_allow_html=True)
-
-    # Testimonial
-    st.markdown('<div class="testimonial-card">', unsafe_allow_html=True)
-    st.markdown('<div style="font-size: 1.5rem; color: var(--gold-medal); margin-bottom: 20px;">★★★★★</div>', unsafe_allow_html=True)
-    st.markdown('<blockquote style="font-size: 1.125rem; line-height: 1.7; color: rgba(240, 253, 255, 0.9); margin-bottom: 24px; font-style: italic;">"I\'ve been coaching for 18 years and this caught a dropped elbow pattern I missed. My swimmer dropped 0.4 seconds in her next 100 free after 2 weeks of targeted drills."</blockquote>', unsafe_allow_html=True)
-    st.markdown("""
-    <div style="display: flex; align-items: center; gap: 16px;">
-        <div style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--surface-glow), var(--lane-line)); color: var(--deep-pool); font-weight: 700; display: flex; align-items: center; justify-content: center; font-size: 1.125rem;">MK</div>
-        <div>
-            <h4 style="color: var(--lane-line);">Mike K.</h4>
-            <p style="font-size: 0.875rem; color: rgba(240, 253, 255, 0.6);">Head Coach, Aquatic Stars SC</p>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # Final CTA
-    st.markdown('<div class="final-cta">', unsafe_allow_html=True)
-    st.markdown('<h2>Ready to find your speed leak?</h2>', unsafe_allow_html=True)
-    st.markdown('<p>One video. One analysis. One fix that changes everything.</p>', unsafe_allow_html=True)
-    if st.button("🏊 Get Instant Analysis → $4.99", key="cta2", use_container_width=True):
-        st.markdown(f'<meta http-equiv="refresh" content="0;url={STRIPE_PAYMENT_LINK}">', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        # Final CTA
+        st.markdown('<div class="final-cta">', unsafe_allow_html=True)
+        st.markdown('<h2>Ready to find your speed leak?</h2>', unsafe_allow_html=True)
+        st.markdown('<p>One video. One analysis. One fix that changes everything.</p>', unsafe_allow_html=True)
+        if st.button("🏊 Get Instant Analysis → $4.99", key="cta2", use_container_width=True):
+            st.markdown(f'<meta http-equiv="refresh" content="0;url={STRIPE_PAYMENT_LINK}">', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-    # Footer
-    st.markdown("""
-    <div style="padding: 40px 0; border-top: 1px solid rgba(6, 182, 212, 0.1); text-align: center; color: rgba(240, 253, 255, 0.5); font-size: 0.875rem;">
-        © 2026 SwimForm AI · <a href="#" style="color: var(--surface-glow); text-decoration: none;">Privacy</a> · <a href="#" style="color: var(--surface-glow); text-decoration: none;">Terms</a> · <a href="mailto:support@swimform.ai" style="color: var(--surface-glow); text-decoration: none;">support@swimform.ai</a>
-    </div>
-    """, unsafe_allow_html=True)
+        # Footer
+        st.markdown("""
+        <div style="padding: 40px 0; border-top: 1px solid rgba(6, 182, 212, 0.1); text-align: center; color: rgba(240, 253, 255, 0.5); font-size: 0.875rem;">
+            © 2026 SwimForm AI · <a href="#" style="color: var(--surface-glow); text-decoration: none;">Privacy</a> · <a href="#" style="color: var(--surface-glow); text-decoration: none;">Terms</a> · <a href="mailto:support@swimform.ai" style="color: var(--surface-glow); text-decoration: none;">support@swimform.ai</a>
+        </div>
+        """, unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────────
-# MAIN ROUTER (unchanged)
+# MAIN ROUTER
 # ─────────────────────────────────────────────
 query_params = st.query_params
 
@@ -578,7 +304,6 @@ if st.session_state.paid:
     try:
         import importlib.util
         import sys
-
         spec = importlib.util.spec_from_file_location("dashboard", "pages/2_Dashboard.py")
         dashboard_module = importlib.util.module_from_spec(spec)
         sys.modules["dashboard"] = dashboard_module
