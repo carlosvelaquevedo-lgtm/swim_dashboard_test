@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
-    layout="centered",  # Centered to prevent expansion
+    layout="centered",                     # Changed to wide → full-screen background
     initial_sidebar_state="expanded",
 )
 
@@ -27,10 +27,32 @@ st.markdown("""
     .st-emotion-cache-1cpxqw2 {
         display: none !important;
     }
+
+    /* Make sure content wrappers don't add white background */
+    [data-testid="stAppViewContainer"],
+    .main,
+    .block-container,
+    .st-emotion-cache-1wivap2 {
+        background: transparent !important;
+        background-color: transparent !important;
+    }
+
+    /* Force full background coverage */
+    .stApp {
+        background: var(--deep-pool) !important;
+        background-image: linear-gradient(180deg, var(--deep-pool) 0%, var(--mid-water) 30%, #0e3d6b 60%, var(--mid-water) 100%) !important;
+    }
+
+    .water-bg {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: -999 !important;
+        pointer-events: none;
+    }
 </style>
 
 <script>
-    // Immediate cleanup in case Streamlit renders late
+    // Immediate cleanup for menu
     document.addEventListener('DOMContentLoaded', () => {
         const els = [
             document.querySelector('[data-testid="stToolbar"]'),
@@ -40,7 +62,6 @@ st.markdown("""
         els.forEach(el => { if (el) el.style.display = 'none'; });
     });
     
-    // Also run right now
     setTimeout(() => {
         const toolbar = document.querySelector('[data-testid="stToolbar"]');
         if (toolbar) toolbar.style.display = 'none';
@@ -48,14 +69,294 @@ st.markdown("""
 </script>
 """, unsafe_allow_html=True)
 
-# Hide Streamlit default chrome
+# ─────────────────────────────────────────────
+# Background layers + full landing styles (one consolidated block)
+# ─────────────────────────────────────────────
+
 st.markdown("""
+<div class="water-bg"></div>
+<div class="lane-lines"></div>
+<div class="bubble"></div>
+<div class="bubble"></div>
+<div class="bubble"></div>
+<div class="bubble"></div>
+
 <style>
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    .block-container {
-        padding-top: 2rem !important;
-        padding-bottom: 2rem !important;
+    :root {
+        --deep-pool: #0a1628;
+        --mid-water: #0f2847;
+        --surface-glow: #06b6d4;
+        --lane-line: #22d3ee;
+        --bubble-white: #f0fdff;
+        --alert-red: #ff4757;
+        --success-green: #10b981;
+        --gold-medal: #fbbf24;
+    }
+
+    .stApp {
+        background: var(--deep-pool) !important;
+        color: var(--bubble-white) !important;
+    }
+
+    .stMarkdown div, p, h1, h2, h3, h4, blockquote {
+        color: var(--bubble-white) !important;
+    }
+
+    h1, h2, h3 {
+        color: var(--bubble-white) !important;
+    }
+
+    .water-bg {
+        background: linear-gradient(180deg, var(--deep-pool) 0%, var(--mid-water) 30%, #0e3d6b 60%, var(--mid-water) 100%);
+    }
+
+    .water-bg::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: 
+            radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+        animation: waterShimmer 8s ease-in-out infinite;
+    }
+
+    @keyframes waterShimmer {
+        0%, 100% { opacity: 0.5; transform: translateY(0); }
+        50% { opacity: 1; transform: translateY(-20px); }
+    }
+
+    .lane-lines {
+        position: fixed;
+        inset: 0;
+        z-index: -9;
+        opacity: 0.03;
+        background: repeating-linear-gradient(90deg, var(--lane-line) 0px, var(--lane-line) 4px, transparent 4px, transparent 150px);
+    }
+
+    .bubble {
+        position: fixed;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(6, 182, 212, 0.1));
+        animation: float 15s infinite ease-in-out;
+        z-index: -8;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        33% { transform: translateY(-30px) rotate(5deg); }
+        66% { transform: translateY(20px) rotate(-5deg); }
+    }
+
+    .bubble:nth-child(1) { width: 80px; height: 80px; top: 20%; left: 10%; }
+    .bubble:nth-child(2) { width: 40px; height: 40px; top: 60%; left: 85%; animation-delay: -5s; }
+    .bubble:nth-child(3) { width: 60px; height: 60px; top: 80%; left: 20%; animation-delay: -10s; }
+    .bubble:nth-child(4) { width: 30px; height: 30px; top: 40%; left: 70%; animation-delay: -3s; }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(6, 182, 212, 0.15);
+        border: 1px solid rgba(6, 182, 212, 0.3);
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 0.875rem;
+        color: var(--lane-line);
+        margin-bottom: 24px;
+        animation: fadeInUp 0.6s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+        font-size: clamp(2.5rem, 6vw, 4rem);
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: 20px;
+        animation: fadeInUp 0.6s ease-out 0.1s both;
+    }
+
+    h1 .highlight {
+        background: linear-gradient(135deg, var(--surface-glow), var(--lane-line));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        color: rgba(240, 253, 255, 0.7);
+        max-width: 600px;
+        margin: 0 auto 40px;
+        line-height: 1.6;
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+    }
+
+    .cta-box {
+        background: linear-gradient(135deg, rgba(15, 40, 71, 0.8) 0%, rgba(10, 22, 40, 0.9) 100%);
+        border: 1px solid rgba(6, 182, 212, 0.2);
+        border-radius: 24px;
+        padding: 40px;
+        max-width: 500px;
+        margin: 0 auto 60px;
+        position: relative;
+        overflow: hidden;
+        animation: fadeInUp 0.6s ease-out 0.3s both;
+    }
+
+    .price-tag {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--surface-glow);
+    }
+
+    .price-period {
+        font-size: 1.125rem;
+        color: rgba(240, 253, 255, 0.6);
+    }
+
+    .price-note {
+        font-size: 0.875rem;
+        color: rgba(240, 253, 255, 0.5);
+        margin-bottom: 32px;
+        text-align: center;
+    }
+
+    .trust-signals {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 24px;
+        font-size: 0.875rem;
+        color: rgba(240, 253, 255, 0.6);
+    }
+
+    .trust-signal::before {
+        content: '✓';
+        color: var(--success-green);
+        font-weight: 700;
+    }
+
+    .section-title {
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 48px;
+        margin-top: 60px;
+    }
+
+    .feature {
+        background: rgba(15, 40, 71, 0.4);
+        border: 1px solid rgba(6, 182, 212, 0.15);
+        border-radius: 16px;
+        padding: 32px;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .feature:hover {
+        border-color: rgba(6, 182, 212, 0.4);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
+    }
+
+    .feature-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(34, 211, 238, 0.1));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin-bottom: 20px;
+    }
+
+    .video-card {
+        background: rgba(15, 40, 71, 0.4);
+        border: 1px solid rgba(6, 182, 212, 0.15);
+        border-radius: 16px;
+        padding: 20px;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .video-card:hover {
+        border-color: rgba(6, 182, 212, 0.4);
+        transform: translateY(-4px);
+    }
+
+    .video-card.recommended {
+        border: 2px solid var(--gold-medal);
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(15, 40, 71, 0.4) 100%);
+        position: relative;
+    }
+
+    .video-card.recommended::before {
+        content: '⭐ RECOMMENDED';
+        position: absolute;
+        top: -12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--gold-medal);
+        color: var(--deep-pool);
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 4px 12px;
+        border-radius: 100px;
+        letter-spacing: 0.5px;
+    }
+
+    .video-svg {
+        width: 100%;
+        height: 120px;
+        display: block;
+        margin-bottom: 16px;
+    }
+
+    .step {
+        background: rgba(15, 40, 71, 0.4);
+        border: 1px solid rgba(6, 182, 212, 0.15);
+        border-radius: 16px;
+        padding: 32px;
+        text-align: center;
+        height: 100%;
+    }
+
+    .step-number {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--surface-glow), var(--lane-line));
+        color: var(--deep-pool);
+        font-size: 1.5rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 16px;
+    }
+
+    .testimonial-card {
+        background: rgba(15, 40, 71, 0.4);
+        border: 1px solid rgba(6, 182, 212, 0.15);
+        border-radius: 20px;
+        padding: 40px;
+        max-width: 700px;
+        margin: 60px auto;
+    }
+
+    .final-cta {
+        text-align: center;
+        margin: 80px 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -80,303 +381,10 @@ if "paid" not in st.session_state:
 
 
 def show_landing_page():
-    # Global CSS with fixes for text color, spacing, and overrides
-    st.markdown("""
-    <style>
-        :root {
-            --deep-pool: #0a1628;
-            --mid-water: #0f2847;
-            --surface-glow: #06b6d4;
-            --lane-line: #22d3ee;
-            --bubble-white: #f0fdff;
-            --alert-red: #ff4757;
-            --success-green: #10b981;
-            --gold-medal: #fbbf24;
-        }
-
-        .stApp {
-            background: var(--deep-pool) !important;
-            color: var(--bubble-white) !important;
-        }
-
-        .stMarkdown div, p, h1, h2, h3, h4, blockquote {
-            color: var(--bubble-white) !important;
-        }
-
-        h1, h2, h3 {
-            color: var(--bubble-white) !important;
-        }
-
-        .water-bg {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -10;
-            background: linear-gradient(180deg, var(--deep-pool) 0%, var(--mid-water) 30%, #0e3d6b 60%, var(--mid-water) 100%);
-        }
-
-        .water-bg::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: 
-                radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
-            animation: waterShimmer 8s ease-in-out infinite;
-        }
-
-        @keyframes waterShimmer {
-            0%, 100% { opacity: 0.5; transform: translateY(0); }
-            50% { opacity: 1; transform: translateY(-20px); }
-        }
-
-        .lane-lines {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: -9;
-            opacity: 0.03;
-            background: repeating-linear-gradient(90deg, var(--lane-line) 0px, var(--lane-line) 4px, transparent 4px, transparent 150px);
-        }
-
-        .bubble {
-            position: fixed;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.4), rgba(6, 182, 212, 0.1));
-            animation: float 15s infinite ease-in-out;
-            z-index: -8;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            33% { transform: translateY(-30px) rotate(5deg); }
-            66% { transform: translateY(20px) rotate(-5deg); }
-        }
-
-        .bubble:nth-child(1) { width: 80px; height: 80px; top: 20%; left: 10%; }
-        .bubble:nth-child(2) { width: 40px; height: 40px; top: 60%; left: 85%; animation-delay: -5s; }
-        .bubble:nth-child(3) { width: 60px; height: 60px; top: 80%; left: 20%; animation-delay: -10s; }
-        .bubble:nth-child(4) { width: 30px; height: 30px; top: 40%; left: 70%; animation-delay: -3s; }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(6, 182, 212, 0.15);
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            padding: 8px 16px;
-            border-radius: 100px;
-            font-size: 0.875rem;
-            color: var(--lane-line);
-            margin-bottom: 24px;
-            animation: fadeInUp 0.6s ease-out;
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h1 {
-            font-size: clamp(2.5rem, 6vw, 4rem);
-            font-weight: 700;
-            line-height: 1.1;
-            margin-bottom: 20px;
-            animation: fadeInUp 0.6s ease-out 0.1s both;
-        }
-
-        h1 .highlight {
-            background: linear-gradient(135deg, var(--surface-glow), var(--lane-line));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-subtitle {
-            font-size: 1.25rem;
-            color: rgba(240, 253, 255, 0.7);
-            max-width: 600px;
-            margin: 0 auto 40px;
-            line-height: 1.6;
-            animation: fadeInUp 0.6s ease-out 0.2s both;
-        }
-
-        .cta-box {
-            background: linear-gradient(135deg, rgba(15, 40, 71, 0.8) 0%, rgba(10, 22, 40, 0.9) 100%);
-            border: 1px solid rgba(6, 182, 212, 0.2);
-            border-radius: 24px;
-            padding: 40px;
-            max-width: 500px;
-            margin: 0 auto 60px;  /* Added margin for spacing */
-            position: relative;
-            overflow: hidden;
-            animation: fadeInUp 0.6s ease-out 0.3s both;
-        }
-
-        .price-tag {
-            display: flex;
-            align-items: baseline;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            font-size: 3rem;
-            font-weight: 700;
-            color: var(--surface-glow);
-        }
-
-        .price-period {
-            font-size: 1.125rem;
-            color: rgba(240, 253, 255, 0.6);
-        }
-
-        .price-note {
-            font-size: 0.875rem;
-            color: rgba(240, 253, 255, 0.5);
-            margin-bottom: 32px;
-            text-align: center;
-        }
-
-        .trust-signals {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 24px;
-            font-size: 0.875rem;
-            color: rgba(240, 253, 255, 0.6);
-        }
-
-        .trust-signal::before {
-            content: '✓';
-            color: var(--success-green);
-            font-weight: 700;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 48px;
-            margin-top: 60px;  /* Added top margin for section spacing */
-        }
-
-        .feature {
-            background: rgba(15, 40, 71, 0.4);
-            border: 1px solid rgba(6, 182, 212, 0.15);
-            border-radius: 16px;
-            padding: 32px;
-            transition: all 0.3s ease;
-            height: 100%;  /* Equal height in columns */
-        }
-
-        .feature:hover {
-            border-color: rgba(6, 182, 212, 0.4);
-            transform: translateY(-4px);
-            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.15);
-        }
-
-        .feature-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(34, 211, 238, 0.1));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            margin-bottom: 20px;
-        }
-
-        .video-card {
-            background: rgba(15, 40, 71, 0.4);
-            border: 1px solid rgba(6, 182, 212, 0.15);
-            border-radius: 16px;
-            padding: 20px;
-            transition: all 0.3s ease;
-            height: 100%;
-        }
-
-        .video-card:hover {
-            border-color: rgba(6, 182, 212, 0.4);
-            transform: translateY(-4px);
-        }
-
-        .video-card.recommended {
-            border: 2px solid var(--gold-medal);
-            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(15, 40, 71, 0.4) 100%);
-            position: relative;
-        }
-
-        .video-card.recommended::before {
-            content: '⭐ RECOMMENDED';
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--gold-medal);
-            color: var(--deep-pool);
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 4px 12px;
-            border-radius: 100px;
-            letter-spacing: 0.5px;
-        }
-
-        .video-svg {
-            width: 100%;
-            height: 120px;  /* Fixed height to prevent expansion */
-            display: block;
-            margin-bottom: 16px;
-        }
-
-        .step {
-            background: rgba(15, 40, 71, 0.4);
-            border: 1px solid rgba(6, 182, 212, 0.15);
-            border-radius: 16px;
-            padding: 32px;
-            text-align: center;
-            height: 100%;
-        }
-
-        .step-number {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--surface-glow), var(--lane-line));
-            color: var(--deep-pool);
-            font-size: 1.5rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 16px;
-        }
-
-        .testimonial-card {
-            background: rgba(15, 40, 71, 0.4);
-            border: 1px solid rgba(6, 182, 212, 0.15);
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 700px;
-            margin: 60px auto;  /* Centered with spacing */
-        }
-
-        .final-cta {
-            text-align: center;
-            margin: 80px 0;  /* Added spacing */
-        }
-    </style>
-    <div class="water-bg"></div>
-    <div class="lane-lines"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    <div class="bubble"></div>
-    """, unsafe_allow_html=True)
-
-    container = st.container()  # Wrap content in max-width container
+    container = st.container()
 
     with container:
-        # Header/Logo (unchanged)
+        # Header/Logo
         st.markdown("""
         <div style="padding: 20px 0; position: relative; z-index: 10; text-align: left;">
             <a href="#" style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--surface-glow); text-decoration: none; display: inline-flex; align-items: center; gap: 10px;">
@@ -391,13 +399,13 @@ def show_landing_page():
         </div>
         """, unsafe_allow_html=True)
 
-        # Hero Section (with padding)
+        # Hero Section
         st.markdown('<div style="padding: 60px 0 20px; text-align: center;">', unsafe_allow_html=True)
         st.markdown('<div class="hero-badge">⚡ Video analysis powered by Claude AI</div>', unsafe_allow_html=True)
         st.markdown('<h1>Find the <span class="highlight">one fix</span><br/>that makes you faster</h1>', unsafe_allow_html=True)
         st.markdown('<p class="hero-subtitle">Upload your swim video. Get a biomechanics report in 90 seconds. Fix what coaches miss.</p>', unsafe_allow_html=True)
 
-        # CTA Box (unchanged)
+        # CTA Box
         st.markdown("""
         <div class="cta-box">
             <div class="price-tag">
@@ -426,7 +434,7 @@ def show_landing_page():
 
         # Features Section
         st.markdown('<h2 class="section-title">What you get</h2>', unsafe_allow_html=True)
-        cols = st.columns(3, gap="medium")  # Added gap for spacing
+        cols = st.columns(3, gap="medium")
         features = [
             ("📊", "7 Biomechanical Metrics", "Stroke rate, DPS, entry angle, elbow drop, kick depth, head position, body rotation—all measured frame-by-frame."),
             ("🎯", "Ranked Issues (1-3)", "Not just a list. We tell you which fix will move the needle most based on your specific technique patterns."),
@@ -561,9 +569,8 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-
 # ─────────────────────────────────────────────
-# MAIN ROUTER
+# MAIN ROUTER (unchanged)
 # ─────────────────────────────────────────────
 query_params = st.query_params
 
@@ -572,7 +579,6 @@ if st.session_state.paid:
         import importlib.util
         import sys
 
-        # Import the dashboard module (handles numeric prefix in filename)
         spec = importlib.util.spec_from_file_location("dashboard", "pages/2_Dashboard.py")
         dashboard_module = importlib.util.module_from_spec(spec)
         sys.modules["dashboard"] = dashboard_module
