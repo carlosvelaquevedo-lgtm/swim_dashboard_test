@@ -118,9 +118,6 @@ def show_landing_page():
         color: white;
         margin-bottom: 25px;
     ">
-        <h1 style="margin-bottom: 10px;">
-            🏊 Swim Technique Analyzer
-        </h1>
         <h3 style="margin-top: 0; font-weight: 400;">
             ⚡ Video analysis powered by Pose-Estimation AI
         </h3>
