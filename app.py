@@ -7,7 +7,6 @@ st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
     layout="centered",                # changed back to wide — centered usually breaks full bg
-    initial_sidebar_state="collapsed"
 )
 
 # =============================================
