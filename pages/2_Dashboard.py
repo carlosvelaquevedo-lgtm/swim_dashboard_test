@@ -2858,12 +2858,18 @@ def create_results_bundle(video_path, csv_buf, pdf_buf, timestamp):
 # ─────────────────────────────────────────────
 
 def main():
-    st.set_page_config(layout="wide", page_title="Freestyle Swim Analyzer Pro v2",initial_sidebar_state="expanded")
-    st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
-
+    st.set_page_config(
+        page_title="SwimForm AI • Analysis",
+        page_icon="🏊",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+    
+    # Force reset any landing styles
     st.markdown("""
     <style>
-        #MainMenu {visibility: visible !important;}
+        .water-bg, .lane-lines, .bubble { display: none !important; }
+        .stApp { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%) !important; }
     </style>
     """, unsafe_allow_html=True)
 
