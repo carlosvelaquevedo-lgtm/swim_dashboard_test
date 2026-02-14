@@ -6,7 +6,7 @@ import streamlit as st
 st.set_page_config(
     page_title="SwimForm AI | Elite Biomechanics",
     page_icon="🏊",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="collapsed"
 )
 
@@ -250,20 +250,20 @@ def show_landing_page():
     """, unsafe_allow_html=True)
 
 # =============================================
-# MAIN ROUTER (Clean & Reliable)
+# MAIN ROUTER
 # =============================================
-
-# Handle Stripe success redirect
-q = st.query_params
-if q.get("success") == "true":
-    st.session_state.paid = True
-    st.query_params.clear()          # clean the URL
-    st.balloons()
-    st.rerun()                       # important
-
-# ────── PAGE ROUTING ──────
 if st.session_state.paid:
-    st.switch_page("pages/2_Dashboard.py")   # ← This is the magic line
-
+    st.title("🏊 AI Analysis Dashboard")
+    st.success("Analysis Credit Active. Upload your clip below.")
+    st.file_uploader("Upload Video (Max 30s)", type=['mp4', 'mov'])
+    if st.button("Log Out"):
+        st.session_state.paid = False
+        st.rerun()
 else:
+    # Handle Stripe Returns
+    q = st.query_params
+    if q.get("success") == "true":
+        st.session_state.paid = True
+        st.balloons()
+        st.rerun()
     show_landing_page()
