@@ -108,7 +108,34 @@ def show_landing_page():
         </div>
     </div>
     """, unsafe_allow_html=True)
-
+        # --- 3. How It Works (The 3 Steps) ---
+    st.markdown('<h2 style="text-align: center; font-size: 2.2rem; margin-bottom: 50px;">The 90-Second Process</h2>', unsafe_allow_html=True)
+    
+    # Create 3 equal columns
+    s_cols = st.columns(3)
+    
+    steps = [
+        ("01", "Activate", "Complete the secure $4.99 payment to unlock your specialized processing tunnel."),
+        ("02", "Drop", "Upload a 10-30s raw video clip from your phone. Our AI handles the rest."),
+        ("03", "Review", "Get your data-rich PDF report including prioritized fixes and drill cards.")
+    ]
+    
+    for i, (num, title, desc) in enumerate(steps):
+        with s_cols[i]:
+            st.markdown(f"""
+            <div style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: #06b6d4; color: #0a1628; 
+                            display: flex; align-items: center; justify-content: center; font-weight: 900; 
+                            font-size: 1.2rem; margin: 0 auto 20px; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+                            border: 4px solid rgba(255,255,255,0.1);">
+                    {num}
+                </div>
+                <h3 style="color: white; margin-bottom: 12px; font-size: 1.3rem;">{title}</h3>
+                <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5; max-width: 250px; margin: 0 auto;">
+                    {desc}
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
     # --- 2. Hero Section + Loom Placeholder ---
     st.markdown(f"""
     <div style="padding: 60px 0 10px; text-align: center; display: flex; flex-direction: column; align-items: center;">
@@ -136,26 +163,8 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 3. How It Works (The 3 Steps) ---
-    st.markdown('<h2 style="text-align: center; font-size: 2.2rem; margin-bottom: 50px;">The 90-Second Process</h2>', unsafe_allow_html=True)
-    s_cols = st.columns(3)
-    steps = [
-        ("01", "Activate", "Complete the secure $4.99 payment to unlock your specialized processing tunnel."),
-        ("02", "Drop", "Upload a 10-30s raw video clip from your phone. Our AI handles the rest."),
-        ("03", "Review", "Get your data-rich PDF report including prioritized fixes and drill cards.")
-    ]
-    
-    for i, (num, title, desc) in enumerate(steps):
-        with s_cols[i]:
-            st.markdown(f"""
-            <div style="text-align: center; padding: 20px;">
-                <div style="width: 50px; height: 50px; border-radius: 50%; background: #06b6d4; color: #0a1628; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.2rem; margin: 0 auto 20px; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); border: 4px solid rgba(255,255,255,0.1);">
-                    {num}
-                </div>
-                <h3 style="color: white; margin-bottom: 12px; font-size: 1.3rem;">{title}</h3>
-                <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5;">{desc}</p>
-            </div>
-            """, unsafe_allow_html=True)
+
+
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 50px;">The Analysis Engine</h2>', unsafe_allow_html=True)
     
