@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 # =============================================
 # PAGE CONFIG
@@ -111,24 +112,20 @@ def show_landing_page():
     # --- 3. How It Works (The 3 Steps) ---
     st.markdown("""
     <style>
-    
-    /* ================= STRIPE PROCESS SECTION ================= */
-    
     .process-section {
-        padding: 100px 0;
         text-align: center;
+        padding: 100px 0;
     }
     
     .process-title {
         font-size: 2.8rem;
         font-weight: 700;
-        margin-bottom: 70px;
+        margin-bottom: 60px;
     }
     
     .process-grid {
         display: flex;
         justify-content: center;
-        align-items: stretch;
         gap: 40px;
         flex-wrap: wrap;
     }
@@ -138,21 +135,13 @@ def show_landing_page():
         border-radius: 28px;
         padding: 50px 40px;
         width: 300px;
-        border: 1px solid rgba(34,211,238,0.15);
-        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        position: relative;
-        transition: all 0.4s ease;
-    }
-    
-    .process-card:hover {
-        transform: translateY(-8px);
-        border-color: rgba(34,211,238,0.5);
+        border: 1px solid rgba(34,211,238,0.2);
     }
     
     .process-number {
         width: 60px;
         height: 60px;
-        margin: 0 auto 25px auto;
+        margin: 0 auto 25px;
         border-radius: 50%;
         background: #22d3ee;
         color: #0a1628;
@@ -162,31 +151,10 @@ def show_landing_page():
         align-items: center;
         justify-content: center;
     }
-    
-    .process-card h3 {
-        color: #22d3ee;
-        margin-bottom: 15px;
-    }
-    
-    .process-card p {
-        color: #94a3b8;
-        font-size: 0.95rem;
-        line-height: 1.6;
-    }
-    
-    .process-arrow {
-        align-self: center;
-        font-size: 2rem;
-        color: rgba(34,211,238,0.4);
-    }
-    
     </style>
     
     <div class="process-section">
-    
-        <div class="process-title">
-            How it works
-        </div>
+        <div class="process-title">How it works</div>
     
         <div class="process-grid">
     
@@ -196,15 +164,11 @@ def show_landing_page():
                 <p>Secure checkout via Stripe. Instant access.</p>
             </div>
     
-            <div class="process-arrow">→</div>
-    
             <div class="process-card">
                 <div class="process-number">2</div>
                 <h3>Upload Video</h3>
                 <p>10–15 sec clip. Side view underwater works best.</p>
             </div>
-    
-            <div class="process-arrow">→</div>
     
             <div class="process-card">
                 <div class="process-number">3</div>
@@ -213,63 +177,59 @@ def show_landing_page():
             </div>
     
         </div>
-    
     </div>
     """, unsafe_allow_html=True)
 
     # --- 2. Hero Section + Loom Placeholder ---
-    st.markdown("""
+    components.html("""
     <style>
+    body { margin:0; background:transparent; }
     
-    /* ================= HERO VIDEO STRIPE STYLE ================= */
-    
-    .hero-video-wrapper {
+    /* WRAPPER */
+    .hero-wrapper {
         position: relative;
-        width: 100%;
         max-width: 1000px;
         margin: 0 auto 120px auto;
     }
     
-    /* Gradient Glow */
+    /* GLOW */
     .hero-glow {
         position: absolute;
         inset: -40px;
-        background: radial-gradient(circle at 50% 50%, rgba(6,182,212,0.35), transparent 60%);
+        background: radial-gradient(circle at center, rgba(6,182,212,0.35), transparent 60%);
         filter: blur(80px);
-        z-index: 0;
         animation: glowPulse 6s ease-in-out infinite;
     }
     
     @keyframes glowPulse {
-        0%,100% { opacity: 0.6; transform: scale(1); }
-        50% { opacity: 1; transform: scale(1.05); }
+        0%,100% { opacity: 0.6; }
+        50% { opacity: 1; }
     }
     
+    /* VIDEO CARD */
     .hero-video {
         position: relative;
         border-radius: 32px;
         overflow: hidden;
         border: 1px solid rgba(6,182,212,0.25);
-        background: rgba(0,0,0,0.4);
         box-shadow: 0 40px 100px rgba(0,0,0,0.6);
-        z-index: 1;
     }
     
-    /* 16:9 container */
-    .hero-video-inner {
+    /* 16:9 */
+    .video-inner {
         position: relative;
         padding-bottom: 56.25%;
         height: 0;
     }
     
-    .hero-video iframe {
+    .video-inner iframe {
         position: absolute;
         inset: 0;
         width: 100%;
         height: 100%;
     }
     
-    /* Scan Line */
+    /* SCAN LINE */
     .scan-line {
         position: absolute;
         left: 0;
@@ -277,7 +237,6 @@ def show_landing_page():
         height: 2px;
         background: linear-gradient(90deg, transparent, #22d3ee, transparent);
         animation: scanMove 3s linear infinite;
-        opacity: 0.8;
     }
     
     @keyframes scanMove {
@@ -285,82 +244,74 @@ def show_landing_page():
         100% { top: 100%; }
     }
     
-    /* Floating Metrics */
-    .metric-badge {
+    /* METRICS */
+    .metric {
         position: absolute;
-        background: rgba(15,40,71,0.8);
-        border: 1px solid rgba(34,211,238,0.3);
+        background: rgba(15,40,71,0.85);
+        border: 1px solid rgba(34,211,238,0.4);
         padding: 10px 16px;
         border-radius: 14px;
-        font-size: 0.8rem;
+        font-size: 13px;
         backdrop-filter: blur(10px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        animation: floatMetric 4s ease-in-out infinite;
     }
     
-    .metric-1 { top: 20px; left: 20px; }
-    .metric-2 { bottom: 20px; right: 20px; animation-delay: -2s; }
-    
-    @keyframes floatMetric {
-        0%,100% { transform: translateY(0); }
-        50% { transform: translateY(-10px); }
-    }
-    
-    .metric-value {
+    .metric span {
         color: #22d3ee;
         font-weight: 700;
     }
     
+    .metric-1 { top: 20px; left: 20px; }
+    .metric-2 { bottom: 20px; right: 20px; }
+    
     </style>
     
-    <div class="hero-video-wrapper">
-    
+    <div class="hero-wrapper">
         <div class="hero-glow"></div>
     
         <div class="hero-video">
-    
-            <div class="hero-video-inner">
+            <div class="video-inner">
                 <iframe 
-                    id="heroVideo"
-                    src="https://www.youtube.com/embed/5HLW2AI1Ink?mute=1&controls=0&rel=0&modestbranding=1&enablejsapi=1"
+                    id="ytplayer"
+                    src="https://www.youtube.com/embed/5HLW2AI1Ink?enablejsapi=1&mute=1&controls=0&rel=0"
                     frameborder="0"
                     allow="autoplay; encrypted-media">
                 </iframe>
     
                 <div class="scan-line"></div>
     
-                <div class="metric-badge metric-1">
-                    Elbow Angle<br>
-                    <span class="metric-value">118°</span>
+                <div class="metric metric-1">
+                    Elbow Angle<br><span>118°</span>
                 </div>
     
-                <div class="metric-badge metric-2">
-                    Stroke Rate<br>
-                    <span class="metric-value">32 spm</span>
+                <div class="metric metric-2">
+                    Stroke Rate<br><span>32 spm</span>
                 </div>
     
             </div>
-    
         </div>
-    
     </div>
     
     <script>
-    const iframe = document.getElementById("heroVideo");
+    var iframe = document.getElementById("ytplayer");
+    var player;
     
-    const wrapper = iframe.closest(".hero-video");
+    function onYouTubeIframeAPIReady() {
+        player = new YT.Player('ytplayer');
+    }
     
-    wrapper.addEventListener("mouseenter", () => {
-        iframe.contentWindow.postMessage(
-            '{"event":"command","func":"playVideo","args":""}', '*');
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+    
+    document.querySelector('.hero-video').addEventListener('mouseenter', function() {
+        if(player) player.playVideo();
     });
     
-    wrapper.addEventListener("mouseleave", () => {
-        iframe.contentWindow.postMessage(
-            '{"event":"command","func":"pauseVideo","args":""}', '*');
+    document.querySelector('.hero-video').addEventListener('mouseleave', function() {
+        if(player) player.pauseVideo();
     });
     </script>
-    """, unsafe_allow_html=True)
+    """, height=600)
 
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 50px;">The Analysis Engine</h2>', unsafe_allow_html=True)
