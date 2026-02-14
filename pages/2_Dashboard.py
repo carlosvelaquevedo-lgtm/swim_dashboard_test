@@ -3217,179 +3217,179 @@ def main():
         st.success("✅ Analysis complete!")
       
             
-            # Display video type information - User selected vs Auto-detected
-            st.markdown("### 📹 Video Type")
-            
-            col_user, col_auto = st.columns(2)
-            
-            with col_user:
-                user_ctx_icon = "🎥" if selected_camera == CameraView.SIDE else "👤"
-                user_water_icon = "🤿" if selected_water == WaterPosition.UNDERWATER else "☀️"
-                st.markdown(f"""
-                <div style="background: rgba(34, 197, 94, 0.15); border-radius: 12px; padding: 16px; border-left: 4px solid #22c55e;">
-                    <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase;">Your Selection (Used for Analysis)</span>
-                    <div style="font-size: 18px; font-weight: 600; color: #22c55e; margin-top: 4px;">
-                        {user_ctx_icon} {selected_camera.value} &nbsp;•&nbsp; {user_water_icon} {selected_water.value}
-                    </div>
+        # Display video type information - User selected vs Auto-detected
+        st.markdown("### 📹 Video Type")
+        
+        col_user, col_auto = st.columns(2)
+        
+        with col_user:
+            user_ctx_icon = "🎥" if selected_camera == CameraView.SIDE else "👤"
+            user_water_icon = "🤿" if selected_water == WaterPosition.UNDERWATER else "☀️"
+            st.markdown(f"""
+            <div style="background: rgba(34, 197, 94, 0.15); border-radius: 12px; padding: 16px; border-left: 4px solid #22c55e;">
+                <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase;">Your Selection (Used for Analysis)</span>
+                <div style="font-size: 18px; font-weight: 600; color: #22c55e; margin-top: 4px;">
+                    {user_ctx_icon} {selected_camera.value} &nbsp;•&nbsp; {user_water_icon} {selected_water.value}
                 </div>
-                """, unsafe_allow_html=True)
-            
-            with col_auto:
-                if summary.video_context:
-                    ctx = summary.video_context
-                    ctx_icon = "🎥" if ctx.camera_view == CameraView.SIDE else "👤" if ctx.camera_view == CameraView.FRONT else "🔝"
-                    water_icon = "🤿" if ctx.water_position == WaterPosition.UNDERWATER else "☀️" if ctx.water_position == WaterPosition.ABOVE_WATER else "〰️"
-                    confidence_color = "#22c55e" if ctx.confidence >= 0.7 else "#eab308" if ctx.confidence >= 0.5 else "#ef4444"
-                    
-                    # Check if auto-detection matches user selection
-                    matches = (ctx.camera_view == selected_camera and ctx.water_position == selected_water)
-                    match_icon = "✅" if matches else "⚠️"
-                    border_color = "#22c55e" if matches else "#eab308"
-                    
-                    st.markdown(f"""
-                    <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 16px; border-left: 4px solid {border_color};">
-                        <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase;">Auto-Detection Result {match_icon}</span>
-                        <div style="font-size: 18px; font-weight: 600; color: white; margin-top: 4px;">
-                            {ctx_icon} {ctx.camera_view.value} &nbsp;•&nbsp; {water_icon} {ctx.water_position.value}
-                        </div>
-                        <div style="font-size: 12px; color: {confidence_color}; margin-top: 4px;">Confidence: {ctx.confidence*100:.0f}%</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    if not matches:
-                        st.caption("ℹ️ Auto-detection differs from your selection. Your selection is used for analysis.")
-                else:
-                    st.markdown("""
-                    <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 16px; border-left: 4px solid #64748b;">
-                        <span style="color: #94a3b8; font-size: 12px;">Auto-Detection</span>
-                        <div style="font-size: 14px; color: #64748b; margin-top: 4px;">Not enough data for detection</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-
-            # NEW: Render visual metrics component with body silhouettes
-            st.subheader("📊 Technique Breakdown")
-            metrics_for_viz = {
-                'horizontal_deviation': summary.avg_horizontal_deviation,
-                'vertical_drop': summary.avg_vertical_drop,
-                'evf_angle': summary.avg_evf_angle,
-                'dropped_elbow_pct': summary.dropped_elbow_pct,
-                'body_roll': summary.avg_body_roll,
-                'kick_depth': summary.avg_kick_depth,
-                'kick_symmetry': summary.avg_kick_symmetry,
-            }
-            render_swim_metrics_component(metrics_for_viz, height=440)
-
-            # Display score cards in columns - ENHANCED
-            col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                score_color = "#22c55e" if summary.avg_score >= 70 else "#eab308" if summary.avg_score >= 50 else "#ef4444"
-                score_status = "Excellent" if summary.avg_score >= 80 else "Good" if summary.avg_score >= 70 else "Fair" if summary.avg_score >= 50 else "Needs Work"
-                st.markdown(f"""
-                <div style="background: linear-gradient(135deg, rgba(6,182,212,0.2) 0%, rgba(37,99,235,0.2) 100%); border: 2px solid {score_color}; border-radius: 16px; padding: 20px; text-align: center;">
-                    <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">OVERALL SCORE</h4>
-                    <div style="font-size: 48px; font-weight: bold; color: {score_color};">{summary.avg_score:.1f}</div>
-                    <div style="font-size: 12px; color: {score_color}; font-weight: 600;">{score_status}</div>
-                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: 70+ (Good) | 80+ (Excellent)</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with col2:
-                align_color = "#22c55e" if summary.avg_vertical_drop <= 8 else "#eab308" if summary.avg_vertical_drop <= 15 else "#ef4444"
-                align_status = "Streamlined" if summary.avg_vertical_drop <= 5 else "Good" if summary.avg_vertical_drop <= 8 else "Hip Drop" if summary.avg_vertical_drop <= 15 else "Sinking"
-                st.markdown(f"""
-                <div style="background: linear-gradient(135deg, rgba(5,150,105,0.2) 0%, rgba(16,185,129,0.2) 100%); border: 2px solid {align_color}; border-radius: 16px; padding: 20px; text-align: center;">
-                    <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">BODY ALIGNMENT</h4>
-                    <div style="font-size: 48px; font-weight: bold; color: {align_color};">{summary.avg_vertical_drop:.1f}°</div>
-                    <div style="font-size: 12px; color: {align_color}; font-weight: 600;">{align_status}</div>
-                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: &lt;8° • OK: &lt;15°</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            with col3:
-                evf_color = "#22c55e" if summary.dropped_elbow_pct <= 10 else "#eab308" if summary.dropped_elbow_pct <= 30 else "#ef4444"
-                evf_status = "High Elbow" if summary.dropped_elbow_pct <= 10 else "Some Drop" if summary.dropped_elbow_pct <= 30 else "Dropped Elbow"
-                st.markdown(f"""
-                <div style="background: linear-gradient(135deg, rgba(124,58,237,0.2) 0%, rgba(168,85,247,0.2) 100%); border: 2px solid {evf_color}; border-radius: 16px; padding: 20px; text-align: center;">
-                    <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">EVF (CATCH)</h4>
-                    <div style="font-size: 48px; font-weight: bold; color: {evf_color};">{summary.dropped_elbow_pct:.0f}%</div>
-                    <div style="font-size: 12px; color: {evf_color}; font-weight: 600;">{evf_status}</div>
-                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: &lt;10% drop</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            with col4:
-                glide_color = "#22c55e" if summary.glide_ratio > 25 else "#eab308" if summary.glide_ratio > 15 else "#ef4444"
-                glide_status = "Strong" if summary.glide_ratio > 25 else "OK" if summary.glide_ratio > 15 else "Improve"
-                st.markdown(f"""
-                <div style="background: linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(34,197,94,0.2) 100%); border: 2px solid {glide_color}; border-radius: 16px; padding: 20px; text-align: center;">
-                    <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">GLIDE RATIO</h4>
-                    <div style="font-size: 48px; font-weight: bold; color: {glide_color};">{summary.glide_ratio:.0f}%</div>
-                    <div style="font-size: 12px; color: {glide_color}; font-weight: 600;">{glide_status}</div>
-                    <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: 20-35% for efficiency</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-            # Metrics row
-            cols = st.columns(5)
-            cols[0].metric("Stroke Rate", f"{summary.stroke_rate:.1f} spm")
-            cols[1].metric("Breaths/min", f"{summary.breaths_per_min:.1f}")
-            cols[2].metric("Avg Body Roll", f"{summary.avg_body_roll:.1f}°")
-            cols[3].metric("Kick Status", summary.kick_status)
-            cols[4].metric("Breaths in Pull", f"{summary.breaths_during_pull}", 
-                          delta="Good" if summary.breaths_during_pull == 0 else "Reduce",
-                          delta_color="normal" if summary.breaths_during_pull == 0 else "inverse")
-
-            # Diagnostics section
-            st.subheader("🎯 Coaching Insights")
-            for diag in summary.diagnostics:
-                if diag.startswith("✅"):
-                    st.success(diag)
-                elif diag.startswith("🚨") or diag.startswith("⚠️"):
-                    st.error(diag)
-                else:
-                    st.warning(diag)
-
-            # Best/Worst frames
-            st.subheader("📸 Key Frames")
-            col1, col2 = st.columns(2)
-            with col1:
-                if summary.best_frame_bytes:
-                    st.image(summary.best_frame_bytes, caption="Best Pull Frame")
-                else:
-                    st.info("No best frame captured")
-            with col2:
-                if summary.worst_frame_bytes:
-                    st.image(summary.worst_frame_bytes, caption="Worst Pull Frame")
-                else:
-                    st.info("No worst frame captured")
-
-            # Video player - use st.video for cross-platform compatibility
-            st.subheader("🎬 Annotated Video")
-            if video_bytes:
-                # st.video works better across platforms
-                st.video(video_bytes, format="video/mp4")
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col_auto:
+            if summary.video_context:
+                ctx = summary.video_context
+                ctx_icon = "🎥" if ctx.camera_view == CameraView.SIDE else "👤" if ctx.camera_view == CameraView.FRONT else "🔝"
+                water_icon = "🤿" if ctx.water_position == WaterPosition.UNDERWATER else "☀️" if ctx.water_position == WaterPosition.ABOVE_WATER else "〰️"
+                confidence_color = "#22c55e" if ctx.confidence >= 0.7 else "#eab308" if ctx.confidence >= 0.5 else "#ef4444"
                 
-                # Also provide download link for the video separately
-                st.download_button(
-                    "⬇️ Download Annotated Video",
-                    video_bytes,
-                    f"annotated_swim_{timestamp}.mp4",
-                    "video/mp4"
-                )
+                # Check if auto-detection matches user selection
+                matches = (ctx.camera_view == selected_camera and ctx.water_position == selected_water)
+                match_icon = "✅" if matches else "⚠️"
+                border_color = "#22c55e" if matches else "#eab308"
+                
+                st.markdown(f"""
+                <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 16px; border-left: 4px solid {border_color};">
+                    <span style="color: #94a3b8; font-size: 12px; text-transform: uppercase;">Auto-Detection Result {match_icon}</span>
+                    <div style="font-size: 18px; font-weight: 600; color: white; margin-top: 4px;">
+                        {ctx_icon} {ctx.camera_view.value} &nbsp;•&nbsp; {water_icon} {ctx.water_position.value}
+                    </div>
+                    <div style="font-size: 12px; color: {confidence_color}; margin-top: 4px;">Confidence: {ctx.confidence*100:.0f}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                if not matches:
+                    st.caption("ℹ️ Auto-detection differs from your selection. Your selection is used for analysis.")
+            else:
+                st.markdown("""
+                <div style="background: rgba(30, 41, 59, 0.8); border-radius: 12px; padding: 16px; border-left: 4px solid #64748b;">
+                    <span style="color: #94a3b8; font-size: 12px;">Auto-Detection</span>
+                    <div style="font-size: 14px; color: #64748b; margin-top: 4px;">Not enough data for detection</div>
+                </div>
+                """, unsafe_allow_html=True)
+    
+        # NEW: Render visual metrics component with body silhouettes
+        st.subheader("📊 Technique Breakdown")
+        metrics_for_viz = {
+            'horizontal_deviation': summary.avg_horizontal_deviation,
+            'vertical_drop': summary.avg_vertical_drop,
+            'evf_angle': summary.avg_evf_angle,
+            'dropped_elbow_pct': summary.dropped_elbow_pct,
+            'body_roll': summary.avg_body_roll,
+            'kick_depth': summary.avg_kick_depth,
+            'kick_symmetry': summary.avg_kick_symmetry,
+        }
+        render_swim_metrics_component(metrics_for_viz, height=440)
 
-            # Download button
+        # Display score cards in columns - ENHANCED
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            score_color = "#22c55e" if summary.avg_score >= 70 else "#eab308" if summary.avg_score >= 50 else "#ef4444"
+            score_status = "Excellent" if summary.avg_score >= 80 else "Good" if summary.avg_score >= 70 else "Fair" if summary.avg_score >= 50 else "Needs Work"
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, rgba(6,182,212,0.2) 0%, rgba(37,99,235,0.2) 100%); border: 2px solid {score_color}; border-radius: 16px; padding: 20px; text-align: center;">
+                <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">OVERALL SCORE</h4>
+                <div style="font-size: 48px; font-weight: bold; color: {score_color};">{summary.avg_score:.1f}</div>
+                <div style="font-size: 12px; color: {score_color}; font-weight: 600;">{score_status}</div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: 70+ (Good) | 80+ (Excellent)</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col2:
+            align_color = "#22c55e" if summary.avg_vertical_drop <= 8 else "#eab308" if summary.avg_vertical_drop <= 15 else "#ef4444"
+            align_status = "Streamlined" if summary.avg_vertical_drop <= 5 else "Good" if summary.avg_vertical_drop <= 8 else "Hip Drop" if summary.avg_vertical_drop <= 15 else "Sinking"
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, rgba(5,150,105,0.2) 0%, rgba(16,185,129,0.2) 100%); border: 2px solid {align_color}; border-radius: 16px; padding: 20px; text-align: center;">
+                <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">BODY ALIGNMENT</h4>
+                <div style="font-size: 48px; font-weight: bold; color: {align_color};">{summary.avg_vertical_drop:.1f}°</div>
+                <div style="font-size: 12px; color: {align_color}; font-weight: 600;">{align_status}</div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: &lt;8° • OK: &lt;15°</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col3:
+            evf_color = "#22c55e" if summary.dropped_elbow_pct <= 10 else "#eab308" if summary.dropped_elbow_pct <= 30 else "#ef4444"
+            evf_status = "High Elbow" if summary.dropped_elbow_pct <= 10 else "Some Drop" if summary.dropped_elbow_pct <= 30 else "Dropped Elbow"
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, rgba(124,58,237,0.2) 0%, rgba(168,85,247,0.2) 100%); border: 2px solid {evf_color}; border-radius: 16px; padding: 20px; text-align: center;">
+                <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">EVF (CATCH)</h4>
+                <div style="font-size: 48px; font-weight: bold; color: {evf_color};">{summary.dropped_elbow_pct:.0f}%</div>
+                <div style="font-size: 12px; color: {evf_color}; font-weight: 600;">{evf_status}</div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: &lt;10% drop</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with col4:
+            glide_color = "#22c55e" if summary.glide_ratio > 25 else "#eab308" if summary.glide_ratio > 15 else "#ef4444"
+            glide_status = "Strong" if summary.glide_ratio > 25 else "OK" if summary.glide_ratio > 15 else "Improve"
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(34,197,94,0.2) 100%); border: 2px solid {glide_color}; border-radius: 16px; padding: 20px; text-align: center;">
+                <h4 style="color: #94a3b8; margin: 0 0 8px 0; font-size: 14px;">GLIDE RATIO</h4>
+                <div style="font-size: 48px; font-weight: bold; color: {glide_color};">{summary.glide_ratio:.0f}%</div>
+                <div style="font-size: 12px; color: {glide_color}; font-weight: 600;">{glide_status}</div>
+                <div style="font-size: 11px; color: #64748b; margin-top: 8px;">🎯 Ideal: 20-35% for efficiency</div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+        # Metrics row
+        cols = st.columns(5)
+        cols[0].metric("Stroke Rate", f"{summary.stroke_rate:.1f} spm")
+        cols[1].metric("Breaths/min", f"{summary.breaths_per_min:.1f}")
+        cols[2].metric("Avg Body Roll", f"{summary.avg_body_roll:.1f}°")
+        cols[3].metric("Kick Status", summary.kick_status)
+        cols[4].metric("Breaths in Pull", f"{summary.breaths_during_pull}", 
+                      delta="Good" if summary.breaths_during_pull == 0 else "Reduce",
+                      delta_color="normal" if summary.breaths_during_pull == 0 else "inverse")
+
+        # Diagnostics section
+        st.subheader("🎯 Coaching Insights")
+        for diag in summary.diagnostics:
+            if diag.startswith("✅"):
+                st.success(diag)
+            elif diag.startswith("🚨") or diag.startswith("⚠️"):
+                st.error(diag)
+            else:
+                st.warning(diag)
+
+        # Best/Worst frames
+        st.subheader("📸 Key Frames")
+        col1, col2 = st.columns(2)
+        with col1:
+            if summary.best_frame_bytes:
+                st.image(summary.best_frame_bytes, caption="Best Pull Frame")
+            else:
+                st.info("No best frame captured")
+        with col2:
+            if summary.worst_frame_bytes:
+                st.image(summary.worst_frame_bytes, caption="Worst Pull Frame")
+            else:
+                st.info("No worst frame captured")
+
+        # Video player - use st.video for cross-platform compatibility
+        st.subheader("🎬 Annotated Video")
+        if video_bytes:
+            # st.video works better across platforms
+            st.video(video_bytes, format="video/mp4")
+            
+            # Also provide download link for the video separately
             st.download_button(
-                "📦 Download Full Results (ZIP)",
-                zip_buf,
-                f"swim_analysis_{timestamp}.zip",
-                "application/zip"
+                "⬇️ Download Annotated Video",
+                video_bytes,
+                f"annotated_swim_{timestamp}.mp4",
+                "video/mp4"
             )
 
-        except Exception as e:
-            st.error(f"Error during processing: {str(e)}")
-            import traceback
-            st.code(traceback.format_exc())
+        # Download button
+        st.download_button(
+            "📦 Download Full Results (ZIP)",
+            zip_buf,
+            f"swim_analysis_{timestamp}.zip",
+            "application/zip"
+        )
+
+    except Exception as e:
+        st.error(f"Error during processing: {str(e)}")
+        import traceback
+        st.code(traceback.format_exc())
 
 if __name__ == "__main__":
     main()
