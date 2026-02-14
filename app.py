@@ -396,10 +396,6 @@ def show_landing_page():
             </div>
             """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-    # --- Camera Angles (Animated Skeletal SVGs) ---
-    st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 40px;">Optimized Recording Angles</h2>', unsafe_allow_html=True)
-    a_cols = st.columns(4)
-
     # Angle 1: Side Underwater
     with a_cols[0]:
         st.markdown("""
