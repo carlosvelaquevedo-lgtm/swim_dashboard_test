@@ -192,10 +192,11 @@ def show_landing_page():
     # --- 6. Final CTA / Pricing (Centered with Demo) ---
     st.markdown('<div style="margin-top: 100px;"></div>', unsafe_allow_html=True)
     
-    # Using columns to constrain the width and center the box
-    col1, col2, col3 = st.columns([1, 2, 1])
+    # This layout centers the action area on the page
+    col_left, col_mid, col_right = st.columns([1, 2, 1])
     
-    with col2:
+    with col_mid:
+        # The Pricing Box
         st.markdown("""
         <div class="cta-box">
             <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">GET STARTED</div>
@@ -204,16 +205,23 @@ def show_landing_page():
         </div>
         """, unsafe_allow_html=True)
         
-        # Payment Button
-        st.link_button("🏊 Analyze My Stroke Now — $4.99", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
+        # side-by-side Button Layout
+        btn_col1, btn_col2 = st.columns(2)
         
-        # Demo / Developer Button
-        if IS_DEV:
-            st.markdown('<div style="margin-top: 12px;"></div>', unsafe_allow_html=True)
-            if st.button("🧪 Try Developer Demo (Skip Payment)", use_container_width=True):
-                st.session_state.paid = True
-                st.balloons()
-                st.rerun()
+        with btn_col1:
+            # Primary Action
+            st.link_button("🏊 Analyze Now", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
+        
+        with btn_col2:
+            # Demo Action (visible if IS_DEV is True)
+            if IS_DEV:
+                if st.button("🧪 Try Demo", use_container_width=True):
+                    st.session_state.paid = True
+                    st.balloons()
+                    st.rerun()
+            else:
+                # If not in dev mode, you could put a "Contact" or "Sample Report" button here
+                st.button("📄 View Sample", use_container_width=True)
     # --- Camera Angles (Animated Skeletal SVGs) ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 40px;">Optimized Recording Angles</h2>', unsafe_allow_html=True)
     a_cols = st.columns(4)
