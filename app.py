@@ -338,6 +338,22 @@ def show_landing_page():
     """
     
     components.html(html_code, height=400)
+    # Pricing Box
+    col1, col2, col3 = st.columns([1, 1.8, 1])
+    with col2:
+        st.markdown("""
+        <div class="cta-box">
+            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">INSTANT ANALYSIS</div>
+            <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ video</span></div>
+            <p style="color: #94a3b8; margin: 15px 0 30px;">Full PDF Report • Side-by-Side Playback • Drill Cards</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.link_button("🏊 Get My Biomechanics Report →", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
+        if IS_DEV:
+            if st.button("Developer: Skip to Dashboard", use_container_width=True):
+                st.session_state.paid = True
+                st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 50px;">The Analysis Engine</h2>', unsafe_allow_html=True)
     
@@ -361,23 +377,7 @@ def show_landing_page():
             </div>
             <div style="height: 25px;"></div>
             """, unsafe_allow_html=True)
-    # --- 6. Final CTA / Pricing (Centered with Demo) ---
-    # Pricing Box
-    col1, col2, col3 = st.columns([1, 1.8, 1])
-    with col2:
-        st.markdown("""
-        <div class="cta-box">
-            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">INSTANT ANALYSIS</div>
-            <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ video</span></div>
-            <p style="color: #94a3b8; margin: 15px 0 30px;">Full PDF Report • Side-by-Side Playback • Drill Cards</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.link_button("🏊 Get My Biomechanics Report →", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
-        if IS_DEV:
-            if st.button("Developer: Skip to Dashboard", use_container_width=True):
-                st.session_state.paid = True
-                st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+
     # --- Camera Angles (Animated Skeletal SVGs) ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 40px;">Optimized Recording Angles</h2>', unsafe_allow_html=True)
     a_cols = st.columns(4)
