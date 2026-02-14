@@ -109,7 +109,7 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 2. Hero Section (Centered + Loom Placeholder) ---
+    # --- 2. Hero Section + Loom Placeholder ---
     st.markdown(f"""
     <div style="padding: 60px 0 10px; text-align: center; display: flex; flex-direction: column; align-items: center;">
         <div class="hero-badge">⚡ Video analysis powered by Pose-Estimation AI</div>
@@ -140,9 +140,9 @@ def show_landing_page():
     st.markdown('<h2 style="text-align: center; font-size: 2.2rem; margin-bottom: 50px;">The 90-Second Process</h2>', unsafe_allow_html=True)
     s_cols = st.columns(3)
     steps = [
-        ("01", "Activate", "Complete the secure $4.99 payment to unlock your processing tunnel."),
-        ("02", "Drop", "Upload a 10-30s raw video clip. Our AI handles the tracking automatically."),
-        ("03", "Review", "Receive a data-rich PDF report and synchronized video analysis instantly.")
+        ("01", "Activate", "Complete the secure $4.99 payment to unlock your specialized processing tunnel."),
+        ("02", "Drop", "Upload a 10-30s raw video clip from your phone. Our AI handles the rest."),
+        ("03", "Review", "Get your data-rich PDF report including prioritized fixes and drill cards.")
     ]
     
     for i, (num, title, desc) in enumerate(steps):
@@ -156,60 +156,6 @@ def show_landing_page():
                 <p style="color: #64748b; font-size: 0.95rem; line-height: 1.5;">{desc}</p>
             </div>
             """, unsafe_allow_html=True)
-
-    # --- 4. Feature Grid ---
-    st.markdown('<h2 style="text-align: center; font-size: 2.2rem; margin: 100px 0 50px;">Deep-Dive Analytics</h2>', unsafe_allow_html=True)
-    f_cols = st.columns(3)
-    features = [
-        ("📊", "Anatomical Tracking", "We track 15+ points including wrist, elbow, and hip for exact angles."),
-        ("🎯", "Prioritized Fixes", "Don't get overwhelmed. We highlight the top 3 changes that drop the most time."),
-        ("🩹", "Drill Library", "Personalized PDF including video-guided drills for your specific leaks."),
-        ("🎥", "Pro-Sync Overlay", "View your stroke side-by-side with Olympic reference footage."),
-        ("📈", "Progress History", "Track your technical improvement across multiple sessions."),
-        ("⚡", "Cloud GPU Speed", "Analysis that used to take days now takes less than two minutes.")
-    ]
-    
-    for i, (icon, title, desc) in enumerate(features):
-        with f_cols[i % 3]:
-            st.markdown(f"""
-            <div class="f-card">
-                <div style="font-size: 2rem; margin-bottom: 15px;">{icon}</div>
-                <h3 style="color: #22d3ee; margin-bottom: 10px; font-size: 1.2rem;">{title}</h3>
-                <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">{desc}</p>
-            </div>
-            <div style="height: 25px;"></div>
-            """, unsafe_allow_html=True)
-
-    # --- 5. Final CTA / Pricing ---
-    st.markdown('<div style="margin-top: 80px;"></div>', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1, 1.8, 1])
-    with col2:
-        st.markdown("""
-        <div class="cta-box">
-            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">GET STARTED</div>
-            <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ report</span></div>
-            <p style="color: #94a3b8; margin: 15px 0 30px;">No subscription. Pay only when you want an analysis.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.link_button("🏊 Analyze My Stroke Now — $4.99", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
-
-    # Pricing Box
-    col1, col2, col3 = st.columns([1, 1.8, 1])
-    with col2:
-        st.markdown("""
-        <div class="cta-box">
-            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 10px; letter-spacing: 1px;">INSTANT ANALYSIS</div>
-            <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ video</span></div>
-            <p style="color: #94a3b8; margin: 15px 0 30px;">Full PDF Report • Side-by-Side Playback • Drill Cards</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.link_button("🏊 Get My Biomechanics Report →", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
-        if IS_DEV:
-            if st.button("Developer: Skip to Dashboard", use_container_width=True):
-                st.session_state.paid = True
-                st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 50px;">The Analysis Engine</h2>', unsafe_allow_html=True)
     
