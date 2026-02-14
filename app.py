@@ -292,7 +292,7 @@ def show_landing_page():
         if(player) player.pauseVideo();
     });
     </script>
-    """, height=600)
+    """, height=400)
 
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 50px;">The Analysis Engine</h2>', unsafe_allow_html=True)
