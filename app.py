@@ -110,6 +110,7 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
     # --- 3. How It Works (The 3 Steps) ---
+    # --- 3. How It Works (Ensure unsafe_allow_html=True is at the very end) ---
     st.markdown("""
     <style>
     /* ================= STRIPE PROCESS SECTION ================= */
@@ -125,7 +126,7 @@ def show_landing_page():
         font-size: 2.8rem;
         font-weight: 700;
         margin-bottom: 60px;
-        color: white;
+        color: white !important;
     }
     
     .process-grid {
@@ -144,7 +145,6 @@ def show_landing_page():
         width: 280px;
         border: 1px solid rgba(34,211,238,0.15);
         box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-        position: relative;
         transition: all 0.4s ease;
         text-align: center;
     }
@@ -188,17 +188,10 @@ def show_landing_page():
         color: rgba(34,211,238,0.4);
         font-weight: bold;
     }
-
-    /* Mobile handling for arrows */
-    @media (max-width: 768px) {
-        .process-arrow { transform: rotate(90deg); margin: 10px 0; }
-        .process-grid { flex-direction: column; }
-    }
     </style>
     
     <div class="process-section">
         <div class="process-title">How it works</div>
-        
         <div class="process-grid">
             <div class="process-card">
                 <div class="process-number">1</div>
@@ -224,7 +217,6 @@ def show_landing_page():
         </div>
     </div>
     """, unsafe_allow_html=True)
-
     # --- 2. Hero Section + Loom Placeholder ---
     components.html("""
     <style>
