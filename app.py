@@ -139,7 +139,9 @@ def show_landing_page():
     # --- 2. Hero Section + Loom Placeholder ---
     st.markdown(f"""
     <div style="padding: 60px 0 10px; text-align: center; display: flex; flex-direction: column; align-items: center;">
-        <div class="hero-badge">⚡ Video analysis powered by Pose-Estimation AI</div>
+        <div style="font-size: 2.4rem; font-weight: 800; color: #06b6d4; margin-bottom: 40px; letter-spacing: 0.5px;">
+            ⚡ Video analysis powered by Pose-Estimation AI
+        </div>
         
         <h1 style="font-size: 4.2rem; font-weight: 800; line-height: 1.1; margin: 25px 0; color: white;">
             Find the <span style="background: linear-gradient(90deg, #22d3ee, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">one fix</span><br>
@@ -150,21 +152,20 @@ def show_landing_page():
             Upload your swim video. Get a full biomechanics report in 90 seconds. 
             We pinpoint the technical leaks that coaches miss.
         </p>
-
+    
         <div style="width: 100%; max-width: 800px; border-radius: 24px; overflow: hidden; border: 1px solid rgba(6, 182, 212, 0.3); background: rgba(0,0,0,0.2); box-shadow: 0 20px 50px rgba(0,0,0,0.5); margin-bottom: 80px;">
             <div style="position: relative; padding-bottom: 56.25%; height: 0;">
-                <iframe src="https://pixabay.com/videos/swimming-pool-swimmers-swimming-78059/" 
-                        frameborder="0" 
-                        webkitallowfullscreen mozallowfullscreen allowfullscreen 
-                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+                <iframe 
+                    src="https://www.youtube.com/embed/5HLW2AI1Ink?autoplay=1&mute=1&loop=1&playlist=5HLW2AI1Ink" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen 
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
                 </iframe>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
-
-
-
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 50px;">The Analysis Engine</h2>', unsafe_allow_html=True)
     
