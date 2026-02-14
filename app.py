@@ -99,7 +99,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def show_landing_page():
-def show_landing_page():
     # --- 1. Navigation (Centered) ---
     st.markdown("""
     <div style="padding: 20px 0; display: flex; justify-content: center; align-items: center;">
