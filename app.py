@@ -164,31 +164,30 @@ def show_landing_page():
     """, unsafe_allow_html=True)
 
     # --- 2. Hero Section + Loom Placeholder ---
-    # --- 1. FUNCTION TO CONVERT VIDEO TO TEXT (BASE64) ---
+    
+    # --- 1. VIDEO CONVERSION ---
     def get_video_base64(video_path):
         if not os.path.exists(video_path):
             return None
         with open(video_path, "rb") as f:
             data = f.read()
         return base64.b64encode(data).decode()
-
-    # Load the video
+    
     video_file_name = "hero_demo.mp4" 
     video_b64 = get_video_base64(video_file_name)
     
-    # Handle case where file is missing
     if not video_b64:
-        st.error(f"⚠️ Video file '{video_file_name}' not found. Please ensure it is in the main directory.")
+        st.error(f"⚠️ Video file '{video_file_name}' not found.")
         st.stop()
     
-    # --- 2. THE UPDATED HTML/CSS ---
+    # --- 2. HUD HTML & CSS ---
+    # Using specific colors: #ff4757 for FIX, #10b981 for GOOD/OK
     html_code = f"""
     <!DOCTYPE html>
     <html>
     <head>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
-    
         body {{ margin: 0; background: transparent; overflow: hidden; }}
     
         .container {{
@@ -196,140 +195,78 @@ def show_landing_page():
             width: 100%;
             max-width: 1000px;
             margin: 0 auto;
-            border-radius: 20px;
+            border-radius: 24px;
             overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
             border: 1px solid rgba(34, 211, 238, 0.3);
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
         }}
     
-        /* VIDEO LAYER */
-        video {{
-            width: 100%;
-            display: block;
-            object-fit: cover;
-        }}
+        video {{ width: 100%; display: block; object-fit: cover; }}
     
-        /* SCANNER LINE */
-        .scan-bar {{
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%;
-            height: 4px;
-            background: #22d3ee;
-            box-shadow: 0 0 20px #22d3ee, 0 0 10px #22d3ee;
-            animation: scan 3s linear infinite;
-            opacity: 0.7;
-            z-index: 2;
-        }}
-    
-        @keyframes scan {{
-            0% {{ top: 0%; opacity: 0; }}
-            10% {{ opacity: 1; }}
-            90% {{ opacity: 1; }}
-            100% {{ top: 100%; opacity: 0; }}
-        }}
-    
-        /* HUD OVERLAY CONTAINER */
+        /* HUD ELEMENTS */
         .hud-layer {{
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 3;
-            pointer-events: none; /* Let clicks pass through */
+            z-index: 10;
+            pointer-events: none;
+            font-family: 'Space Mono', monospace;
         }}
     
-        /* --- METRIC CARD STYLE --- */
         .metric-node {{
             position: absolute;
             display: flex;
             align-items: center;
-            font-family: 'Space Mono', monospace;
-            color: #fff;
+            transition: all 0.3s ease;
         }}
     
-        /* The "Target" Circle */
         .target-circle {{
-            width: 24px;
-            height: 24px;
+            width: 20px; height: 20px;
             border: 2px solid #22d3ee;
             border-radius: 50%;
-            position: relative;
-            box-shadow: 0 0 10px rgba(34, 211, 238, 0.6);
             background: rgba(34, 211, 238, 0.1);
-        }}
-        .target-circle::after {{
-            content: '';
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 4px; height: 4px;
-            background: #fff;
-            transform: translate(-50%, -50%);
-            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
         }}
     
-        /* The Connecting Line */
         .connect-line {{
-            height: 1px;
-            width: 40px;
+            height: 1px; width: 30px;
             background: #22d3ee;
-            margin: 0 8px;
-            box-shadow: 0 0 5px #22d3ee;
-            opacity: 0.8;
+            opacity: 0.6;
         }}
     
-        /* The Data Box */
         .data-box {{
-            background: rgba(10, 22, 40, 0.85);
+            background: rgba(10, 22, 40, 0.9);
             backdrop-filter: blur(8px);
-            border: 1px solid rgba(34, 211, 238, 0.3);
-            border-left: 3px solid #22d3ee;
-            padding: 8px 12px;
-            border-radius: 4px;
-            transform: translateY(0);
+            border: 1px solid rgba(34, 211, 238, 0.2);
+            padding: 10px 14px;
+            border-radius: 8px;
+            min-width: 160px;
             animation: float 4s ease-in-out infinite;
         }}
     
-        .label {{
-            font-size: 10px;
-            color: #94a3b8;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }}
-    
-        .value {{
-            font-size: 18px;
-            font-weight: 700;
-            color: #22d3ee;
-            text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
-        }}
-    
-        /* --- POSITIONS --- */
+        .label {{ font-size: 9px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }}
+        .value-row {{ display: flex; justify-content: space-between; align-items: baseline; }}
+        .main-val {{ font-size: 18px; font-weight: 700; color: #fff; }}
         
-        /* Elbow (Top Left area) */
-        .node-1 {{
-            top: 25%;
-            left: 20%;
+        /* Status Tags */
+        .status-tag {{
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            margin-left: 8px;
         }}
+        .fix {{ background: rgba(255, 71, 87, 0.2); color: #ff4757; border: 1px solid #ff4757; }}
+        .ok {{ background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }}
     
-        /* Hips (Center/Low area) */
-        .node-2 {{
-            top: 60%;
-            left: 55%;
-            flex-direction: row-reverse; /* Flip text to left of target */
-        }}
+        .ideal {{ font-size: 9px; color: #64748b; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px; }}
     
-        /* Stroke Rate (Top Right) */
-        .node-3 {{
-            top: 15%;
-            right: 15%;
-            flex-direction: row-reverse;
-        }}
+        @keyframes float {{ 0%, 100% {{ transform: translateY(0px); }} 50% {{ transform: translateY(-5px); }} }}
     
-        @keyframes float {{
-            0%, 100% {{ transform: translateY(0px); }}
-            50% {{ transform: translateY(-5px); }}
-        }}
-    
+        /* POSITIONS */
+        .pos-glide {{ top: 15%; left: 10%; }}
+        .pos-roll  {{ top: 15%; right: 10%; flex-direction: row-reverse; }}
+        .pos-evf   {{ bottom: 20%; left: 15%; }}
+        .pos-kick  {{ bottom: 15%; right: 15%; flex-direction: row-reverse; }}
     </style>
     </head>
     <body>
@@ -339,34 +276,57 @@ def show_landing_page():
             <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
         </video>
     
-        <div class="scan-bar"></div>
-    
         <div class="hud-layer">
             
-            <div class="metric-node node-1">
+            <div class="metric-node pos-glide">
                 <div class="target-circle"></div>
                 <div class="connect-line"></div>
                 <div class="data-box">
-                    <div class="label">Elbow Angle</div>
-                    <div class="value">118°</div>
+                    <div class="label">Glide Ratio</div>
+                    <div class="value-row">
+                        <span class="main-val">1%</span>
+                        <span class="status-tag fix">FIX</span>
+                    </div>
+                    <div class="ideal">Ideal: 20-35%</div>
                 </div>
             </div>
     
-            <div class="metric-node node-2">
+            <div class="metric-node pos-roll">
                 <div class="target-circle"></div>
                 <div class="connect-line"></div>
-                <div class="data-box">
-                    <div class="label">Hip Rotation</div>
-                    <div class="value">42°</div>
+                <div class="data-box" style="border-left: none; border-right: 3px solid #10b981;">
+                    <div class="label">Body Roll</div>
+                    <div class="value-row">
+                        <span class="main-val">65°</span>
+                        <span class="status-tag ok">OK</span>
+                    </div>
+                    <div class="ideal">Ideal: 35-55%</div>
                 </div>
             </div>
     
-            <div class="metric-node node-3">
+            <div class="metric-node pos-evf">
+                <div class="target-circle"></div>
+                <div class="connect-line"></div>
+                <div class="data-box" style="border-left: 3px solid #ff4757;">
+                    <div class="label">Early Vertical Forearm</div>
+                    <div class="value-row">
+                        <span class="main-val">43°</span>
+                        <span class="status-tag fix">FIX</span>
+                    </div>
+                    <div class="ideal">Ideal: 0-25°</div>
+                </div>
+            </div>
+    
+            <div class="metric-node pos-kick">
                 <div class="target-circle"></div>
                 <div class="connect-line"></div>
                 <div class="data-box">
-                    <div class="label">Velocity</div>
-                    <div class="value">1.4 m/s</div>
+                    <div class="label">Kick Depth</div>
+                    <div class="value-row">
+                        <span class="main-val">0.33m</span>
+                        <span class="status-tag ok">GOOD</span>
+                    </div>
+                    <div class="ideal">Target: < 0.40m</div>
                 </div>
             </div>
     
@@ -377,7 +337,6 @@ def show_landing_page():
     </html>
     """
     
-    # Render
     components.html(html_code, height=400)
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 50px;">The Analysis Engine</h2>', unsafe_allow_html=True)
