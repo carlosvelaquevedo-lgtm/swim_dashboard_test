@@ -8,10 +8,49 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# ─────────────────────────────────────────────
+# Force HIDE menu on landing page only
+# ─────────────────────────────────────────────
+
+st.markdown("""
+<style>
+    /* Hide toolbar / three-dot / hamburger on landing page */
+    [data-testid="stToolbar"] {
+        display: none !important;
+    }
+    
+    button[kind="menu"] {
+        display: none !important;
+    }
+    
+    /* Extra cleanup for legacy classes */
+    .st-emotion-cache-1cpxqw2 {
+        display: none !important;
+    }
+</style>
+
+<script>
+    // Immediate cleanup in case Streamlit renders late
+    document.addEventListener('DOMContentLoaded', () => {
+        const els = [
+            document.querySelector('[data-testid="stToolbar"]'),
+            document.querySelector('button[kind="menu"]'),
+            ...document.querySelectorAll('.st-emotion-cache-1cpxqw2')
+        ];
+        els.forEach(el => { if (el) el.style.display = 'none'; });
+    });
+    
+    // Also run right now
+    setTimeout(() => {
+        const toolbar = document.querySelector('[data-testid="stToolbar"]');
+        if (toolbar) toolbar.style.display = 'none';
+    }, 100);
+</script>
+""", unsafe_allow_html=True)
+
 # Hide Streamlit default chrome
 st.markdown("""
 <style>
-    #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
     .block-container {
