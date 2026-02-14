@@ -3191,7 +3191,6 @@ def main():
             processing_status.text("✅ Analysis complete!")
     
             st.markdown("### 🎥 Finalizing Video")
-            st.markdown("### 🎥 Finalizing Video")
             encoding_status = st.empty()
             encoding_status.text("✅ Video saved as native MP4 (ready for playback)")
     
