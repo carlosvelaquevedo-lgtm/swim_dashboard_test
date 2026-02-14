@@ -4,7 +4,7 @@ import streamlit.components.v1 as components
 st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
-    layout="wide",  # Centered to prevent expansion
+    layout="centered",  # Centered to prevent expansion
     initial_sidebar_state="expanded",
 )
 
