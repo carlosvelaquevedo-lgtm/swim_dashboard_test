@@ -75,7 +75,6 @@ IS_DEV = True
 if "paid" not in st.session_state:
     st.session_state.paid = False
 
-
 def show_landing_page():
     # No extra container needed unless you want max-width centering
 
@@ -130,10 +129,6 @@ def show_landing_page():
 
     # ... add Demo, Video Section, How It Works, Testimonial, Final CTA, Footer here ...
     # (copy them from your previous working version)
-
-    st.info("← Add the rest of your sections here (demo video, video cards, how it works, etc.)")
-
-
 
     # Demo Section
     st.markdown('<h2 class="section-title">See it in action</h2>', unsafe_allow_html=True)
