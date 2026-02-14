@@ -79,6 +79,10 @@ CUSTOM_CSS = """
     .phase-push { background: #f59e0b; color: black; }
     .phase-recovery { background: #6b7280; color: white; }
      #MainMenu {visibility: visible !important;}
+     .main .block-container {
+    padding: 2rem 3rem !important;
+    max-width: none !important;
+    }
 </style>
 """
 
