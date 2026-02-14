@@ -164,22 +164,23 @@ def show_landing_page():
     # --- 2. Hero Section + Loom Placeholder ---
     components.html("""
     <style>
-    body { margin:0; background:transparent; }
+    body { margin:0; background:transparent; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
     
     /* WRAPPER */
     .hero-wrapper {
         position: relative;
-        max-width: 1000px;
-        margin: 0 auto 120px auto;
+        max-width: 1100px;
+        margin: 0 auto 100px auto;
     }
     
-    /* GLOW */
+    /* GLOW BACKGROUND */
     .hero-glow {
         position: absolute;
-        inset: -40px;
+        inset: -60px;
         background: radial-gradient(circle at center, rgba(6,182,212,0.35), transparent 60%);
-        filter: blur(80px);
+        filter: blur(100px);
         animation: glowPulse 6s ease-in-out infinite;
+        z-index: 0;
     }
     
     @keyframes glowPulse {
@@ -187,30 +188,32 @@ def show_landing_page():
         50% { opacity: 1; }
     }
     
-    /* VIDEO CARD */
+    /* VIDEO CONTAINER */
     .hero-video {
         position: relative;
-        border-radius: 32px;
+        border-radius: 28px;
         overflow: hidden;
         border: 1px solid rgba(6,182,212,0.25);
         box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+        z-index: 1;
     }
     
-    /* 16:9 */
+    /* 16:9 ASPECT RATIO */
     .video-inner {
         position: relative;
         padding-bottom: 56.25%;
         height: 0;
     }
     
-    .video-inner iframe {
+    .video-inner video {
         position: absolute;
         inset: 0;
         width: 100%;
         height: 100%;
+        object-fit: cover;
     }
     
-    /* SCAN LINE */
+    /* SCAN LINE EFFECT */
     .scan-line {
         position: absolute;
         left: 0;
@@ -218,6 +221,7 @@ def show_landing_page():
         height: 2px;
         background: linear-gradient(90deg, transparent, #22d3ee, transparent);
         animation: scanMove 3s linear infinite;
+        z-index: 2;
     }
     
     @keyframes scanMove {
@@ -225,24 +229,43 @@ def show_landing_page():
         100% { top: 100%; }
     }
     
-    /* METRICS */
-    .metric {
+    /* OVERLAY METRIC CARDS */
+    .overlay-card {
         position: absolute;
-        background: rgba(15,40,71,0.85);
+        background: rgba(15,40,71,0.88);
         border: 1px solid rgba(34,211,238,0.4);
-        padding: 10px 16px;
-        border-radius: 14px;
+        padding: 14px 18px;
+        border-radius: 16px;
         font-size: 13px;
-        backdrop-filter: blur(10px);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+        animation: float 4s ease-in-out infinite;
+        z-index: 3;
     }
     
-    .metric span {
-        color: #22d3ee;
+    .overlay-card h4 {
+        margin: 0 0 6px 0;
+        font-size: 12px;
+        letter-spacing: 1px;
+        opacity: 0.8;
+        color: #9bdfff;
+    }
+    
+    .overlay-card span {
+        font-size: 22px;
         font-weight: 700;
+        color: #22d3ee;
     }
     
-    .metric-1 { top: 20px; left: 20px; }
-    .metric-2 { bottom: 20px; right: 20px; }
+    /* CARD POSITIONS */
+    .card-1 { top: 20px; left: 20px; }
+    .card-2 { bottom: 25px; right: 25px; }
+    .card-3 { top: 50%; left: 15px; transform: translateY(-50%); }
+    
+    @keyframes float {
+        0%,100% { transform: translateY(0px); }
+        50% { transform: translateY(-6px); }
+    }
     
     </style>
     
@@ -251,49 +274,34 @@ def show_landing_page():
     
         <div class="hero-video">
             <div class="video-inner">
-                <iframe 
-                    id="ytplayer"
-                    src="https://www.youtube.com/embed/5HLW2AI1Ink?enablejsapi=1&mute=1&controls=0&rel=0"
-                    frameborder="0"
-                    allow="autoplay; encrypted-media">
-                </iframe>
+    
+                <!-- LOCAL VIDEO (RECOMMENDED) -->
+                <video autoplay muted loop playsinline>
+                    <source src="hero_demo.mp4" type="video/mp4">
+                </video>
     
                 <div class="scan-line"></div>
     
-                <div class="metric metric-1">
-                    Elbow Angle<br><span>118°</span>
+                <!-- ANALYSIS OVERLAYS -->
+                <div class="overlay-card card-1">
+                    <h4>ELBOW ANGLE</h4>
+                    <span>118°</span>
                 </div>
     
-                <div class="metric metric-2">
-                    Stroke Rate<br><span>32 spm</span>
+                <div class="overlay-card card-2">
+                    <h4>STROKE RATE</h4>
+                    <span>32 spm</span>
+                </div>
+    
+                <div class="overlay-card card-3">
+                    <h4>HIP DROP</h4>
+                    <span>9.3°</span>
                 </div>
     
             </div>
         </div>
     </div>
-    
-    <script>
-    var iframe = document.getElementById("ytplayer");
-    var player;
-    
-    function onYouTubeIframeAPIReady() {
-        player = new YT.Player('ytplayer');
-    }
-    
-    var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    document.body.appendChild(tag);
-    
-    document.querySelector('.hero-video').addEventListener('mouseenter', function() {
-        if(player) player.playVideo();
-    });
-    
-    document.querySelector('.hero-video').addEventListener('mouseleave', function() {
-        if(player) player.pauseVideo();
-    });
-    </script>
     """, height=400)
-
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 80px 0 50px;">The Analysis Engine</h2>', unsafe_allow_html=True)
     
