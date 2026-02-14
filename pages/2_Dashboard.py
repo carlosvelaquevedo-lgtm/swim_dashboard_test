@@ -3137,19 +3137,12 @@ def main():
         # Users can only access this dashboard if they've completed payment
 
     if uploaded and video_type:
-        # Use the user-selected video type (mandatory override)
         manual_camera_view = selected_camera
         manual_water_position = selected_water
         
-        try:
-            analyzer = SwimAnalyzer(
-                athlete, conf_thresh, yaw_thresh,
-                manual_camera_view=manual_camera_view,
-                manual_water_position=manual_water_position
-            )
-        except Exception as e:
-            st.error(f"Failed to initialize analyzer: {e}")
-            return
+        analyzer = SwimAnalyzer(athlete, conf_thresh, yaw_thresh,
+                                manual_camera_view=manual_camera_view,
+                                manual_water_position=manual_water_position)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_in:
             tmp_in.write(uploaded.getvalue())
@@ -3164,10 +3157,9 @@ def main():
         # Write to temporary file with OpenCV
         # ────── DIRECT MP4 WRITING (THE FIX) ──────
         out_path = tempfile.mktemp(suffix=".mp4")
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')          # Most reliable for browsers
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')          # Native MP4 - works everywhere
         writer = cv2.VideoWriter(out_path, fourcc, fps, (w, h))
 
-        # Progress
         st.markdown("### ⏳ Processing Video")
         processing_progress = st.progress(0)
         processing_status = st.empty()
@@ -3193,16 +3185,16 @@ def main():
 
         processing_status.text("✅ Analysis complete!")
 
-        # ────── ENCODING STATUS (no heavy re-encode) ──────
+        # ────── NO RE-ENCODING NEEDED ──────
         st.markdown("### 🎥 Finalizing Video")
         encoding_status = st.empty()
         encoding_status.text("✅ Video saved as native MP4 (ready for playback)")
 
-        # Read final video bytes
+        # Read bytes
         with open(out_path, 'rb') as f:
             video_bytes = f.read()
 
-        # Clean up
+        # Cleanup
         try:
             os.unlink(input_path)
             os.unlink(out_path)
