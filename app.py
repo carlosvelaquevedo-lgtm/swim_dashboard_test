@@ -1,30 +1,27 @@
 import streamlit as st
 
-# ─────────────────────────────────────────────
+# =============================================
 # PAGE CONFIG
-# ─────────────────────────────────────────────
+# =============================================
 st.set_page_config(
     page_title="SwimForm AI",
     page_icon="🏊",
     layout="centered",
+    initial_sidebar_state="expanded",
 )
 
-# ─────────────────────────────────────────────
-# AGGRESSIVE BACKGROUND + MENU HIDE
-# ─────────────────────────────────────────────
+# =============================================
+# BACKGROUND + MENU HIDE (Aggressive & Simple)
+# =============================================
 st.markdown("""
 <style>
+    /* FULL BACKGROUND */
     .stApp, [data-testid="stAppViewContainer"], .main, .block-container {
         background: #0a1628 !important;
         background-image: linear-gradient(180deg, #0a1628 0%, #0f2847 30%, #0e3d6b 60%, #0f2847 100%) !important;
     }
-    
-    [data-testid="stAppViewContainer"],
-    .main,
-    .block-container {
-        background: transparent !important;
-    }
 
+    /* Background layers */
     .water-bg {
         position: fixed !important;
         inset: 0 !important;
@@ -46,15 +43,8 @@ st.markdown("""
         50% { opacity: 1; }
     }
 
-    .lane-lines {
-        position: fixed;
-        inset: 0;
-        z-index: -998;
-        opacity: 0.03;
-        background: repeating-linear-gradient(90deg, #22d3ee 0px, #22d3ee 4px, transparent 4px, transparent 150px);
-    }
-
-    /* Hide menu on landing */
+    /* HIDE MENU - Stronger selectors */
+    header button[aria-label="View more options"],
     [data-testid="stToolbar"],
     button[kind="menu"],
     .st-emotion-cache-1cpxqw2 {
@@ -63,21 +53,11 @@ st.markdown("""
 </style>
 
 <div class="water-bg"></div>
-<div class="lane-lines"></div>
 """, unsafe_allow_html=True)
 
-# ─────────────────────────────────────────────
+# =============================================
 # CONFIG
-# ─────────────────────────────────────────────
-try:
-    import stripe
-    stripe.api_key = st.secrets["stripe"]["secret_key"]
-    APP_BASE_URL = st.secrets["stripe"].get("base_url", "http://localhost:8501")
-    STRIPE_CONFIGURED = True
-except Exception:
-    APP_BASE_URL = "http://localhost:8501"
-    STRIPE_CONFIGURED = False
-
+# =============================================
 STRIPE_PAYMENT_LINK = "https://buy.stripe.com/test_8x2eVdaBSe7mf2JaIEao800"
 IS_DEV = True
 
@@ -86,40 +66,32 @@ if "paid" not in st.session_state:
 
 
 def show_landing_page():
-    container = st.container()
-    with container:
         # Header
         st.markdown("""
         <div style="padding: 20px 0; text-align: left;">
-            <a href="#" style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: #06b6d4; text-decoration: none;">
+            <a href="#" style="font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: #06b6d4;">
                 SwimForm AI
             </a>
         </div>
         """, unsafe_allow_html=True)
-
-        # Hero
-        st.markdown('<div style="padding: 60px 0 20px; text-align: center;">', unsafe_allow_html=True)
-        st.markdown('<div class="hero-badge">⚡ Video analysis powered by Claude AI</div>', unsafe_allow_html=True)
-        st.markdown('<h1>Find the <span class="highlight">one fix</span><br/>that makes you faster</h1>', unsafe_allow_html=True)
-        st.markdown('<p class="hero-subtitle">Upload your swim video. Get a biomechanics report in 90 seconds. Fix what coaches miss.</p>', unsafe_allow_html=True)
-
-        # CTA
-        st.markdown("""
-        <div class="cta-box">
-            <div class="price-tag">$4.99 <span class="price-period">per analysis</span></div>
-            <p class="price-note">One video • Full PDF report • Annotated playback</p>
-        """, unsafe_allow_html=True)
-
-        if st.button("🏊 Get Instant Analysis → $4.99", key="cta1", use_container_width=True):
+    
+        # Hero + CTA
+        st.markdown('<div style="padding: 80px 0 40px; text-align: center;">', unsafe_allow_html=True)
+        st.markdown('<div style="background: rgba(6,182,212,0.15); border: 1px solid #06b6d4; border-radius: 50px; padding: 8px 20px; display: inline-block; margin-bottom: 20px;">⚡ Video analysis powered by Claude AI</div>', unsafe_allow_html=True)
+        st.markdown('<h1 style="font-size: 3.2rem; line-height: 1.1;">Find the <span style="background: linear-gradient(90deg, #06b6d4, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">one fix</span><br>that makes you faster</h1>', unsafe_allow_html=True)
+        st.markdown('<p style="font-size: 1.3rem; color: #a5b4fc; max-width: 700px; margin: 20px auto;">Upload your swim video. Get a biomechanics report in 90 seconds.</p>', unsafe_allow_html=True)
+    
+        # PAYMENT BUTTON
+        if st.button("🏊 Get Instant Analysis → $4.99", key="cta_main", use_container_width=True, type="primary"):
             st.markdown(f'<meta http-equiv="refresh" content="0;url={STRIPE_PAYMENT_LINK}">', unsafe_allow_html=True)
-
+    
         if IS_DEV:
-            if st.button("Skip Payment – Demo Mode (testing only)", key="demo1", use_container_width=True):
+            if st.button("Skip Payment – Demo Mode", key="demo_btn"):
                 st.session_state.paid = True
                 st.rerun()
-
+    
         st.markdown('</div>', unsafe_allow_html=True)
-
+    
         # Features Section
         st.markdown('<h2 class="section-title">What you get</h2>', unsafe_allow_html=True)
         cols = st.columns(3, gap="medium")
@@ -178,11 +150,9 @@ def show_landing_page():
 
         # Testimonial, Final CTA, Footer — add them here if you want
 
-# ─────────────────────────────────────────────
+# =============================================
 # MAIN ROUTER
-# ─────────────────────────────────────────────
-query_params = st.query_params
-
+# =============================================
 if st.session_state.paid:
     try:
         import importlib.util
@@ -195,15 +165,4 @@ if st.session_state.paid:
     except Exception as e:
         st.error(f"Error loading dashboard: {e}")
 else:
-    success = query_params.get("success", [None])[0] == "true"
-    demo = query_params.get("demo", [None])[0] == "true"
-    cancel = query_params.get("payment", [None])[0] == "cancel"
-
-    if success or demo:
-        st.session_state.paid = True
-        st.rerun()
-    elif cancel:
-        st.warning("Payment cancelled.")
-        st.query_params.clear()
-    else:
-        show_landing_page()
+    show_landing_page()
