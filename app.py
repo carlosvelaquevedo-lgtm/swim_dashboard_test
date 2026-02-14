@@ -112,57 +112,101 @@ def show_landing_page():
     # --- 3. How It Works (The 3 Steps) ---
     st.markdown("""
     <style>
+    /* ================= STRIPE PROCESS SECTION ================= */
     .process-section {
+        padding: 80px 0;
         text-align: center;
-        padding: 100px 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
     
     .process-title {
         font-size: 2.8rem;
         font-weight: 700;
         margin-bottom: 60px;
+        color: white;
     }
     
     .process-grid {
         display: flex;
         justify-content: center;
-        gap: 40px;
+        align-items: center;
+        gap: 20px;
         flex-wrap: wrap;
+        max-width: 1200px;
     }
     
     .process-card {
         background: linear-gradient(180deg, rgba(20,50,90,0.9), rgba(15,40,71,0.9));
         border-radius: 28px;
-        padding: 50px 40px;
-        width: 300px;
-        border: 1px solid rgba(34,211,238,0.2);
+        padding: 40px 30px;
+        width: 280px;
+        border: 1px solid rgba(34,211,238,0.15);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        position: relative;
+        transition: all 0.4s ease;
+        text-align: center;
+    }
+    
+    .process-card:hover {
+        transform: translateY(-8px);
+        border-color: rgba(34,211,238,0.5);
     }
     
     .process-number {
-        width: 60px;
-        height: 60px;
-        margin: 0 auto 25px;
+        width: 50px;
+        height: 50px;
+        margin: 0 auto 20px auto;
         border-radius: 50%;
         background: #22d3ee;
         color: #0a1628;
         font-weight: 800;
-        font-size: 1.3rem;
+        font-size: 1.2rem;
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 0 15px rgba(34,211,238,0.4);
+    }
+    
+    .process-card h3 {
+        color: #22d3ee !important;
+        margin-bottom: 15px;
+        font-size: 1.4rem;
+        font-weight: 700;
+    }
+    
+    .process-card p {
+        color: #94a3b8 !important;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    .process-arrow {
+        font-size: 2rem;
+        color: rgba(34,211,238,0.4);
+        font-weight: bold;
+    }
+
+    /* Mobile handling for arrows */
+    @media (max-width: 768px) {
+        .process-arrow { transform: rotate(90deg); margin: 10px 0; }
+        .process-grid { flex-direction: column; }
     }
     </style>
     
     <div class="process-section">
         <div class="process-title">How it works</div>
-    
+        
         <div class="process-grid">
-    
             <div class="process-card">
                 <div class="process-number">1</div>
                 <h3>Pay $4.99</h3>
-                <p>Secure checkout via Stripe. Instant access.</p>
+                <p>Secure checkout via Stripe. Instant access to analysis.</p>
             </div>
+    
+            <div class="process-arrow">→</div>
     
             <div class="process-card">
                 <div class="process-number">2</div>
@@ -170,12 +214,13 @@ def show_landing_page():
                 <p>10–15 sec clip. Side view underwater works best.</p>
             </div>
     
+            <div class="process-arrow">→</div>
+    
             <div class="process-card">
                 <div class="process-number">3</div>
                 <h3>Get Report</h3>
                 <p>AI analysis in 90 sec. Download PDF + annotated video.</p>
             </div>
-    
         </div>
     </div>
     """, unsafe_allow_html=True)
