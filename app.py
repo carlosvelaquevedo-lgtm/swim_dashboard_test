@@ -14,8 +14,10 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
-    .block-container {padding: 0 !important;}
-    .stContainer {max-width: 1100px; margin: 0 auto; padding: 0 24px;}  /* Container max-width like original */
+    .block-container {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
