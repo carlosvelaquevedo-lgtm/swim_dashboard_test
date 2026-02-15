@@ -356,12 +356,12 @@ def show_landing_page():
                 st.session_state.paid = True
                 st.rerun()
     # --- Feature Grid ---
-
+    # --- Feature Grid ---
     st.markdown(
         '<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px;">The Analysis Engine</h2>',
         unsafe_allow_html=True
     )
-    
+
     features = [
         ("📊", "7 Biometrics", "Stroke rate, DPS, entry angle, elbow drop, and body rotation measured frame-by-frame."),
         ("🎯", "Ranked Issues", "We rank your 1-3 biggest speed leaks so you know exactly what to fix first."),
@@ -370,55 +370,76 @@ def show_landing_page():
         ("📈", "Progress Charting", "Upload follow-up videos to track improvement across all metrics session-over-session."),
         ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
     ]
-    
+
     st.markdown("""
     <style>
+    /* Grid Container */
     .feature-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(3, 1fr); /* Strictly 3 columns */
+        gap: 20px; /* Gap between cards */
         width: 100%;
         margin: 0 auto;
     }
-    
+
+    /* Individual Card */
     .f-card {
-        min-height: 380px;
+        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 20px;
+        padding: 30px 20px;
+        text-align: center;
+        
+        /* Flexbox inside card to ensure equal height behavior */
         display: flex;
         flex-direction: column;
         align-items: center;
-        text-align: center;
-        padding: 28px 16px;
+        height: 100%; 
         box-sizing: border-box;
-        border-radius: 20px;
-    
-        background: rgba(15, 23, 42, 0.55);
-        border: 1px solid rgba(148, 163, 184, 0.18);
+        transition: all 0.3s ease;
     }
-    
-    .f-card p { flex-grow: 1; margin: 0; }
-    
-    @media (max-width: 960px) {
-        .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    /* Hover Effect */
+    .f-card:hover {
+        border-color: #22d3ee;
+        transform: translateY(-5px);
+        background: rgba(34, 211, 238, 0.05);
     }
-    
-    @media (max-width: 640px) {
+
+    /* Icon styling */
+    .f-icon {
+        font-size: 3.5rem;
+        margin-bottom: 20px;
+        height: 60px; /* Fixed height for icon area alignment */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Typography */
+    .f-card h3 { color: #22d3ee; margin-bottom: 12px; font-size: 1.3rem; font-weight: 600; }
+    .f-card p { color: #94a3b8; font-size: 0.95rem; line-height: 1.6; margin: 0; flex-grow: 1; }
+
+    /* Mobile Responsiveness: Stack on small screens */
+    @media (max-width: 768px) {
         .feature-grid { grid-template-columns: 1fr; }
     }
     </style>
     """, unsafe_allow_html=True)
-    
+
+    # Generate HTML
     cards_html = ""
     for icon, title, desc in features:
         cards_html += f"""
         <div class="f-card">
-            <div style="font-size: 4.8rem; margin-bottom: 24px;">{icon}</div>
-            <h3 style="color:#22d3ee; margin-bottom:16px; font-size:1.5rem;">{title}</h3>
-            <p style="color:#94a3b8; font-size:0.98rem; line-height:1.6;">{desc}</p>
+            <div class="f-icon">{icon}</div>
+            <h3>{title}</h3>
+            <p>{desc}</p>
         </div>
         """
-    
-    grid_html = f'<div class="feature-grid">{cards_html}</div>'
-    st.markdown(grid_html, unsafe_allow_html=True)
+
+    # Render Grid
+    st.markdown(f'<div class="feature-grid">{cards_html}</div>', unsafe_allow_html=True)
     # Angle 1: Side Underwater
     st.markdown('<p style="text-align: center; color: #94a3b8; margin-bottom: 40px;">Choose the best angle for accurate AI analysis</p>', unsafe_allow_html=True)
     a_cols = st.columns([2, 1.2, 1.2, 1.2])  # first column wider
