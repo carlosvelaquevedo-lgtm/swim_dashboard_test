@@ -193,7 +193,7 @@ def show_landing_page():
         .container {{
             position: relative;
             width: 100%;
-            max-width: 1000px;
+            max-width: 500px;
             margin: 0 auto;
             border-radius: 24px;
             overflow: hidden;
