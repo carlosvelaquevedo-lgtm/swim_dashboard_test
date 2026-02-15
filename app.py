@@ -16,13 +16,10 @@ st.set_page_config(
 # =============================================
 # CSS STYLING (Background & Theme)
 # =============================================
-# We inject this immediately to ensure background loads instantly
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Mono:wght@700&display=swap');
 
-    /* --- GLOBAL CONTAINER FIX --- */
-    /* This targets the main scrollable area to force the background color */
     [data-testid="stAppViewContainer"] {
         background: #0a1628 !important;
         background: linear-gradient(180deg, #0a1628 0%, #0f2847 30%, #0e3d6b 60%, #0f2847 100%) !important;
@@ -33,8 +30,6 @@ st.markdown("""
         background: transparent !important;
     }
 
-    /* --- Background Layers --- */
-    /* We attach these to the view container so they stick */
     .water-bg {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
         pointer-events: none;
@@ -51,7 +46,6 @@ st.markdown("""
     }
     @keyframes waterShimmer { 0%, 100% { opacity: 0.5; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-20px); } }
 
-    /* --- Floating Bubbles --- */
     .bubble {
         position: fixed; border-radius: 50%; z-index: 0;
         pointer-events: none;
@@ -62,7 +56,6 @@ st.markdown("""
     .b2 { width: 40px; height: 40px; top: 60%; left: 85%; animation-delay: -5s; }
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-40px); } }
 
-    /* --- Components --- */
     .cta-box {
         background: rgba(15, 40, 71, 0.6);
         backdrop-filter: blur(12px);
@@ -111,36 +104,49 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 2. How It Works (FIXED HTML STRUCTURE) ---
-    # We use a single string for the whole block to prevent HTML breaking
+    # --- 2. How It Works (FIXED: 1 Row, 4 Cards) ---
     st.markdown("""
     <style>
-    .process-section { padding: 40px 0 60px 0; text-align: center; position: relative; z-index: 1; }
+    .process-section { padding: 40px 0 60px 0; text-align: center; position: relative; z-index: 1; width: 100%; }
     .process-title { font-size: 2.8rem; font-weight: 700; margin-bottom: 50px; color: white !important; }
-    .process-grid { display: flex; justify-content: center; align-items: stretch; gap: 15px; flex-wrap: wrap; margin: 0 auto; }
+    
+    /* Force single row */
+    .process-grid { 
+        display: flex; 
+        justify-content: center; 
+        align-items: stretch; 
+        gap: 10px; 
+        flex-wrap: nowrap; 
+        max-width: 900px; 
+        margin: 0 auto; 
+    }
     
     .process-card { 
         background: linear-gradient(180deg, rgba(20,50,90,0.9), rgba(15,40,71,0.9)); 
-        border-radius: 24px; 
-        padding: 25px 15px; 
-        width: 220px; 
+        border-radius: 20px; 
+        padding: 20px 12px; 
+        width: 175px; /* Slightly narrower to fit 4 in a row perfectly */
         border: 1px solid rgba(34,211,238,0.15); 
         text-align: center; 
         display: flex; flex-direction: column; align-items: center;
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
     
-    .process-number { width: 40px; height: 40px; margin: 0 auto 15px auto; border-radius: 50%; background: #22d3ee; color: #0a1628; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .process-card h3 { color: #22d3ee !important; margin-bottom: 10px; font-size: 1.1rem; min-height: 40px; display: flex; align-items: center; justify-content: center;}
-    .process-card p { color: #94a3b8 !important; font-size: 0.85rem; line-height: 1.4; margin: 0; }
-    .process-arrow { font-size: 1.5rem; color: rgba(34,211,238,0.4); font-weight: bold; align-self: center; }
+    .process-number { width: 32px; height: 32px; margin-bottom: 12px; border-radius: 50%; background: #22d3ee; color: #0a1628; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .process-card h3 { color: #22d3ee !important; margin-bottom: 8px; font-size: 1rem; min-height: 30px; display: flex; align-items: center; justify-content: center;}
+    .process-card p { color: #94a3b8 !important; font-size: 0.8rem; line-height: 1.3; margin: 0; }
+    .process-arrow { font-size: 1.2rem; color: rgba(34,211,238,0.4); font-weight: bold; align-self: center; }
     
-    /* List styles for card 3 */
-    .angle-list { text-align: left; font-size: 0.75rem !important; color: #cbd5e1 !important; margin-top: 5px; width: 100%; padding-left: 10px; }
-    .angle-list span { display: block; margin-bottom: 4px; }
+    .angle-list { text-align: left; font-size: 0.7rem !important; color: #cbd5e1 !important; margin-top: 5px; width: 100%; padding-left: 5px; }
+    .angle-list span { display: block; margin-bottom: 2px; }
     .highlight { color: #10b981; font-weight: 700; }
 
-    @media (max-width: 900px) { .process-arrow { display: none; } .process-grid { gap: 20px; } }
+    /* Hide arrows on mobile to stack cards */
+    @media (max-width: 768px) { 
+        .process-grid { flex-wrap: wrap; }
+        .process-arrow { display: none; } 
+        .process-card { width: 45%; }
+    }
     </style>
     
     <div class="process-section">
@@ -151,30 +157,24 @@ def show_landing_page():
                 <h3>Pay $4.99</h3>
                 <p>Secure checkout via Stripe. Instant access.</p>
             </div>
-            
             <div class="process-arrow">→</div>
-            
             <div class="process-card">
                 <div class="process-number">2</div>
                 <h3>Upload Video</h3>
                 <p>10–15s clip. Ensure good lighting.</p>
             </div>
-            
             <div class="process-arrow">→</div>
-            
             <div class="process-card">
                 <div class="process-number">3</div>
                 <h3>Select View</h3>
                 <div class="angle-list">
-                    <span>• Side | Underwater <span class="highlight">(Best)</span></span>
-                    <span>• Side | Above Water</span>
-                    <span>• Front | Underwater</span>
-                    <span>• Front | Above Water</span>
+                    <span>• Side | Under <span class="highlight">(Best)</span></span>
+                    <span>• Side | Above</span>
+                    <span>• Front | Under</span>
+                    <span>• Front | Above</span>
                 </div>
             </div>
-            
             <div class="process-arrow">→</div>
-            
             <div class="process-card">
                 <div class="process-number">4</div>
                 <h3>Get Report</h3>
@@ -184,7 +184,7 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 3. VIDEO & HUD (RESIZED) ---
+    # --- 3. VIDEO & HUD (FIXED: 25% Larger) ---
     def get_video_base64(video_path):
         if not os.path.exists(video_path):
             return None
@@ -198,7 +198,7 @@ def show_landing_page():
     if not video_b64:
         st.info(f"ℹ️ Place a file named '{video_file_name}' in the root to see the video demo.")
     else:
-        # Changes: Max-width increased to 625px (25% larger than 500px)
+        # Changes: Max-width increased to 780px (25% larger than 625px)
         html_code = f"""
         <!DOCTYPE html>
         <html>
@@ -210,7 +210,7 @@ def show_landing_page():
             .container {{
                 position: relative;
                 width: 100%;
-                max-width: 625px; /* INCREASED SIZE */
+                max-width: 780px; /* INCREASED SIZE BY 25% */
                 margin: 0 auto;
                 border-radius: 24px;
                 overflow: hidden;
@@ -220,7 +220,6 @@ def show_landing_page():
     
             video {{ width: 100%; display: block; object-fit: cover; }}
     
-            /* HUD ELEMENTS */
             .hud-layer {{
                 position: absolute;
                 top: 0; left: 0; width: 100%; height: 100%;
@@ -264,7 +263,6 @@ def show_landing_page():
             .value-row {{ display: flex; justify-content: space-between; align-items: baseline; }}
             .main-val {{ font-size: 18px; font-weight: 700; color: #fff; }}
             
-            /* Status Tags */
             .status-tag {{
                 font-size: 9px;
                 padding: 2px 6px;
@@ -279,7 +277,6 @@ def show_landing_page():
     
             @keyframes float {{ 0%, 100% {{ transform: translateY(0px); }} 50% {{ transform: translateY(-5px); }} }}
     
-            /* POSITIONS */
             .pos-glide {{ top: 15%; left: 10%; }}
             .pos-roll  {{ top: 15%; right: 10%; flex-direction: row-reverse; }}
             .pos-evf   {{ bottom: 20%; left: 15%; }}
@@ -294,7 +291,6 @@ def show_landing_page():
             </video>
     
             <div class="hud-layer">
-                
                 <div class="metric-node pos-glide">
                     <div class="target-circle"></div>
                     <div class="connect-line"></div>
@@ -346,15 +342,13 @@ def show_landing_page():
                         <div class="ideal">Target: < 0.40m</div>
                     </div>
                 </div>
-    
             </div>
         </div>
-    
         </body>
         </html>
         """
-        # Increased height from 400 to 500 to fit the larger video without scrolling
-        components.html(html_code, height=500)
+        # Increased height from 500 to 600 to accommodate larger video scaling
+        components.html(html_code, height=600)
 
     # Pricing Box
     col1, col2, col3 = st.columns([1, 1.8, 1])
