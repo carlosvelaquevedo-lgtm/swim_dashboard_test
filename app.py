@@ -108,7 +108,7 @@ def show_landing_page():
     st.markdown("""
     <style>
     .process-section { padding: 40px 0 60px 0; text-align: center; position: relative; z-index: 1; width: 100%; }
-    .process-title { font-size: 2.8rem; font-weight: 700; margin-bottom: 50px; color: white !important; }
+    .process-title { font-size: 2.8rem; font-weight: 700; margin-bottom: 50px; color: black !important; }
     
     /* Force single row */
     .process-grid { 
