@@ -367,54 +367,41 @@ def show_landing_page():
         ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
     ]
     
+    # Force all cards to be exactly the same size
     st.markdown("""
     <style>
-    .feature-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 32px;
-        max-width: 1400px;
-        margin: 0 auto;
-        grid-auto-rows: 1fr; /* All rows exactly the same height */
+    .f-card {
+        min-height: 440px !important;     /* ← This is the magic line */
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        padding: 40px 24px !important;
+        box-sizing: border-box !important;
     }
-    .f-card-extra {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: 10px; /* small extra padding if needed; your global .f-card already has 25px */
-        box-sizing: border-box;
-    }
-    
-    /* Responsive: stack to 1 column on tablets/mobile */
-    @media (max-width: 1024px) {
-        .feature-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-    @media (max-width: 640px) {
-        .feature-grid {
-            grid-template-columns: 1fr;
-        }
+    .f-card p {
+        flex-grow: 1 !important;          /* Makes shorter descriptions stretch to match */
     }
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown('<div class="feature-grid">', unsafe_allow_html=True)
-    
-    for icon, title, desc in features:
-        st.markdown(f"""
-        <div class="f-card">
-            <div class="f-card-extra">
-                <div style="font-size: 5rem; margin-bottom: 30px;">{icon}</div>
-                <h3 style="color: #22d3ee; margin: 0 0 20px 0; font-size: 1.6rem; line-height: 1.3;">{title}</h3>
-                <p style="color: #94a3b8; font-size: 1.05rem; line-height: 1.6; margin: 0; flex: 1;">{desc}</p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    # 2 rows × 3 columns using native Streamlit columns (most reliable)
+    for row in range(2):
+        cols = st.columns(3, gap="large")
+        start_idx = row * 3
+        
+        for i in range(3):
+            icon, title, desc = features[start_idx + i]
+            
+            with cols[i]:
+                st.markdown(f"""
+                <div class="f-card">
+                    <div style="font-size: 5.5rem; margin-bottom: 28px;">{icon}</div>
+                    <h3 style="color: #22d3ee; margin-bottom: 18px; font-size: 1.55rem; line-height: 1.3;">{title}</h3>
+                    <p style="color: #94a3b8; font-size: 1.02rem; line-height: 1.65;">{desc}</p>
+                </div>
+                """, unsafe_allow_html=True)
     # Angle 1: Side Underwater
     st.markdown('<p style="text-align: center; color: #94a3b8; margin-bottom: 40px;">Choose the best angle for accurate AI analysis</p>', unsafe_allow_html=True)
     a_cols = st.columns([2, 1.2, 1.2, 1.2])  # first column wider
