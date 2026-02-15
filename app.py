@@ -355,11 +355,9 @@ def show_landing_page():
             if st.button("Developer: Skip to Dashboard", use_container_width=True):
                 st.session_state.paid = True
                 st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 30px 0 30px;">The Analysis Engine</h2>', unsafe_allow_html=True)
     
-    f_cols = st.columns(3)
     features = [
         ("📊", "7 Biometrics", "Stroke rate, DPS, entry angle, elbow drop, and body rotation measured frame-by-frame."),
         ("🎯", "Ranked Issues", "We rank your 1-3 biggest speed leaks so you know exactly what to fix first."),
@@ -397,6 +395,8 @@ def show_landing_page():
             """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     # Angle 1: Side Underwater
+    st.markdown('<p style="text-align: center; color: #94a3b8; margin-bottom: 40px;">Choose the best angle for accurate AI analysis</p>', unsafe_allow_html=True)
+    a_cols = st.columns([2, 1.2, 1.2, 1.2])  # first column wider
     with a_cols[0]:
         st.markdown("""
         <div style="background: #07111d; border-radius: 15px; padding: 15px; border: 1px solid rgba(255,255,255,0.05);">
