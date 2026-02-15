@@ -356,34 +356,23 @@ def show_landing_page():
                 st.session_state.paid = True
                 st.rerun()
     # --- Feature Grid ---
-# --- Feature Grid ---
+    # --- Feature Grid ---
     st.markdown(
         '<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px;">The Analysis Engine</h2>',
         unsafe_allow_html=True
     )
 
-    features = [
-        ("📊", "7 Biometrics", "Stroke rate, DPS, entry angle, elbow drop, and body rotation measured frame-by-frame."),
-        ("🎯", "Ranked Issues", "We rank your 1-3 biggest speed leaks so you know exactly what to fix first."),
-        ("🏊", "Drill Prescription", "Personalized drills with rep counts and focus cues to correct your specific flaws."),
-        ("🎥", "Pro Comparison", "Your stroke overlaid with Olympic-level reference footage for visual alignment."),
-        ("📈", "Progress Charting", "Upload follow-up videos to track improvement across all metrics session-over-session."),
-        ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
-    ]
-
-    # 1. Define CSS for the Grid and Cards
+    # 1. CSS for the 3x2 Grid
     st.markdown("""
     <style>
-    /* The Grid Container */
     .feature-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr); /* Forces 3 columns */
+        grid-template-columns: repeat(3, 1fr);
         gap: 20px;
         width: 100%;
-        margin-bottom: 40px;
+        margin-bottom: 50px;
     }
 
-    /* Individual Card Style */
     .f-card {
         background: rgba(15, 23, 42, 0.55);
         border: 1px solid rgba(148, 163, 184, 0.18);
@@ -393,64 +382,44 @@ def show_landing_page():
         display: flex;
         flex-direction: column;
         align-items: center;
-        height: 100%; /* Ensures all cards in a row are same height */
+        justify-content: flex-start;
+        height: 100%; 
         box-sizing: border-box;
-        transition: transform 0.2s ease, border-color 0.2s ease;
     }
 
-    .f-card:hover {
-        border-color: #22d3ee;
-        transform: translateY(-5px);
-        background: rgba(34, 211, 238, 0.05);
-    }
+    .f-icon { font-size: 3rem; margin-bottom: 15px; }
+    .f-card h3 { color: #22d3ee; font-size: 1.25rem; margin: 0 0 10px 0; }
+    .f-card p { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; margin: 0; }
 
-    /* Icon Style */
-    .f-icon {
-        font-size: 3.5rem;
-        margin-bottom: 15px;
-    }
-
-    /* Text Styles */
-    .f-card h3 {
-        color: #22d3ee;
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin: 0 0 10px 0;
-    }
-    
-    .f-card p {
-        color: #94a3b8;
-        font-size: 0.9rem;
-        line-height: 1.5;
-        margin: 0;
-    }
-
-    /* Mobile Responsive: Collapse to 1 column on small screens */
-    @media (max-width: 768px) {
-        .feature-grid { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 900px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .feature-grid { grid-template-columns: 1fr; } }
     </style>
     """, unsafe_allow_html=True)
 
-    # 2. Build the HTML String
-    # Start the container
-    cards_html = '<div class="feature-grid">'
-    
-    # Loop through features to create cards
-    for icon, title, desc in features:
-        cards_html += f"""
-        <div class="f-card">
+    # 2. Data and Logic
+    features = [
+        ("📊", "7 Biometrics", "Stroke rate, DPS, entry angle, elbow drop, and body rotation measured frame-by-frame."),
+        ("🎯", "Ranked Issues", "We rank your 1-3 biggest speed leaks so you know exactly what to fix first."),
+        ("🏊", "Drill Prescription", "Personalized drills with rep counts and focus cues to correct your specific flaws."),
+        ("🎥", "Pro Comparison", "Your stroke overlaid with Olympic-level reference footage for visual alignment."),
+        ("📈", "Progress Charting", "Upload follow-up videos to track improvement across all metrics session-over-session."),
+        ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
+    ]
+
+    # 3. Secure String Building
+    # This creates a list of strings for each card and joins them inside a single container div
+    cards_list = [
+        f"""<div class="f-card">
             <div class="f-icon">{icon}</div>
             <h3>{title}</h3>
             <p>{desc}</p>
-        </div>
-        """
+        </div>""" 
+        for icon, title, desc in features
+    ]
     
-    # Close the container
-    cards_html += '</div>'
+    full_grid_html = f'<div class="feature-grid">{" ".join(cards_list)}</div>'
 
-    # 3. Render the HTML
-    st.markdown(cards_html, unsafe_allow_html=True)
+    st.markdown(full_grid_html, unsafe_allow_html=True)
     # Angle 1: Side Underwater
     st.markdown('<p style="text-align: center; color: #94a3b8; margin-bottom: 40px;">Choose the best angle for accurate AI analysis</p>', unsafe_allow_html=True)
     a_cols = st.columns([2, 1.2, 1.2, 1.2])  # first column wider
