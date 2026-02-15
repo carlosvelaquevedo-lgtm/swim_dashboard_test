@@ -104,7 +104,7 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 2. How It Works (UPDATED: Blue/White Numbers, All Centered) ---
+    # --- 2. How It Works (UPDATED: No Borders, No Links, Centered) ---
     st.markdown("""
     <style>
     .process-section { padding: 40px 0 60px 0; text-align: center; position: relative; z-index: 1; width: 100%; }
@@ -129,13 +129,15 @@ def show_landing_page():
         text-align: center; 
         display: flex; flex-direction: column; align-items: center;
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        cursor: default; /* Ensures it doesn't look like a link */
+        text-decoration: none;
     }
     
     .process-number { 
         width: 32px; height: 32px; margin-bottom: 12px; border-radius: 50%; 
         background: #0a1628; /* Dark Blue Background */
         color: white; /* White Number */
-        border: 1px solid #22d3ee; /* Thin Cyan Border for visibility */
+        border: none; /* REMOVED BORDER */
         font-weight: 800; 
         display: flex; align-items: center; justify-content: center; flex-shrink: 0; 
     }
@@ -151,7 +153,7 @@ def show_landing_page():
         color: #cbd5e1 !important; 
         margin-top: 5px; 
         width: 100%; 
-        padding-left: 0; /* Removed left padding */
+        padding-left: 0;
     }
     .angle-list span { display: block; margin-bottom: 2px; }
     .highlight { color: #10b981; font-weight: 700; }
@@ -198,12 +200,10 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 3. VIDEO & HUD (FIXED: 25% Larger) ---
+    # --- 3. VIDEO & HUD ---
     def get_video_base64(video_path):
-        if not os.path.exists(video_path):
-            return None
-        with open(video_path, "rb") as f:
-            data = f.read()
+        if not os.path.exists(video_path): return None
+        with open(video_path, "rb") as f: data = f.read()
         return base64.b64encode(data).decode()
     
     video_file_name = "hero_demo.mp4" 
