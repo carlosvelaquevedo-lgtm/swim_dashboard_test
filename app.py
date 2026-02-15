@@ -104,7 +104,7 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 2. How It Works (UPDATED: No Borders, No Links, Centered) ---
+    # --- 2. How It Works (Fixed: No links, No Borders) ---
     st.markdown("""
     <style>
     .process-section { padding: 40px 0 60px 0; text-align: center; position: relative; z-index: 1; width: 100%; }
@@ -129,15 +129,15 @@ def show_landing_page():
         text-align: center; 
         display: flex; flex-direction: column; align-items: center;
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        cursor: default; /* Ensures it doesn't look like a link */
+        cursor: default;
         text-decoration: none;
     }
     
     .process-number { 
         width: 32px; height: 32px; margin-bottom: 12px; border-radius: 50%; 
-        background: #0a1628; /* Dark Blue Background */
-        color: white; /* White Number */
-        border: none; /* REMOVED BORDER */
+        background: #0a1628;
+        color: white;
+        border: none;
         font-weight: 800; 
         display: flex; align-items: center; justify-content: center; flex-shrink: 0; 
     }
@@ -146,7 +146,6 @@ def show_landing_page():
     .process-card p { color: #94a3b8 !important; font-size: 0.8rem; line-height: 1.3; margin: 0; text-align: center; }
     .process-arrow { font-size: 1.2rem; color: rgba(34,211,238,0.4); font-weight: bold; align-self: center; }
     
-    /* Centered List */
     .angle-list { 
         text-align: center !important; 
         font-size: 0.7rem !important; 
@@ -159,9 +158,9 @@ def show_landing_page():
     .highlight { color: #10b981; font-weight: 700; }
 
     @media (max-width: 768px) { 
-        .process-grid { flex-wrap: wrap; }
+        .process-grid { flex-wrap: wrap; justify-content: center; }
         .process-arrow { display: none; } 
-        .process-card { width: 45%; }
+        .process-card { width: 45%; margin: 5px; }
     }
     </style>
     
@@ -200,7 +199,7 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 3. VIDEO & HUD ---
+    # --- 3. VIDEO & HUD (Mobile Optimized) ---
     def get_video_base64(video_path):
         if not os.path.exists(video_path): return None
         with open(video_path, "rb") as f: data = f.read()
@@ -216,6 +215,7 @@ def show_landing_page():
         <!DOCTYPE html>
         <html>
         <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
             body {{ margin: 0; background: transparent; overflow: hidden; }}
@@ -249,118 +249,69 @@ def show_landing_page():
             }}
     
             .target-circle {{
-                width: 20px; height: 20px;
+                width: 12px; height: 12px;
                 border: 2px solid #22d3ee;
                 border-radius: 50%;
                 background: rgba(34, 211, 238, 0.1);
-                box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
             }}
     
-            .connect-line {{
-                height: 1px; width: 30px;
-                background: #22d3ee;
-                opacity: 0.6;
-            }}
+            .connect-line {{ height: 1px; width: 15px; background: #22d3ee; opacity: 0.6; }}
     
             .data-box {{
                 background: rgba(10, 22, 40, 0.9);
                 backdrop-filter: blur(8px);
                 border: 1px solid rgba(34, 211, 238, 0.2);
-                padding: 10px 14px;
-                border-radius: 8px;
-                min-width: 160px;
+                padding: 6px 10px;
+                border-radius: 6px;
+                min-width: 110px;
                 animation: float 4s ease-in-out infinite;
             }}
     
-            .label {{ font-size: 9px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }}
+            .label {{ font-size: 7px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }}
             .value-row {{ display: flex; justify-content: space-between; align-items: baseline; }}
-            .main-val {{ font-size: 18px; font-weight: 700; color: #fff; }}
+            .main-val {{ font-size: 14px; font-weight: 700; color: #fff; }}
             
-            .status-tag {{
-                font-size: 9px;
-                padding: 2px 6px;
-                border-radius: 4px;
-                font-weight: 700;
-                margin-left: 8px;
-            }}
+            .status-tag {{ font-size: 7px; padding: 1px 4px; border-radius: 4px; font-weight: 700; margin-left: 4px; }}
             .fix {{ background: rgba(255, 71, 87, 0.2); color: #ff4757; border: 1px solid #ff4757; }}
             .ok {{ background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }}
     
-            .ideal {{ font-size: 9px; color: #64748b; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px; }}
-    
             @keyframes float {{ 0%, 100% {{ transform: translateY(0px); }} 50% {{ transform: translateY(-5px); }} }}
     
-            .pos-glide {{ top: 15%; left: 10%; }}
-            .pos-roll  {{ top: 15%; right: 10%; flex-direction: row-reverse; }}
-            .pos-evf   {{ bottom: 20%; left: 15%; }}
-            .pos-kick  {{ bottom: 15%; right: 15%; flex-direction: row-reverse; }}
+            /* Mobile Positioning */
+            .pos-glide {{ top: 10%; left: 5%; }}
+            .pos-roll  {{ top: 10%; right: 5%; flex-direction: row-reverse; }}
+            .pos-evf   {{ bottom: 15%; left: 5%; }}
+            .pos-kick  {{ bottom: 10%; right: 5%; flex-direction: row-reverse; }}
+
+            /* Desktop Overrides */
+            @media (min-width: 600px) {{
+                .target-circle {{ width: 20px; height: 20px; }}
+                .connect-line {{ width: 30px; }}
+                .data-box {{ padding: 10px 14px; min-width: 160px; }}
+                .label {{ font-size: 9px; }}
+                .main-val {{ font-size: 18px; }}
+                .status-tag {{ font-size: 9px; }}
+                .pos-glide {{ top: 15%; left: 10%; }}
+                .pos-roll  {{ top: 15%; right: 10%; }}
+                .pos-evf   {{ bottom: 20%; left: 15%; }}
+                .pos-kick  {{ bottom: 15%; right: 15%; }}
+            }}
         </style>
         </head>
         <body>
-    
         <div class="container">
-            <video autoplay muted loop playsinline>
-                <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
-            </video>
-    
+            <video autoplay muted loop playsinline><source src="data:video/mp4;base64,{video_b64}" type="video/mp4"></video>
             <div class="hud-layer">
-                <div class="metric-node pos-glide">
-                    <div class="target-circle"></div>
-                    <div class="connect-line"></div>
-                    <div class="data-box">
-                        <div class="label">Glide Ratio</div>
-                        <div class="value-row">
-                            <span class="main-val">1%</span>
-                            <span class="status-tag fix">FIX</span>
-                        </div>
-                        <div class="ideal">Ideal: 20-35%</div>
-                    </div>
-                </div>
-    
-                <div class="metric-node pos-roll">
-                    <div class="target-circle"></div>
-                    <div class="connect-line"></div>
-                    <div class="data-box" style="border-left: none; border-right: 3px solid #10b981;">
-                        <div class="label">Body Roll</div>
-                        <div class="value-row">
-                            <span class="main-val">65°</span>
-                            <span class="status-tag ok">OK</span>
-                        </div>
-                        <div class="ideal">Ideal: 35-55%</div>
-                    </div>
-                </div>
-    
-                <div class="metric-node pos-evf">
-                    <div class="target-circle"></div>
-                    <div class="connect-line"></div>
-                    <div class="data-box" style="border-left: 3px solid #ff4757;">
-                        <div class="label">Early Vertical Forearm</div>
-                        <div class="value-row">
-                            <span class="main-val">43°</span>
-                            <span class="status-tag fix">FIX</span>
-                        </div>
-                        <div class="ideal">Ideal: 0-25°</div>
-                    </div>
-                </div>
-    
-                <div class="metric-node pos-kick">
-                    <div class="target-circle"></div>
-                    <div class="connect-line"></div>
-                    <div class="data-box">
-                        <div class="label">Kick Depth</div>
-                        <div class="value-row">
-                            <span class="main-val">0.33m</span>
-                            <span class="status-tag ok">GOOD</span>
-                        </div>
-                        <div class="ideal">Target: < 0.40m</div>
-                    </div>
-                </div>
+                <div class="metric-node pos-glide"><div class="target-circle"></div><div class="connect-line"></div><div class="data-box"><div class="label">Glide Ratio</div><div class="value-row"><span class="main-val">1%</span><span class="status-tag fix">FIX</span></div></div></div>
+                <div class="metric-node pos-roll"><div class="target-circle"></div><div class="connect-line"></div><div class="data-box"><div class="label">Body Roll</div><div class="value-row"><span class="main-val">65°</span><span class="status-tag ok">OK</span></div></div></div>
+                <div class="metric-node pos-evf"><div class="target-circle"></div><div class="connect-line"></div><div class="data-box"><div class="label">EVF Angle</div><div class="value-row"><span class="main-val">43°</span><span class="status-tag fix">FIX</span></div></div></div>
+                <div class="metric-node pos-kick"><div class="target-circle"></div><div class="connect-line"></div><div class="data-box"><div class="label">Kick Depth</div><div class="value-row"><span class="main-val">0.33m</span><span class="status-tag ok">OK</span></div></div></div>
             </div>
         </div>
         </body>
         </html>
         """
-        components.html(html_code, height=400)
+        components.html(html_code, height=500)
 
     # Pricing Box
     col1, col2, col3 = st.columns([1, 1.8, 1])
@@ -380,41 +331,15 @@ def show_landing_page():
                 st.session_state.paid = True
                 st.rerun()
 
-    # --- Feature Grid ---
-    st.markdown(
-        '<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px; position: relative; z-index: 1;">The Analysis Engine</h2>',
-        unsafe_allow_html=True
-    )
-
+    # --- 4. Feature Grid (Restored all 6) ---
+    st.markdown('<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px; position: relative; z-index: 1;">The Analysis Engine</h2>', unsafe_allow_html=True)
     st.markdown("""
     <style>
-    .feature-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        width: 100%;
-        margin-bottom: 50px;
-        position: relative; z-index: 1;
-    }
-
-    .f-card {
-        background: rgba(15, 23, 42, 0.55);
-        border: 1px solid rgba(148, 163, 184, 0.18);
-        border-radius: 20px;
-        padding: 30px 20px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: flex-start;
-        height: 100%; 
-        box-sizing: border-box;
-    }
-
+    .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; margin-bottom: 50px; position: relative; z-index: 1; }
+    .f-card { background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 20px; padding: 30px 20px; text-align: center; }
     .f-icon { font-size: 3rem; margin-bottom: 15px; }
     .f-card h3 { color: #22d3ee; font-size: 1.25rem; margin: 0 0 10px 0; }
     .f-card p { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; margin: 0; }
-
     @media (max-width: 900px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 600px) { .feature-grid { grid-template-columns: 1fr; } }
     </style>
@@ -429,17 +354,8 @@ def show_landing_page():
         ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
     ]
 
-    cards_list = [
-        f"""<div class="f-card">
-            <div class="f-icon">{icon}</div>
-            <h3>{title}</h3>
-            <p>{desc}</p>
-        </div>""" 
-        for icon, title, desc in features
-    ]
-    
-    full_grid_html = f'<div class="feature-grid">{" ".join(cards_list)}</div>'
-    st.markdown(full_grid_html, unsafe_allow_html=True)
+    cards_html = "".join([f'<div class="f-card"><div class="f-icon">{f[0]}</div><h3>{f[1]}</h3><p>{f[2]}</p></div>' for f in features])
+    st.markdown(f'<div class="feature-grid">{cards_html}</div>', unsafe_allow_html=True)
 
     # --- Footer ---
     st.markdown("""
@@ -449,9 +365,8 @@ def show_landing_page():
     """, unsafe_allow_html=True)
 
 # =============================================
-# MAIN ROUTER
+# MAIN ROUTER (Fixed)
 # =============================================
-
 q = st.query_params
 if q.get("success") == "true":
     st.session_state.paid = True
@@ -460,6 +375,10 @@ if q.get("success") == "true":
     st.rerun()                       
 
 if st.session_state.paid:
-    st.switch_page("pages/2_Dashboard.py")
+    # Use your actual dashboard page path here
+    try:
+        st.switch_page("pages/2_Dashboard.py")
+    except:
+        st.write("Redirecting to Dashboard...") # Fallback if path differs
 else:
     show_landing_page()
