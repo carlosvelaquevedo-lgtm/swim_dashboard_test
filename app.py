@@ -348,7 +348,7 @@ def show_landing_page():
         </html>
         """
         # Increased height from 500 to 600 to accommodate larger video scaling
-        components.html(html_code, height=600)
+        components.html(html_code, height=400)
 
     # Pricing Box
     col1, col2, col3 = st.columns([1, 1.8, 1])
