@@ -104,7 +104,7 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 2. How It Works (Fixed: No links, No Borders) ---
+    # --- 2. How It Works ---
     st.markdown("""
     <style>
     .process-section { padding: 40px 0 60px 0; text-align: center; position: relative; z-index: 1; width: 100%; }
@@ -158,9 +158,9 @@ def show_landing_page():
     .highlight { color: #10b981; font-weight: 700; }
 
     @media (max-width: 768px) { 
-        .process-grid { flex-wrap: wrap; justify-content: center; }
+        .process-grid { flex-wrap: wrap; }
         .process-arrow { display: none; } 
-        .process-card { width: 45%; margin: 5px; }
+        .process-card { width: 45%; }
     }
     </style>
     
@@ -221,69 +221,50 @@ def show_landing_page():
             body {{ margin: 0; background: transparent; overflow: hidden; }}
     
             .container {{
-                position: relative;
-                width: 100%;
-                max-width: 780px; 
-                margin: 0 auto;
-                border-radius: 24px;
-                overflow: hidden;
-                border: 1px solid rgba(34, 211, 238, 0.3);
+                position: relative; width: 100%; max-width: 780px; margin: 0 auto;
+                border-radius: 24px; overflow: hidden; border: 1px solid rgba(34, 211, 238, 0.3);
                 box-shadow: 0 30px 60px rgba(0,0,0,0.5);
             }}
     
             video {{ width: 100%; display: block; object-fit: cover; }}
     
             .hud-layer {{
-                position: absolute;
-                top: 0; left: 0; width: 100%; height: 100%;
-                z-index: 10;
-                pointer-events: none;
-                font-family: 'Space Mono', monospace;
+                position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+                z-index: 10; pointer-events: none; font-family: 'Space Mono', monospace;
             }}
     
-            .metric-node {{
-                position: absolute;
-                display: flex;
-                align-items: center;
-                transition: all 0.3s ease;
-            }}
+            .metric-node {{ position: absolute; display: flex; align-items: center; transition: all 0.3s ease; }}
     
             .target-circle {{
-                width: 12px; height: 12px;
-                border: 2px solid #22d3ee;
-                border-radius: 50%;
-                background: rgba(34, 211, 238, 0.1);
+                width: 14px; height: 14px; border: 2px solid #22d3ee; border-radius: 50%;
+                background: rgba(34, 211, 238, 0.1); box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
             }}
     
-            .connect-line {{ height: 1px; width: 15px; background: #22d3ee; opacity: 0.6; }}
+            .connect-line {{ height: 1px; width: 20px; background: #22d3ee; opacity: 0.6; }}
     
             .data-box {{
-                background: rgba(10, 22, 40, 0.9);
-                backdrop-filter: blur(8px);
-                border: 1px solid rgba(34, 211, 238, 0.2);
-                padding: 6px 10px;
-                border-radius: 6px;
-                min-width: 110px;
-                animation: float 4s ease-in-out infinite;
+                background: rgba(10, 22, 40, 0.9); backdrop-filter: blur(8px);
+                border: 1px solid rgba(34, 211, 238, 0.2); padding: 8px 10px; border-radius: 8px;
+                min-width: 120px; animation: float 4s ease-in-out infinite;
             }}
     
-            .label {{ font-size: 7px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }}
+            .label {{ font-size: 8px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }}
             .value-row {{ display: flex; justify-content: space-between; align-items: baseline; }}
             .main-val {{ font-size: 14px; font-weight: 700; color: #fff; }}
             
-            .status-tag {{ font-size: 7px; padding: 1px 4px; border-radius: 4px; font-weight: 700; margin-left: 4px; }}
+            .status-tag {{ font-size: 8px; padding: 1px 4px; border-radius: 4px; font-weight: 700; margin-left: 6px; }}
             .fix {{ background: rgba(255, 71, 87, 0.2); color: #ff4757; border: 1px solid #ff4757; }}
             .ok {{ background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }}
     
             @keyframes float {{ 0%, 100% {{ transform: translateY(0px); }} 50% {{ transform: translateY(-5px); }} }}
     
-            /* Mobile Positioning */
-            .pos-glide {{ top: 10%; left: 5%; }}
-            .pos-roll  {{ top: 10%; right: 5%; flex-direction: row-reverse; }}
-            .pos-evf   {{ bottom: 15%; left: 5%; }}
-            .pos-kick  {{ bottom: 10%; right: 5%; flex-direction: row-reverse; }}
+            /* POSITIONING */
+            .pos-glide {{ top: 12%; left: 5%; }}
+            .pos-roll  {{ top: 12%; right: 5%; flex-direction: row-reverse; }}
+            .pos-evf   {{ bottom: 18%; left: 5%; }}
+            .pos-kick  {{ bottom: 12%; right: 5%; flex-direction: row-reverse; }}
 
-            /* Desktop Overrides */
+            /* DESKTOP UPSCALING */
             @media (min-width: 600px) {{
                 .target-circle {{ width: 20px; height: 20px; }}
                 .connect-line {{ width: 30px; }}
@@ -304,16 +285,16 @@ def show_landing_page():
             <div class="hud-layer">
                 <div class="metric-node pos-glide"><div class="target-circle"></div><div class="connect-line"></div><div class="data-box"><div class="label">Glide Ratio</div><div class="value-row"><span class="main-val">1%</span><span class="status-tag fix">FIX</span></div></div></div>
                 <div class="metric-node pos-roll"><div class="target-circle"></div><div class="connect-line"></div><div class="data-box"><div class="label">Body Roll</div><div class="value-row"><span class="main-val">65°</span><span class="status-tag ok">OK</span></div></div></div>
-                <div class="metric-node pos-evf"><div class="target-circle"></div><div class="connect-line"></div><div class="data-box"><div class="label">EVF Angle</div><div class="value-row"><span class="main-val">43°</span><span class="status-tag fix">FIX</span></div></div></div>
-                <div class="metric-node pos-kick"><div class="target-circle"></div><div class="connect-line"></div><div class="data-box"><div class="label">Kick Depth</div><div class="value-row"><span class="main-val">0.33m</span><span class="status-tag ok">OK</span></div></div></div>
+                <div class="metric-node pos-evf"><div class="target-circle"></div><div class="connect-line"></div><div class="data-box"><div class="label">Early Vertical Forearm</div><div class="value-row"><span class="main-val">43°</span><span class="status-tag fix">FIX</span></div></div></div>
+                <div class="metric-node pos-kick"><div class="target-circle"></div><div class="connect-line"></div><div class="data-box"><div class="label">Kick Depth</div><div class="value-row"><span class="main-val">0.33m</span><span class="status-tag ok">GOOD</span></div></div></div>
             </div>
         </div>
         </body>
         </html>
         """
-        components.html(html_code, height=400)
+        components.html(html_code, height=450)
 
-    # Pricing Box
+    # --- Pricing & CTA ---
     col1, col2, col3 = st.columns([1, 1.8, 1])
     with col2:
         st.markdown("""
@@ -331,12 +312,12 @@ def show_landing_page():
                 st.session_state.paid = True
                 st.rerun()
 
-    # --- 4. Feature Grid (Restored all 6) ---
+    # --- 4. The Analysis Engine (Full Restore) ---
     st.markdown('<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px; position: relative; z-index: 1;">The Analysis Engine</h2>', unsafe_allow_html=True)
     st.markdown("""
     <style>
     .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 100%; margin-bottom: 50px; position: relative; z-index: 1; }
-    .f-card { background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 20px; padding: 30px 20px; text-align: center; }
+    .f-card { background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(148, 163, 184, 0.18); border-radius: 20px; padding: 30px 20px; text-align: center; height: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
     .f-icon { font-size: 3rem; margin-bottom: 15px; }
     .f-card h3 { color: #22d3ee; font-size: 1.25rem; margin: 0 0 10px 0; }
     .f-card p { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; margin: 0; }
@@ -354,7 +335,7 @@ def show_landing_page():
         ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
     ]
 
-    cards_html = "".join([f'<div class="f-card"><div class="f-icon">{f[0]}</div><h3>{f[1]}</h3><p>{f[2]}</p></div>' for f in features])
+    cards_html = "".join([f'<div class="f-card"><div class="f-icon">{icon}</div><h3>{title}</h3><p>{desc}</p></div>' for icon, title, desc in features])
     st.markdown(f'<div class="feature-grid">{cards_html}</div>', unsafe_allow_html=True)
 
     # --- Footer ---
@@ -365,7 +346,7 @@ def show_landing_page():
     """, unsafe_allow_html=True)
 
 # =============================================
-# MAIN ROUTER (Fixed)
+# MAIN ROUTER
 # =============================================
 q = st.query_params
 if q.get("success") == "true":
@@ -375,10 +356,7 @@ if q.get("success") == "true":
     st.rerun()                       
 
 if st.session_state.paid:
-    # Use your actual dashboard page path here
-    try:
-        st.switch_page("pages/2_Dashboard.py")
-    except:
-        st.write("Redirecting to Dashboard...") # Fallback if path differs
+    # Ensure the path below matches your exact file structure
+    st.switch_page("pages/2_Dashboard.py")
 else:
     show_landing_page()
