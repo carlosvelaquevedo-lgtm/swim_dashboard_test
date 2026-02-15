@@ -356,7 +356,8 @@ def show_landing_page():
                 st.session_state.paid = True
                 st.rerun()
     # --- Feature Grid ---
-    st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 60px 0 40px;">The Analysis Engine</h2>', unsafe_allow_html=True)
+    
+    st.set_page_config(layout="wide")
     
     features = [
         ("📊", "7 Biometrics", "Stroke rate, DPS, entry angle, elbow drop, and body rotation measured frame-by-frame."),
@@ -369,60 +370,29 @@ def show_landing_page():
     
     st.markdown("""
     <style>
-    .feature-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);   /* Forces exactly 3 columns */
-        gap: 12px;                              /* As close as possible */
-        max-width: 100%;
-        margin: 0 auto;
-        grid-auto-rows: 1fr;                    /* All cards same height */
-    }
-    
     .f-card {
-        height: 100% !important;
-        min-height: 380px !important;           /* Same height for all 6 cards */
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-        padding: 28px 16px !important;
-        box-sizing: border-box !important;
-        border-radius: 20px !important;
-    }
-    
-    /* Description stretches to keep cards perfectly even */
-    .f-card p {
-        flex-grow: 1 !important;
-    }
-    
-    /* Only collapse to 2 columns on fairly narrow screens */
-    @media (max-width: 960px) {
-        .feature-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
-    
-    /* 1 column only on mobile */
-    @media (max-width: 640px) {
-        .feature-grid {
-            grid-template-columns: 1fr;
-        }
+        min-height: 380px;
+        padding: 28px 16px;
+        border-radius: 20px;
+        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        text-align: center;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    st.markdown('<div class="feature-grid">', unsafe_allow_html=True)
-    
-    for icon, title, desc in features:
-        st.markdown(f"""
-        <div class="f-card">
-            <div style="font-size: 4.8rem; margin-bottom: 24px;">{icon}</div>
-            <h3 style="color: #22d3ee; margin-bottom: 16px; font-size: 1.5rem;">{title}</h3>
-            <p style="color: #94a3b8; font-size: 0.98rem; line-height: 1.6;">{desc}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Two rows of 3
+    for row in range(2):
+        cols = st.columns(3, gap="small")
+        for col, (icon, title, desc) in zip(cols, features[row*3:(row+1)*3]):
+            with col:
+                st.markdown(f"""
+                <div class="f-card">
+                    <div style="font-size: 4.8rem; margin-bottom: 24px;">{icon}</div>
+                    <h3 style="color:#22d3ee; margin-bottom:16px; font-size:1.5rem;">{title}</h3>
+                    <p style="color:#94a3b8; font-size:0.98rem; line-height:1.6;">{desc}</p>
+                </div>
+                """, unsafe_allow_html=True)
     # Angle 1: Side Underwater
     st.markdown('<p style="text-align: center; color: #94a3b8; margin-bottom: 40px;">Choose the best angle for accurate AI analysis</p>', unsafe_allow_html=True)
     a_cols = st.columns([2, 1.2, 1.2, 1.2])  # first column wider
