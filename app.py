@@ -380,12 +380,12 @@ def show_landing_page():
     
     .f-card {
         height: 100% !important;
-        min-height: 460px !important; /* Forces every card to be the same tall height */
+        min-height: 300px !important; /* Forces every card to be the same tall height */
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         text-align: center !important;
-        padding: 48px 28px !important; /* More internal breathing room */
+        padding: 24px 14px !important; /* More internal breathing room */
         box-sizing: border-box !important;
         border-radius: 24px !important; /* Matches your mockup more closely */
     }
@@ -410,8 +410,8 @@ def show_landing_page():
     for icon, title, desc in features:
         st.markdown(f"""
         <div class="f-card">
-            <div style="font-size: 5.8rem; margin-bottom: 32px;">{icon}</div>
-            <h3 style="color: #22d3ee; margin-bottom: 20px; font-size: 1.65rem; line-height: 1.3;">{title}</h3>
+            <div style="font-size: 5.8rem; margin-bottom: 16px;">{icon}</div>
+            <h3 style="color: #22d3ee; margin-bottom: 16px; font-size: 1.65rem; line-height: 1.3;">{title}</h3>
             <p style="color: #94a3b8; font-size: 1.05rem; line-height: 1.65;">{desc}</p>
         </div>
         """, unsafe_allow_html=True)
