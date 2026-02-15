@@ -14,23 +14,30 @@ st.set_page_config(
 )
 
 # =============================================
-# GLOBAL CSS (MOVED HERE TO FORCE LOAD)
+# CSS STYLING (Background & Theme)
 # =============================================
+# We inject this immediately to ensure background loads instantly
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Mono:wght@700&display=swap');
 
-    /* Global Theme */
-    .stApp, [data-testid="stAppViewContainer"], .main, .block-container {
+    /* --- GLOBAL CONTAINER FIX --- */
+    /* This targets the main scrollable area to force the background color */
+    [data-testid="stAppViewContainer"] {
         background: #0a1628 !important;
+        background: linear-gradient(180deg, #0a1628 0%, #0f2847 30%, #0e3d6b 60%, #0f2847 100%) !important;
         color: #f0fdff;
-        font-family: 'Inter', sans-serif;
+    }
+    
+    [data-testid="stHeader"] {
+        background: transparent !important;
     }
 
     /* --- Background Layers --- */
+    /* We attach these to the view container so they stick */
     .water-bg {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -10;
-        background: linear-gradient(180deg, #0a1628 0%, #0f2847 30%, #0e3d6b 60%, #0f2847 100%);
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
+        pointer-events: none;
     }
     .water-bg::before {
         content: ''; position: absolute; inset: 0;
@@ -38,14 +45,16 @@ st.markdown("""
         animation: waterShimmer 8s ease-in-out infinite;
     }
     .lane-lines {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -9; opacity: 0.03;
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.03;
+        pointer-events: none;
         background: repeating-linear-gradient(90deg, #22d3ee 0px, #22d3ee 4px, transparent 4px, transparent 150px);
     }
     @keyframes waterShimmer { 0%, 100% { opacity: 0.5; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-20px); } }
 
     /* --- Floating Bubbles --- */
     .bubble {
-        position: fixed; border-radius: 50%; z-index: -8;
+        position: fixed; border-radius: 50%; z-index: 0;
+        pointer-events: none;
         background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), rgba(6, 182, 212, 0.05));
         animation: float 15s infinite ease-in-out;
     }
@@ -54,14 +63,6 @@ st.markdown("""
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-40px); } }
 
     /* --- Components --- */
-    [data-testid="stToolbar"], [data-testid="stHeader"] { visibility: hidden; }
-
-    .hero-badge {
-        display: inline-flex; align-items: center; gap: 8px;
-        background: rgba(6, 182, 212, 0.15); border: 1px solid rgba(6, 182, 212, 0.3);
-        padding: 8px 16px; border-radius: 100px; font-size: 0.85rem; color: #22d3ee;
-    }
-
     .cta-box {
         background: rgba(15, 40, 71, 0.6);
         backdrop-filter: blur(12px);
@@ -69,13 +70,6 @@ st.markdown("""
         border-radius: 24px; padding: 40px; text-align: center;
         box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     }
-
-    /* --- SVG Animations --- */
-    @keyframes swim-stroke { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-5px); } }
-    @keyframes arm-pull { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-10deg); } }
-    .swimmer-group { animation: swim-stroke 3s ease-in-out infinite; }
-    .ai-node { fill: #22d3ee; filter: drop-shadow(0 0 3px #22d3ee); }
-    .ai-line { stroke: #22d3ee; stroke-width: 0.5; opacity: 0.5; }
 </style>
 
 <div class="water-bg"></div>
@@ -94,17 +88,14 @@ if "paid" not in st.session_state:
     st.session_state.paid = False
 
 def show_landing_page():
-    # --- 1. Navigation (Centered) ---
+    # --- 1. Header ---
     st.markdown("""
-    <div style="padding: 20px 0; display: flex; justify-content: center; align-items: center;">
-    <div style="font-family: 'Space Mono', monospace; font-size: 2.5rem; font-weight: 700; color: #22d3ee; display: flex; align-items: center; gap: 12px;">
-    <svg width="30" height="30" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/><path d="M 8 16 Q 16 12 24 16" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>
-    SWIMFORM AI
+    <div style="padding: 20px 0; display: flex; justify-content: center; align-items: center; position: relative; z-index: 1;">
+        <div style="font-family: 'Space Mono', monospace; font-size: 2.5rem; font-weight: 700; color: #22d3ee; display: flex; align-items: center; gap: 12px;">
+            <svg width="30" height="30" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/><path d="M 8 16 Q 16 12 24 16" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>
+            SWIMFORM AI
+        </div>
     </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
     <div style="
         background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
         padding: 25px;
@@ -112,6 +103,7 @@ def show_landing_page():
         text-align: center;
         color: white;
         margin-bottom: 25px;
+        position: relative; z-index: 1;
     ">
         <h3 style="margin-top: 0; font-weight: 400;">
             ⚡ Video analysis powered by Pose-Estimation AI
@@ -119,30 +111,32 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 2. How It Works (UPDATED to 4 Steps) ---
+    # --- 2. How It Works (FIXED HTML STRUCTURE) ---
+    # We use a single string for the whole block to prevent HTML breaking
     st.markdown("""
     <style>
-    .process-section { padding: 60px 0; text-align: center; }
+    .process-section { padding: 40px 0 60px 0; text-align: center; position: relative; z-index: 1; }
     .process-title { font-size: 2.8rem; font-weight: 700; margin-bottom: 50px; color: white !important; }
-    /* Changed flex-wrap to wrap to accommodate 4 cards on smaller screens */
     .process-grid { display: flex; justify-content: center; align-items: stretch; gap: 15px; flex-wrap: wrap; margin: 0 auto; }
-    /* Slightly reduced width to fit 4 across */
+    
     .process-card { 
         background: linear-gradient(180deg, rgba(20,50,90,0.9), rgba(15,40,71,0.9)); 
         border-radius: 24px; 
         padding: 25px 15px; 
-        width: 230px; 
+        width: 220px; 
         border: 1px solid rgba(34,211,238,0.15); 
         text-align: center; 
         display: flex; flex-direction: column; align-items: center;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
+    
     .process-number { width: 40px; height: 40px; margin: 0 auto 15px auto; border-radius: 50%; background: #22d3ee; color: #0a1628; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .process-card h3 { color: #22d3ee !important; margin-bottom: 10px; font-size: 1.1rem; min-height: 40px; display: flex; align-items: center; justify-content: center;}
     .process-card p { color: #94a3b8 !important; font-size: 0.85rem; line-height: 1.4; margin: 0; }
     .process-arrow { font-size: 1.5rem; color: rgba(34,211,238,0.4); font-weight: bold; align-self: center; }
     
-    /* Custom list for Step 3 */
-    .angle-list { text-align: left; font-size: 0.75rem !important; color: #cbd5e1 !important; margin-top: 5px; }
+    /* List styles for card 3 */
+    .angle-list { text-align: left; font-size: 0.75rem !important; color: #cbd5e1 !important; margin-top: 5px; width: 100%; padding-left: 10px; }
     .angle-list span { display: block; margin-bottom: 4px; }
     .highlight { color: #10b981; font-weight: 700; }
 
@@ -150,47 +144,47 @@ def show_landing_page():
     </style>
     
     <div class="process-section">
-    <div class="process-title">How it works</div>
-    <div class="process-grid">
-        <div class="process-card">
-            <div class="process-number">1</div>
-            <h3>Pay $4.99</h3>
-            <p>Secure checkout via Stripe. Instant access.</p>
-        </div>
-        
-        <div class="process-arrow">→</div>
-        
-        <div class="process-card">
-            <div class="process-number">2</div>
-            <h3>Upload Video</h3>
-            <p>10–15s clip. Ensure good lighting.</p>
-        </div>
-        
-        <div class="process-arrow">→</div>
-        
-        <div class="process-card">
-            <div class="process-number">3</div>
-            <h3>Select View</h3>
-            <div class="angle-list">
-                <span>• Side | Underwater <span class="highlight">(Best)</span></span>
-                <span>• Side | Above Water</span>
-                <span>• Front | Underwater</span>
-                <span>• Front | Above Water</span>
+        <div class="process-title">How it works</div>
+        <div class="process-grid">
+            <div class="process-card">
+                <div class="process-number">1</div>
+                <h3>Pay $4.99</h3>
+                <p>Secure checkout via Stripe. Instant access.</p>
+            </div>
+            
+            <div class="process-arrow">→</div>
+            
+            <div class="process-card">
+                <div class="process-number">2</div>
+                <h3>Upload Video</h3>
+                <p>10–15s clip. Ensure good lighting.</p>
+            </div>
+            
+            <div class="process-arrow">→</div>
+            
+            <div class="process-card">
+                <div class="process-number">3</div>
+                <h3>Select View</h3>
+                <div class="angle-list">
+                    <span>• Side | Underwater <span class="highlight">(Best)</span></span>
+                    <span>• Side | Above Water</span>
+                    <span>• Front | Underwater</span>
+                    <span>• Front | Above Water</span>
+                </div>
+            </div>
+            
+            <div class="process-arrow">→</div>
+            
+            <div class="process-card">
+                <div class="process-number">4</div>
+                <h3>Get Report</h3>
+                <p>AI analysis in 90s. Download PDF + video.</p>
             </div>
         </div>
-        
-        <div class="process-arrow">→</div>
-        
-        <div class="process-card">
-            <div class="process-number">4</div>
-            <h3>Get Report</h3>
-            <p>AI analysis in 90s. Download PDF + video.</p>
-        </div>
-    </div>
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 3. VIDEO CONVERSION ---
+    # --- 3. VIDEO & HUD (RESIZED) ---
     def get_video_base64(video_path):
         if not os.path.exists(video_path):
             return None
@@ -202,10 +196,9 @@ def show_landing_page():
     video_b64 = get_video_base64(video_file_name)
     
     if not video_b64:
-        # Placeholder if video is missing during dev
         st.info(f"ℹ️ Place a file named '{video_file_name}' in the root to see the video demo.")
     else:
-        # --- HUD HTML & CSS ---
+        # Changes: Max-width increased to 625px (25% larger than 500px)
         html_code = f"""
         <!DOCTYPE html>
         <html>
@@ -217,7 +210,7 @@ def show_landing_page():
             .container {{
                 position: relative;
                 width: 100%;
-                max-width: 500px;
+                max-width: 625px; /* INCREASED SIZE */
                 margin: 0 auto;
                 border-radius: 24px;
                 overflow: hidden;
@@ -360,7 +353,8 @@ def show_landing_page():
         </body>
         </html>
         """
-        components.html(html_code, height=400)
+        # Increased height from 400 to 500 to fit the larger video without scrolling
+        components.html(html_code, height=500)
 
     # Pricing Box
     col1, col2, col3 = st.columns([1, 1.8, 1])
@@ -382,7 +376,7 @@ def show_landing_page():
 
     # --- Feature Grid ---
     st.markdown(
-        '<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px;">The Analysis Engine</h2>',
+        '<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px; position: relative; z-index: 1;">The Analysis Engine</h2>',
         unsafe_allow_html=True
     )
 
@@ -394,6 +388,7 @@ def show_landing_page():
         gap: 20px;
         width: 100%;
         margin-bottom: 50px;
+        position: relative; z-index: 1;
     }
 
     .f-card {
@@ -442,26 +437,23 @@ def show_landing_page():
 
     # --- Footer ---
     st.markdown("""
-    <div style="text-align: center; margin-top: 100px; padding: 40px 0; border-top: 1px solid rgba(6, 182, 212, 0.1); color: #64748b; font-size: 0.8rem;">
+    <div style="text-align: center; margin-top: 100px; padding: 40px 0; border-top: 1px solid rgba(6, 182, 212, 0.1); color: #64748b; font-size: 0.8rem; position: relative; z-index: 1;">
         © 2026 SwimForm AI · Professional Biomechanics for Every Lane · <a href="mailto:support@swimform.ai" style="color: #22d3ee; text-decoration: none;">Support</a>
     </div>
     """, unsafe_allow_html=True)
 
 # =============================================
-# MAIN ROUTER (Clean & Reliable)
+# MAIN ROUTER
 # =============================================
 
-# Handle Stripe success redirect
 q = st.query_params
 if q.get("success") == "true":
     st.session_state.paid = True
-    st.query_params.clear()          # clean the URL
+    st.query_params.clear()          
     st.balloons()
-    st.rerun()                       # important
+    st.rerun()                       
 
-# ────── PAGE ROUTING ──────
 if st.session_state.paid:
-    # Ensure this file exists at pages/2_Dashboard.py
     st.switch_page("pages/2_Dashboard.py")
 else:
     show_landing_page()
