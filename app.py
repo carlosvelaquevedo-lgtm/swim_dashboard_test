@@ -357,7 +357,6 @@ def show_landing_page():
                 st.rerun()
     # --- Feature Grid ---
     
-    st.set_page_config(layout="wide")
     
     features = [
         ("📊", "7 Biometrics", "Stroke rate, DPS, entry angle, elbow drop, and body rotation measured frame-by-frame."),
