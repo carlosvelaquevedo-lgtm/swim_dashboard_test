@@ -356,7 +356,8 @@ def show_landing_page():
                 st.session_state.paid = True
                 st.rerun()
     # --- Feature Grid ---
-    st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 30px 0 30px;">The Analysis Engine</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 20px 0 20px;">The Analysis Engine</h2>', unsafe_allow_html=True)
+    
     features = [
         ("📊", "7 Biometrics", "Stroke rate, DPS, entry angle, elbow drop, and body rotation measured frame-by-frame."),
         ("🎯", "Ranked Issues", "We rank your 1-3 biggest speed leaks so you know exactly what to fix first."),
@@ -365,6 +366,7 @@ def show_landing_page():
         ("📈", "Progress Charting", "Upload follow-up videos to track improvement across all metrics session-over-session."),
         ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
     ]
+    
     for row in range(2):
         cols = st.columns(3)
         start_idx = row * 3
@@ -372,10 +374,18 @@ def show_landing_page():
             icon, title, desc = features[start_idx + i]
             with cols[i]:
                 st.markdown(f"""
-                <div class="f-card" style="height: 100%; display: flex; flex-direction: column; justify-content: flex-start;">
-                    <div style="font-size: 2rem; margin-bottom: 15px;">{icon}</div>
-                    <h3 style="color: #22d3ee; margin-bottom: 10px; font-size: 1.2rem;">{title}</h3>
-                    <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin: 0;">{desc}</p>
+                <div class="f-card" style="
+                    min-height: 380px;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    text-align: center;
+                    box-sizing: border-box;
+                ">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">{icon}</div>
+                    <h3 style="color: #22d3ee; margin: 10px 0 20px; font-size: 1.5rem; line-height: 1.3;">{title}</h3>
+                    <p style="color: #94a3b8; font-size: 1rem; line-height: 1.6; margin: 0; flex-grow: 1;">{desc}</p>
                 </div>
                 """, unsafe_allow_html=True)
     # Angle 1: Side Underwater
