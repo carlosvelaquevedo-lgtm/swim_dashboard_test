@@ -371,36 +371,42 @@ def show_landing_page():
     <style>
     .feature-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;                    /* ← Bigger, more generous gap (was 32px) */
-        max-width: 1280px;
+        grid-template-columns: repeat(3, 1fr);   /* Forces exactly 3 columns */
+        gap: 12px;                              /* As close as possible */
+        max-width: 100%;
         margin: 0 auto;
-        grid-auto-rows: 1fr;          /* All rows same height */
+        grid-auto-rows: 1fr;                    /* All cards same height */
     }
     
     .f-card {
         height: 100% !important;
-        min-height: 300px !important; /* Forces every card to be the same tall height */
+        min-height: 380px !important;           /* Same height for all 6 cards */
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         text-align: center !important;
-        padding: 24px 14px !important; /* More internal breathing room */
+        padding: 28px 16px !important;
         box-sizing: border-box !important;
-        border-radius: 24px !important; /* Matches your mockup more closely */
+        border-radius: 20px !important;
     }
     
-    /* Make the description take up the remaining space so cards stay perfectly aligned */
+    /* Description stretches to keep cards perfectly even */
     .f-card p {
         flex-grow: 1 !important;
     }
     
-    /* Responsive: 3 → 2 → 1 columns */
-    @media (max-width: 1100px) {
-        .feature-grid { grid-template-columns: repeat(2, 1fr); }
+    /* Only collapse to 2 columns on fairly narrow screens */
+    @media (max-width: 960px) {
+        .feature-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
     }
-    @media (max-width: 700px) {
-        .feature-grid { grid-template-columns: 1fr; }
+    
+    /* 1 column only on mobile */
+    @media (max-width: 640px) {
+        .feature-grid {
+            grid-template-columns: 1fr;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -410,9 +416,9 @@ def show_landing_page():
     for icon, title, desc in features:
         st.markdown(f"""
         <div class="f-card">
-            <div style="font-size: 5.8rem; margin-bottom: 16px;">{icon}</div>
-            <h3 style="color: #22d3ee; margin-bottom: 16px; font-size: 1.65rem; line-height: 1.3;">{title}</h3>
-            <p style="color: #94a3b8; font-size: 1.05rem; line-height: 1.65;">{desc}</p>
+            <div style="font-size: 4.8rem; margin-bottom: 24px;">{icon}</div>
+            <h3 style="color: #22d3ee; margin-bottom: 16px; font-size: 1.5rem;">{title}</h3>
+            <p style="color: #94a3b8; font-size: 0.98rem; line-height: 1.6;">{desc}</p>
         </div>
         """, unsafe_allow_html=True)
     
