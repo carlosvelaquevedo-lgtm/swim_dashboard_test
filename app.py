@@ -311,7 +311,7 @@ def show_landing_page():
         </body>
         </html>
         """
-        components.html(html_code, height=500)
+        components.html(html_code, height=400)
 
     # Pricing Box
     col1, col2, col3 = st.columns([1, 1.8, 1])
