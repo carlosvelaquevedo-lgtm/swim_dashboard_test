@@ -356,7 +356,12 @@ def show_landing_page():
                 st.session_state.paid = True
                 st.rerun()
     # --- Feature Grid ---
+
     
+    st.markdown(
+        '<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px;">The Analysis Engine</h2>',
+        unsafe_allow_html=True
+    )
     
     features = [
         ("📊", "7 Biometrics", "Stroke rate, DPS, entry angle, elbow drop, and body rotation measured frame-by-frame."),
@@ -369,29 +374,53 @@ def show_landing_page():
     
     st.markdown("""
     <style>
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        width: 100%;
+        margin: 0 auto;
+    }
+    
     .f-card {
         min-height: 380px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
         padding: 28px 16px;
+        box-sizing: border-box;
         border-radius: 20px;
+    
+        /* optional styling to make it look like a card */
         background: rgba(15, 23, 42, 0.55);
         border: 1px solid rgba(148, 163, 184, 0.18);
-        text-align: center;
+    }
+    
+    .f-card p { flex-grow: 1; margin: 0; }
+    
+    @media (max-width: 960px) {
+        .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+        .feature-grid { grid-template-columns: 1fr; }
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Two rows of 3
-    for row in range(2):
-        cols = st.columns(3, gap="small")
-        for col, (icon, title, desc) in zip(cols, features[row*3:(row+1)*3]):
-            with col:
-                st.markdown(f"""
-                <div class="f-card">
-                    <div style="font-size: 4.8rem; margin-bottom: 24px;">{icon}</div>
-                    <h3 style="color:#22d3ee; margin-bottom:16px; font-size:1.5rem;">{title}</h3>
-                    <p style="color:#94a3b8; font-size:0.98rem; line-height:1.6;">{desc}</p>
-                </div>
-                """, unsafe_allow_html=True)
+    # Build ALL cards inside ONE parent div
+    cards_html = ""
+    for icon, title, desc in features:
+        cards_html += f"""
+        <div class="f-card">
+            <div style="font-size: 4.8rem; margin-bottom: 24px;">{icon}</div>
+            <h3 style="color:#22d3ee; margin-bottom:16px; font-size:1.5rem;">{title}</h3>
+            <p style="color:#94a3b8; font-size:0.98rem; line-height:1.6;">{desc}</p>
+        </div>
+        """
+    
+    grid_html = f'<div class="feature-grid">{cards_html}</div>'
+    st.markdown(grid_html, unsafe_allow_html=True)
     # Angle 1: Side Underwater
     st.markdown('<p style="text-align: center; color: #94a3b8; margin-bottom: 40px;">Choose the best angle for accurate AI analysis</p>', unsafe_allow_html=True)
     a_cols = st.columns([2, 1.2, 1.2, 1.2])  # first column wider
