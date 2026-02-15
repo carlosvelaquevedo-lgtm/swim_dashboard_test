@@ -14,27 +14,47 @@ st.set_page_config(
 )
 
 # =============================================
-# GLOBAL CSS (Background & Theme Fixes)
+# CSS STYLING (Background & Theme)
 # =============================================
+# We inject this immediately to ensure background loads instantly
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Mono:wght@700&display=swap');
 
-    /* --- THEME ROOT --- */
-    /* Force background on the entire app container */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    /* --- GLOBAL CONTAINER FIX --- */
+    /* This targets the main scrollable area to force the background color */
+    [data-testid="stAppViewContainer"] {
         background: #0a1628 !important;
         background: linear-gradient(180deg, #0a1628 0%, #0f2847 30%, #0e3d6b 60%, #0f2847 100%) !important;
-        color: #f0fdff !important;
+        color: #f0fdff;
+    }
+    
+    [data-testid="stHeader"] {
+        background: transparent !important;
     }
 
-    /* Floating Decorations */
+    /* --- Background Layers --- */
+    /* We attach these to the view container so they stick */
     .water-bg {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0;
-        pointer-events: none; opacity: 0.3;
+        pointer-events: none;
     }
+    .water-bg::before {
+        content: ''; position: absolute; inset: 0;
+        background: radial-gradient(ellipse at 20% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 50%);
+        animation: waterShimmer 8s ease-in-out infinite;
+    }
+    .lane-lines {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.03;
+        pointer-events: none;
+        background: repeating-linear-gradient(90deg, #22d3ee 0px, #22d3ee 4px, transparent 4px, transparent 150px);
+    }
+    @keyframes waterShimmer { 0%, 100% { opacity: 0.5; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-20px); } }
+
+    /* --- Floating Bubbles --- */
     .bubble {
-        position: fixed; border-radius: 50%; z-index: 0; pointer-events: none;
+        position: fixed; border-radius: 50%; z-index: 0;
+        pointer-events: none;
         background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), rgba(6, 182, 212, 0.05));
         animation: float 15s infinite ease-in-out;
     }
@@ -42,17 +62,18 @@ st.markdown("""
     .b2 { width: 40px; height: 40px; top: 60%; left: 85%; animation-delay: -5s; }
     @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-40px); } }
 
-    /* CTA Box Styling */
+    /* --- Components --- */
     .cta-box {
         background: rgba(15, 40, 71, 0.6);
         backdrop-filter: blur(12px);
         border: 1px solid rgba(6, 182, 212, 0.2);
         border-radius: 24px; padding: 40px; text-align: center;
         box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        margin-bottom: 20px;
     }
 </style>
+
 <div class="water-bg"></div>
+<div class="lane-lines"></div>
 <div class="bubble b1"></div>
 <div class="bubble b2"></div>
 """, unsafe_allow_html=True)
@@ -66,70 +87,94 @@ IS_DEV = True
 if "paid" not in st.session_state:
     st.session_state.paid = False
 
-def get_video_base64(video_path):
-    if not os.path.exists(video_path):
-        return None
-    with open(video_path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-# =============================================
-# LANDING PAGE RENDERING
-# =============================================
 def show_landing_page():
-    # 1. Header Section
+    # --- 1. Header ---
     st.markdown("""
-    <div style="padding: 20px 0; text-align: center; position: relative; z-index: 1;">
-        <div style="font-family: 'Space Mono', monospace; font-size: 3rem; font-weight: 700; color: #22d3ee; letter-spacing: -1px;">
+    <div style="padding: 20px 0; display: flex; justify-content: center; align-items: center; position: relative; z-index: 1;">
+        <div style="font-family: 'Space Mono', monospace; font-size: 2.5rem; font-weight: 700; color: #22d3ee; display: flex; align-items: center; gap: 12px;">
+            <svg width="30" height="30" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/><path d="M 8 16 Q 16 12 24 16" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>
             SWIMFORM AI
         </div>
-        <p style="color: #94a3b8; font-size: 1.2rem; margin-top: -10px;">Elite Biomechanics. Zero Hardware. 90 Seconds.</p>
+    </div>
+    <div style="
+        background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
+        padding: 25px;
+        border-radius: 12px;
+        text-align: center;
+        color: white;
+        margin-bottom: 25px;
+        position: relative; z-index: 1;
+    ">
+        <h3 style="margin-top: 0; font-weight: 400;">
+            ⚡ Video analysis powered by Pose-Estimation AI
+        </h3>
     </div>
     """, unsafe_allow_html=True)
 
-    # 2. How It Works (FIXED: One Block)
+    # --- 2. How It Works (FIXED HTML STRUCTURE) ---
+    # We use a single string for the whole block to prevent HTML breaking
     st.markdown("""
     <style>
-    .process-section { padding: 40px 0; text-align: center; position: relative; z-index: 1; }
-    .process-grid { display: flex; justify-content: center; align-items: stretch; gap: 15px; flex-wrap: wrap; margin-top: 30px; }
+    .process-section { padding: 40px 0 60px 0; text-align: center; position: relative; z-index: 1; }
+    .process-title { font-size: 2.8rem; font-weight: 700; margin-bottom: 50px; color: white !important; }
+    .process-grid { display: flex; justify-content: center; align-items: stretch; gap: 15px; flex-wrap: wrap; margin: 0 auto; }
+    
     .process-card { 
-        background: rgba(20,50,90,0.9); border-radius: 24px; padding: 25px 15px; 
-        width: 190px; border: 1px solid rgba(34,211,238,0.15); text-align: center; 
+        background: linear-gradient(180deg, rgba(20,50,90,0.9), rgba(15,40,71,0.9)); 
+        border-radius: 24px; 
+        padding: 25px 15px; 
+        width: 220px; 
+        border: 1px solid rgba(34,211,238,0.15); 
+        text-align: center; 
         display: flex; flex-direction: column; align-items: center;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
-    .process-number { width: 35px; height: 35px; margin-bottom: 15px; border-radius: 50%; background: #22d3ee; color: #0a1628; font-weight: 800; display: flex; align-items: center; justify-content: center; }
-    .process-card h3 { color: #22d3ee !important; font-size: 1.1rem; margin-bottom: 8px; }
+    
+    .process-number { width: 40px; height: 40px; margin: 0 auto 15px auto; border-radius: 50%; background: #22d3ee; color: #0a1628; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .process-card h3 { color: #22d3ee !important; margin-bottom: 10px; font-size: 1.1rem; min-height: 40px; display: flex; align-items: center; justify-content: center;}
     .process-card p { color: #94a3b8 !important; font-size: 0.85rem; line-height: 1.4; margin: 0; }
-    .process-arrow { font-size: 1.5rem; color: #22d3ee; opacity: 0.4; align-self: center; }
-    .angle-list { text-align: left; font-size: 0.75rem; color: #cbd5e1; margin-top: 10px; width: 100%; }
+    .process-arrow { font-size: 1.5rem; color: rgba(34,211,238,0.4); font-weight: bold; align-self: center; }
+    
+    /* List styles for card 3 */
+    .angle-list { text-align: left; font-size: 0.75rem !important; color: #cbd5e1 !important; margin-top: 5px; width: 100%; padding-left: 10px; }
+    .angle-list span { display: block; margin-bottom: 4px; }
     .highlight { color: #10b981; font-weight: 700; }
+
+    @media (max-width: 900px) { .process-arrow { display: none; } .process-grid { gap: 20px; } }
     </style>
     
     <div class="process-section">
-        <h2 style="font-size: 2.5rem; color: white;">How it works</h2>
+        <div class="process-title">How it works</div>
         <div class="process-grid">
             <div class="process-card">
                 <div class="process-number">1</div>
                 <h3>Pay $4.99</h3>
                 <p>Secure checkout via Stripe. Instant access.</p>
             </div>
+            
             <div class="process-arrow">→</div>
+            
             <div class="process-card">
                 <div class="process-number">2</div>
                 <h3>Upload Video</h3>
                 <p>10–15s clip. Ensure good lighting.</p>
             </div>
+            
             <div class="process-arrow">→</div>
+            
             <div class="process-card">
                 <div class="process-number">3</div>
                 <h3>Select View</h3>
                 <div class="angle-list">
-                    <span>• Side | Under <span class="highlight">(Best)</span></span>
-                    <span>• Side | Above</span>
-                    <span>• Front | Under</span>
-                    <span>• Front | Above</span>
+                    <span>• Side | Underwater <span class="highlight">(Best)</span></span>
+                    <span>• Side | Above Water</span>
+                    <span>• Front | Underwater</span>
+                    <span>• Front | Above Water</span>
                 </div>
             </div>
+            
             <div class="process-arrow">→</div>
+            
             <div class="process-card">
                 <div class="process-number">4</div>
                 <h3>Get Report</h3>
@@ -139,104 +184,276 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # 3. Video HUD (FIXED: 25% Larger - 750px width)
-    video_b64 = get_video_base64("hero_demo.mp4")
+    # --- 3. VIDEO & HUD (RESIZED) ---
+    def get_video_base64(video_path):
+        if not os.path.exists(video_path):
+            return None
+        with open(video_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    
+    video_file_name = "hero_demo.mp4" 
+    video_b64 = get_video_base64(video_file_name)
+    
     if not video_b64:
-        st.info("ℹ️ Video 'hero_demo.mp4' not found. Please place it in the root directory.")
+        st.info(f"ℹ️ Place a file named '{video_file_name}' in the root to see the video demo.")
     else:
+        # Changes: Max-width increased to 625px (25% larger than 500px)
         html_code = f"""
-        <div style="display: flex; justify-content: center; margin: 50px 0; font-family: 'Space Mono', monospace;">
-            <div style="position: relative; width: 750px; border-radius: 24px; overflow: hidden; border: 1px solid rgba(34, 211, 238, 0.4); box-shadow: 0 30px 60px rgba(0,0,0,0.6);">
-                <video autoplay muted loop playsinline style="width: 100%; display: block;">
-                    <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
-                </video>
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+            body {{ margin: 0; background: transparent; overflow: hidden; }}
+    
+            .container {{
+                position: relative;
+                width: 100%;
+                max-width: 625px; /* INCREASED SIZE */
+                margin: 0 auto;
+                border-radius: 24px;
+                overflow: hidden;
+                border: 1px solid rgba(34, 211, 238, 0.3);
+                box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            }}
+    
+            video {{ width: 100%; display: block; object-fit: cover; }}
+    
+            /* HUD ELEMENTS */
+            .hud-layer {{
+                position: absolute;
+                top: 0; left: 0; width: 100%; height: 100%;
+                z-index: 10;
+                pointer-events: none;
+                font-family: 'Space Mono', monospace;
+            }}
+    
+            .metric-node {{
+                position: absolute;
+                display: flex;
+                align-items: center;
+                transition: all 0.3s ease;
+            }}
+    
+            .target-circle {{
+                width: 20px; height: 20px;
+                border: 2px solid #22d3ee;
+                border-radius: 50%;
+                background: rgba(34, 211, 238, 0.1);
+                box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+            }}
+    
+            .connect-line {{
+                height: 1px; width: 30px;
+                background: #22d3ee;
+                opacity: 0.6;
+            }}
+    
+            .data-box {{
+                background: rgba(10, 22, 40, 0.9);
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(34, 211, 238, 0.2);
+                padding: 10px 14px;
+                border-radius: 8px;
+                min-width: 160px;
+                animation: float 4s ease-in-out infinite;
+            }}
+    
+            .label {{ font-size: 9px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }}
+            .value-row {{ display: flex; justify-content: space-between; align-items: baseline; }}
+            .main-val {{ font-size: 18px; font-weight: 700; color: #fff; }}
+            
+            /* Status Tags */
+            .status-tag {{
+                font-size: 9px;
+                padding: 2px 6px;
+                border-radius: 4px;
+                font-weight: 700;
+                margin-left: 8px;
+            }}
+            .fix {{ background: rgba(255, 71, 87, 0.2); color: #ff4757; border: 1px solid #ff4757; }}
+            .ok {{ background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }}
+    
+            .ideal {{ font-size: 9px; color: #64748b; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px; }}
+    
+            @keyframes float {{ 0%, 100% {{ transform: translateY(0px); }} 50% {{ transform: translateY(-5px); }} }}
+    
+            /* POSITIONS */
+            .pos-glide {{ top: 15%; left: 10%; }}
+            .pos-roll  {{ top: 15%; right: 10%; flex-direction: row-reverse; }}
+            .pos-evf   {{ bottom: 20%; left: 15%; }}
+            .pos-kick  {{ bottom: 15%; right: 15%; flex-direction: row-reverse; }}
+        </style>
+        </head>
+        <body>
+    
+        <div class="container">
+            <video autoplay muted loop playsinline>
+                <source src="data:video/mp4;base64,{video_b64}" type="video/mp4">
+            </video>
+    
+            <div class="hud-layer">
                 
-                <div style="position: absolute; top: 10%; left: 5%; background: rgba(10,22,40,0.85); backdrop-filter: blur(8px); padding: 15px; border-radius: 12px; border-left: 4px solid #ff4757; min-width: 140px;">
-                    <div style="color: #94a3b8; font-size: 10px; text-transform: uppercase;">Elbow Angle</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: white; font-size: 24px; font-weight: 700;">142°</span>
-                        <span style="background: rgba(255,71,87,0.2); color: #ff4757; font-size: 10px; padding: 2px 6px; border-radius: 4px; border: 1px solid #ff4757;">FIX</span>
+                <div class="metric-node pos-glide">
+                    <div class="target-circle"></div>
+                    <div class="connect-line"></div>
+                    <div class="data-box">
+                        <div class="label">Glide Ratio</div>
+                        <div class="value-row">
+                            <span class="main-val">1%</span>
+                            <span class="status-tag fix">FIX</span>
+                        </div>
+                        <div class="ideal">Ideal: 20-35%</div>
                     </div>
                 </div>
-
-                <div style="position: absolute; bottom: 10%; right: 5%; background: rgba(10,22,40,0.85); backdrop-filter: blur(8px); padding: 15px; border-radius: 12px; border-left: 4px solid #10b981; min-width: 140px;">
-                    <div style="color: #94a3b8; font-size: 10px; text-transform: uppercase;">Body Roll</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="color: white; font-size: 24px; font-weight: 700;">65°</span>
-                        <span style="background: rgba(16,185,129,0.2); color: #10b981; font-size: 10px; padding: 2px 6px; border-radius: 4px; border: 1px solid #10b981;">OK</span>
+    
+                <div class="metric-node pos-roll">
+                    <div class="target-circle"></div>
+                    <div class="connect-line"></div>
+                    <div class="data-box" style="border-left: none; border-right: 3px solid #10b981;">
+                        <div class="label">Body Roll</div>
+                        <div class="value-row">
+                            <span class="main-val">65°</span>
+                            <span class="status-tag ok">OK</span>
+                        </div>
+                        <div class="ideal">Ideal: 35-55%</div>
                     </div>
                 </div>
+    
+                <div class="metric-node pos-evf">
+                    <div class="target-circle"></div>
+                    <div class="connect-line"></div>
+                    <div class="data-box" style="border-left: 3px solid #ff4757;">
+                        <div class="label">Early Vertical Forearm</div>
+                        <div class="value-row">
+                            <span class="main-val">43°</span>
+                            <span class="status-tag fix">FIX</span>
+                        </div>
+                        <div class="ideal">Ideal: 0-25°</div>
+                    </div>
+                </div>
+    
+                <div class="metric-node pos-kick">
+                    <div class="target-circle"></div>
+                    <div class="connect-line"></div>
+                    <div class="data-box">
+                        <div class="label">Kick Depth</div>
+                        <div class="value-row">
+                            <span class="main-val">0.33m</span>
+                            <span class="status-tag ok">GOOD</span>
+                        </div>
+                        <div class="ideal">Target: < 0.40m</div>
+                    </div>
+                </div>
+    
             </div>
         </div>
+    
+        </body>
+        </html>
         """
-        components.html(html_code, height=580)
+        # Increased height from 400 to 500 to fit the larger video without scrolling
+        components.html(html_code, height=500)
 
-    # 4. CTA / Pricing
+    # Pricing Box
     col1, col2, col3 = st.columns([1, 1.8, 1])
     with col2:
         st.markdown("""
         <div class="cta-box">
-            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 8px; letter-spacing: 2px;">START YOUR IMPROVEMENT</div>
-            <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ report</span></div>
-            <p style="color: #cbd5e1; margin: 15px 0 30px;">Includes PDF Report, Video Overlay, and Targeted Drills.</p>
+            <div style="font-size: 0.9rem; color: #22d3ee; font-weight: 700; margin-bottom: 8px; letter-spacing: 1px;">INSTANT ANALYSIS</div>
+            <div style="font-size: 3.5rem; font-weight: 800; color: white;">$4.99 <span style="font-size: 1rem; color: #64748b; font-weight: 400;">/ video</span></div>
+            <p style="color: #94a3b8; margin: 15px 0 30px;">Full PDF Report • Side-by-Side Playback • Drill Cards</p>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.link_button("🏊 Analyze My Stroke Now →", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
-        
+        st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+        st.link_button("🏊 Get My Biomechanics Report →", STRIPE_PAYMENT_LINK, type="primary", use_container_width=True)
+
         if IS_DEV:
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("Dev: Skip to Dashboard", use_container_width=True):
+            if st.button("Developer: Skip to Dashboard", use_container_width=True):
                 st.session_state.paid = True
                 st.rerun()
 
-    # 5. Feature Engine Section
-    st.markdown('<h2 style="text-align:center; font-size:2.5rem; margin:80px 0 40px; color: white;">The Analysis Engine</h2>', unsafe_allow_html=True)
-    
+    # --- Feature Grid ---
+    st.markdown(
+        '<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px; position: relative; z-index: 1;">The Analysis Engine</h2>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown("""
+    <style>
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        width: 100%;
+        margin-bottom: 50px;
+        position: relative; z-index: 1;
+    }
+
+    .f-card {
+        background: rgba(15, 23, 42, 0.55);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        border-radius: 20px;
+        padding: 30px 20px;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        height: 100%; 
+        box-sizing: border-box;
+    }
+
+    .f-icon { font-size: 3rem; margin-bottom: 15px; }
+    .f-card h3 { color: #22d3ee; font-size: 1.25rem; margin: 0 0 10px 0; }
+    .f-card p { color: #94a3b8; font-size: 0.9rem; line-height: 1.5; margin: 0; }
+
+    @media (max-width: 900px) { .feature-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .feature-grid { grid-template-columns: 1fr; } }
+    </style>
+    """, unsafe_allow_html=True)
+
     features = [
         ("📊", "7 Biometrics", "Stroke rate, DPS, entry angle, elbow drop, and body rotation measured frame-by-frame."),
         ("🎯", "Ranked Issues", "We rank your 1-3 biggest speed leaks so you know exactly what to fix first."),
         ("🏊", "Drill Prescription", "Personalized drills with rep counts and focus cues to correct your specific flaws."),
         ("🎥", "Pro Comparison", "Your stroke overlaid with Olympic-level reference footage for visual alignment."),
-        ("📈", "Progress Tracking", "Upload follow-up videos to track improvement across all metrics over time."),
-        ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report almost instantly.")
+        ("📈", "Progress Charting", "Upload follow-up videos to track improvement across all metrics session-over-session."),
+        ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
     ]
 
-    # Render Features in a 3-column grid
-    feat_cols = st.columns(3)
-    for i, (icon, title, desc) in enumerate(features):
-        with feat_cols[i % 3]:
-            st.markdown(f"""
-            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(148, 163, 184, 0.1); border-radius: 20px; padding: 30px 20px; text-align: center; height: 100%; margin-bottom: 20px;">
-                <div style="font-size: 2.5rem; margin-bottom: 15px;">{icon}</div>
-                <h3 style="color: #22d3ee; font-size: 1.2rem; margin-bottom: 10px;">{title}</h3>
-                <p style="color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">{desc}</p>
-            </div>
-            """, unsafe_allow_html=True)
+    cards_list = [
+        f"""<div class="f-card">
+            <div class="f-icon">{icon}</div>
+            <h3>{title}</h3>
+            <p>{desc}</p>
+        </div>""" 
+        for icon, title, desc in features
+    ]
+    
+    full_grid_html = f'<div class="feature-grid">{" ".join(cards_list)}</div>'
+    st.markdown(full_grid_html, unsafe_allow_html=True)
 
-    # 6. Footer
+    # --- Footer ---
     st.markdown("""
-    <div style="text-align: center; margin-top: 100px; padding: 40px 0; border-top: 1px solid rgba(6, 182, 212, 0.1); color: #64748b; font-size: 0.8rem;">
-        © 2026 SwimForm AI · Built for the Competitive Lane · <a href="#" style="color: #22d3ee; text-decoration: none;">Privacy Policy</a>
+    <div style="text-align: center; margin-top: 100px; padding: 40px 0; border-top: 1px solid rgba(6, 182, 212, 0.1); color: #64748b; font-size: 0.8rem; position: relative; z-index: 1;">
+        © 2026 SwimForm AI · Professional Biomechanics for Every Lane · <a href="mailto:support@swimform.ai" style="color: #22d3ee; text-decoration: none;">Support</a>
     </div>
     """, unsafe_allow_html=True)
 
 # =============================================
-# MAIN ROUTING LOGIC
+# MAIN ROUTER
 # =============================================
-# Stripe success detection
-if st.query_params.get("success") == "true":
+
+q = st.query_params
+if q.get("success") == "true":
     st.session_state.paid = True
-    st.query_params.clear()
+    st.query_params.clear()          
     st.balloons()
-    st.rerun()
+    st.rerun()                       
 
 if st.session_state.paid:
-    # If using separate files, this would be st.switch_page("pages/Dashboard.py")
-    st.title("🏊 Your Analysis Dashboard")
-    st.write("Welcome! Please upload your video below.")
-    uploaded_file = st.file_uploader("Upload Swim Video", type=["mp4", "mov", "avi"])
-    if uploaded_file:
-        st.success("Video received! Processing...")
+    st.switch_page("pages/2_Dashboard.py")
 else:
     show_landing_page()
