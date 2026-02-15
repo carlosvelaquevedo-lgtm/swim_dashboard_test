@@ -104,13 +104,12 @@ def show_landing_page():
     </div>
     """, unsafe_allow_html=True)
 
-    # --- 2. How It Works (FIXED: 1 Row, 4 Cards) ---
+    # --- 2. How It Works (UPDATED: Blue/White Numbers, All Centered) ---
     st.markdown("""
     <style>
     .process-section { padding: 40px 0 60px 0; text-align: center; position: relative; z-index: 1; width: 100%; }
     .process-title { font-size: 2.8rem; font-weight: 700; margin-bottom: 50px; color: white !important; }
     
-    /* Force single row */
     .process-grid { 
         display: flex; 
         justify-content: center; 
@@ -125,23 +124,38 @@ def show_landing_page():
         background: linear-gradient(180deg, rgba(20,50,90,0.9), rgba(15,40,71,0.9)); 
         border-radius: 20px; 
         padding: 20px 12px; 
-        width: 175px; /* Slightly narrower to fit 4 in a row perfectly */
+        width: 175px; 
         border: 1px solid rgba(34,211,238,0.15); 
         text-align: center; 
         display: flex; flex-direction: column; align-items: center;
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
     
-    .process-number { width: 32px; height: 32px; margin-bottom: 12px; border-radius: 50%; background: #22d3ee; color: black; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .process-number { 
+        width: 32px; height: 32px; margin-bottom: 12px; border-radius: 50%; 
+        background: #0a1628; /* Dark Blue Background */
+        color: white; /* White Number */
+        border: 1px solid #22d3ee; /* Thin Cyan Border for visibility */
+        font-weight: 800; 
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0; 
+    }
+    
     .process-card h3 { color: #22d3ee !important; margin-bottom: 8px; font-size: 1rem; min-height: 30px; display: flex; align-items: center; justify-content: center;}
-    .process-card p { color: #94a3b8 !important; font-size: 0.8rem; line-height: 1.3; margin: 0; }
+    .process-card p { color: #94a3b8 !important; font-size: 0.8rem; line-height: 1.3; margin: 0; text-align: center; }
     .process-arrow { font-size: 1.2rem; color: rgba(34,211,238,0.4); font-weight: bold; align-self: center; }
     
-    .angle-list { text-align: left; font-size: 0.7rem !important; color: #cbd5e1 !important; margin-top: 5px; width: 100%; padding-left: 5px; }
+    /* Centered List */
+    .angle-list { 
+        text-align: center !important; 
+        font-size: 0.7rem !important; 
+        color: #cbd5e1 !important; 
+        margin-top: 5px; 
+        width: 100%; 
+        padding-left: 0; /* Removed left padding */
+    }
     .angle-list span { display: block; margin-bottom: 2px; }
     .highlight { color: #10b981; font-weight: 700; }
 
-    /* Hide arrows on mobile to stack cards */
     @media (max-width: 768px) { 
         .process-grid { flex-wrap: wrap; }
         .process-arrow { display: none; } 
@@ -198,7 +212,6 @@ def show_landing_page():
     if not video_b64:
         st.info(f"ℹ️ Place a file named '{video_file_name}' in the root to see the video demo.")
     else:
-        # Changes: Max-width increased to 780px (25% larger than 625px)
         html_code = f"""
         <!DOCTYPE html>
         <html>
@@ -210,7 +223,7 @@ def show_landing_page():
             .container {{
                 position: relative;
                 width: 100%;
-                max-width: 780px; /* INCREASED SIZE BY 25% */
+                max-width: 780px; 
                 margin: 0 auto;
                 border-radius: 24px;
                 overflow: hidden;
@@ -347,8 +360,7 @@ def show_landing_page():
         </body>
         </html>
         """
-        # Increased height from 500 to 600 to accommodate larger video scaling
-        components.html(html_code, height=400)
+        components.html(html_code, height=600)
 
     # Pricing Box
     col1, col2, col3 = st.columns([1, 1.8, 1])
