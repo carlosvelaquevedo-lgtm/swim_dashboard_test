@@ -357,7 +357,6 @@ def show_landing_page():
                 st.rerun()
     # --- Feature Grid ---
 
-    
     st.markdown(
         '<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px;">The Analysis Engine</h2>',
         unsafe_allow_html=True
@@ -392,7 +391,6 @@ def show_landing_page():
         box-sizing: border-box;
         border-radius: 20px;
     
-        /* optional styling to make it look like a card */
         background: rgba(15, 23, 42, 0.55);
         border: 1px solid rgba(148, 163, 184, 0.18);
     }
@@ -402,13 +400,13 @@ def show_landing_page():
     @media (max-width: 960px) {
         .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
+    
     @media (max-width: 640px) {
         .feature-grid { grid-template-columns: 1fr; }
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Build ALL cards inside ONE parent div
     cards_html = ""
     for icon, title, desc in features:
         cards_html += f"""
