@@ -84,7 +84,7 @@ def show_landing_page():
     # --- 1. Header ---
     st.markdown("""
     <div style="padding: 20px 0; display: flex; justify-content: center; align-items: center; position: relative; z-index: 1;">
-        <div style="font-family: 'Space Mono', monospace; font-size: 2.5rem; font-weight: 700; color: #22d3ee; display: flex; align-items: center; gap: 12px;">
+        <div style="font-family: 'Space Mono', monospace; font-size: 2.5rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 12px;">
             <svg width="30" height="30" viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/><path d="M 8 16 Q 16 12 24 16" stroke="currentColor" stroke-width="2.5" fill="none"/></svg>
             SWIMFORM AI
         </div>
