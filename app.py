@@ -356,7 +356,7 @@ def show_landing_page():
                 st.session_state.paid = True
                 st.rerun()
     # --- Feature Grid ---
-    # --- Feature Grid ---
+# --- Feature Grid ---
     st.markdown(
         '<h2 style="text-align:center; font-size:2.5rem; margin:60px 0 40px;">The Analysis Engine</h2>',
         unsafe_allow_html=True
@@ -371,64 +371,72 @@ def show_landing_page():
         ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
     ]
 
+    # 1. Define CSS for the Grid and Cards
     st.markdown("""
     <style>
-    /* Grid Container */
+    /* The Grid Container */
     .feature-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr); /* Strictly 3 columns */
-        gap: 20px; /* Gap between cards */
+        grid-template-columns: repeat(3, 1fr); /* Forces 3 columns */
+        gap: 20px;
         width: 100%;
-        margin: 0 auto;
+        margin-bottom: 40px;
     }
 
-    /* Individual Card */
+    /* Individual Card Style */
     .f-card {
         background: rgba(15, 23, 42, 0.55);
         border: 1px solid rgba(148, 163, 184, 0.18);
         border-radius: 20px;
         padding: 30px 20px;
         text-align: center;
-        
-        /* Flexbox inside card to ensure equal height behavior */
         display: flex;
         flex-direction: column;
         align-items: center;
-        height: 100%; 
+        height: 100%; /* Ensures all cards in a row are same height */
         box-sizing: border-box;
-        transition: all 0.3s ease;
+        transition: transform 0.2s ease, border-color 0.2s ease;
     }
 
-    /* Hover Effect */
     .f-card:hover {
         border-color: #22d3ee;
         transform: translateY(-5px);
         background: rgba(34, 211, 238, 0.05);
     }
 
-    /* Icon styling */
+    /* Icon Style */
     .f-icon {
         font-size: 3.5rem;
-        margin-bottom: 20px;
-        height: 60px; /* Fixed height for icon area alignment */
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        margin-bottom: 15px;
     }
 
-    /* Typography */
-    .f-card h3 { color: #22d3ee; margin-bottom: 12px; font-size: 1.3rem; font-weight: 600; }
-    .f-card p { color: #94a3b8; font-size: 0.95rem; line-height: 1.6; margin: 0; flex-grow: 1; }
+    /* Text Styles */
+    .f-card h3 {
+        color: #22d3ee;
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0 0 10px 0;
+    }
+    
+    .f-card p {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
+    }
 
-    /* Mobile Responsiveness: Stack on small screens */
+    /* Mobile Responsive: Collapse to 1 column on small screens */
     @media (max-width: 768px) {
         .feature-grid { grid-template-columns: 1fr; }
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # Generate HTML
-    cards_html = ""
+    # 2. Build the HTML String
+    # Start the container
+    cards_html = '<div class="feature-grid">'
+    
+    # Loop through features to create cards
     for icon, title, desc in features:
         cards_html += f"""
         <div class="f-card">
@@ -437,9 +445,12 @@ def show_landing_page():
             <p>{desc}</p>
         </div>
         """
+    
+    # Close the container
+    cards_html += '</div>'
 
-    # Render Grid
-    st.markdown(f'<div class="feature-grid">{cards_html}</div>', unsafe_allow_html=True)
+    # 3. Render the HTML
+    st.markdown(cards_html, unsafe_allow_html=True)
     # Angle 1: Side Underwater
     st.markdown('<p style="text-align: center; color: #94a3b8; margin-bottom: 40px;">Choose the best angle for accurate AI analysis</p>', unsafe_allow_html=True)
     a_cols = st.columns([2, 1.2, 1.2, 1.2])  # first column wider
