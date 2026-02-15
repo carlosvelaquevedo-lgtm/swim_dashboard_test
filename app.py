@@ -357,7 +357,6 @@ def show_landing_page():
                 st.rerun()
     # --- Feature Grid ---
     st.markdown('<h2 style="text-align: center; font-size: 2.5rem; margin: 30px 0 30px;">The Analysis Engine</h2>', unsafe_allow_html=True)
-    
     features = [
         ("📊", "7 Biometrics", "Stroke rate, DPS, entry angle, elbow drop, and body rotation measured frame-by-frame."),
         ("🎯", "Ranked Issues", "We rank your 1-3 biggest speed leaks so you know exactly what to fix first."),
@@ -366,34 +365,19 @@ def show_landing_page():
         ("📈", "Progress Charting", "Upload follow-up videos to track improvement across all metrics session-over-session."),
         ("⚡", "90-Sec Turnaround", "Proprietary AI processing delivers a deep-dive PDF report while you're still at the pool.")
     ]
-    st.markdown("""
-    <style>
-    .row-flex {
-        display: flex;
-        gap: 20px;
-    }
-    .f-card {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        padding: 20px;
-        border-radius: 12px;
-        background-color: #1e293b;
-    }
-    </style>
-    """, unsafe_allow_html=True)
     for row in range(2):
-        st.markdown('<div class="row-flex">', unsafe_allow_html=True)
-        for icon, title, desc in features[row*3:(row+1)*3]:
-            st.markdown(f"""
-            <div class="f-card">
-                <div style="font-size: 2rem; margin-bottom: 15px;">{icon}</div>
-                <h3 style="color: #22d3ee; margin-bottom: 10px; font-size: 1.2rem;">{title}</h3>
-                <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.5;">{desc}</p>
-            </div>
-            """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        cols = st.columns(3)
+        start_idx = row * 3
+        for i in range(3):
+            icon, title, desc = features[start_idx + i]
+            with cols[i]:
+                st.markdown(f"""
+                <div class="f-card" style="height: 100%; display: flex; flex-direction: column; justify-content: flex-start;">
+                    <div style="font-size: 2rem; margin-bottom: 15px;">{icon}</div>
+                    <h3 style="color: #22d3ee; margin-bottom: 10px; font-size: 1.2rem;">{title}</h3>
+                    <p style="color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin: 0;">{desc}</p>
+                </div>
+                """, unsafe_allow_html=True)
     # Angle 1: Side Underwater
     st.markdown('<p style="text-align: center; color: #94a3b8; margin-bottom: 40px;">Choose the best angle for accurate AI analysis</p>', unsafe_allow_html=True)
     a_cols = st.columns([2, 1.2, 1.2, 1.2])  # first column wider
