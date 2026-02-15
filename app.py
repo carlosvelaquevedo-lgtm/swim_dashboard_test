@@ -108,7 +108,7 @@ def show_landing_page():
     st.markdown("""
     <style>
     .process-section { padding: 40px 0 60px 0; text-align: center; position: relative; z-index: 1; width: 100%; }
-    .process-title { font-size: 2.8rem; font-weight: 700; margin-bottom: 50px; color: black !important; }
+    .process-title { font-size: 2.8rem; font-weight: 700; margin-bottom: 50px; color: white !important; }
     
     /* Force single row */
     .process-grid { 
@@ -132,7 +132,7 @@ def show_landing_page():
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
     
-    .process-number { width: 32px; height: 32px; margin-bottom: 12px; border-radius: 50%; background: #22d3ee; color: white; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .process-number { width: 32px; height: 32px; margin-bottom: 12px; border-radius: 50%; background: #22d3ee; color: black; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .process-card h3 { color: #22d3ee !important; margin-bottom: 8px; font-size: 1rem; min-height: 30px; display: flex; align-items: center; justify-content: center;}
     .process-card p { color: #94a3b8 !important; font-size: 0.8rem; line-height: 1.3; margin: 0; }
     .process-arrow { font-size: 1.2rem; color: rgba(34,211,238,0.4); font-weight: bold; align-self: center; }
@@ -166,12 +166,12 @@ def show_landing_page():
             <div class="process-arrow">→</div>
             <div class="process-card">
                 <div class="process-number">3</div>
-                <h3>Select View</h3>
+                <h3>Choose Angle View</h3>
                 <div class="angle-list">
-                    <span>• Side | Under <span class="highlight">(Best)</span></span>
-                    <span>• Side | Above</span>
-                    <span>• Front | Under</span>
-                    <span>• Front | Above</span>
+                    <span>Side & Underwater <span class="highlight">(Best)</span></span>
+                    <span>Side & Above water</span>
+                    <span>Front & Underwater</span>
+                    <span>Front & Above water</span>
                 </div>
             </div>
             <div class="process-arrow">→</div>
