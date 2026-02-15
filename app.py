@@ -132,7 +132,7 @@ def show_landing_page():
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
     
-    .process-number { width: 32px; height: 32px; margin-bottom: 12px; border-radius: 50%; background: #22d3ee; color: #0a1628; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .process-number { width: 32px; height: 32px; margin-bottom: 12px; border-radius: 50%; background: white; color: #0a1628; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .process-card h3 { color: #22d3ee !important; margin-bottom: 8px; font-size: 1rem; min-height: 30px; display: flex; align-items: center; justify-content: center;}
     .process-card p { color: #94a3b8 !important; font-size: 0.8rem; line-height: 1.3; margin: 0; }
     .process-arrow { font-size: 1.2rem; color: rgba(34,211,238,0.4); font-weight: bold; align-self: center; }
